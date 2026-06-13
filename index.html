@@ -201,6 +201,17 @@
       </div>
     </div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Data-gedreven regels schakelen mee per geselecteerde periode. Research is gebaseerd op Meta Ad Library scan 13-06-2026.</div>
+    <div style="background:#f0f4e8;border:1px solid #c8d4a0;border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:12px">
+      <div style="font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#5E7B5A;margin-bottom:8px">Gedaan 13 jun 2026</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">✓ Meta Retargeting gepauzeerd (−€7,55/dag)</span>
+        <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">✓ Google budget €75 → €20/dag</span>
+        <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">✓ [waterkoker] negatief zoekwoord Shopping</span>
+        <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">✓ CAPI op Geoptimaliseerd (bewuste keuze)</span>
+        <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">✓ Pinterest ads gepauzeerd</span>
+        <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">✓ Dashboard live op dashboard.elunahome.nl</span>
+      </div>
+    </div>
     <div class="ae-cols">
       <div><div class="ae-col-head"><span class="ae-badge now">Nu</span>Deze week</div><div id="ae-nu"></div></div>
       <div><div class="ae-col-head"><span class="ae-badge soon">Binnenkort</span>Deze maand</div><div id="ae-binnenkort"></div></div>
@@ -387,14 +398,10 @@ function generateActions(k){
 
   // PLAYBOOK
   nu.push(I('playbook',T('meta','Meta'),'V7 (8,87×) + V47 (7,12×) naar eigen CBO isoleren','Budget lekt nu naar V50 (1,87×). Eigen CBO = direct hogere gemiddelde ROAS zonder extra spend.'));
-  nu.push(I('playbook',T('google','Google'),'Exact-negatief [waterkoker] toevoegen in Shopping','€116,56 voor 1 conversie (30d). Blokkeert alleen kale term, behoudt converters zoals "waterkoker zonder plastic".'));
-  nu.push(I('playbook',T('meta','Meta')+''+T('cro','CRO'),'CAPI instellen via Shopify','Shopify → Sales Channels → Facebook → Data Sharing → Maximum. &lt;20 min. Verhoogt match rate direct.'));
-  bn.push(I('playbook',T('email','Email'),'Klaviyo abandoned cart flow (3 mails)','1u / 24u / 72u. Branche gemiddelde 15% recovery. Gratis extra omzet bovenop spend.'));
-  bn.push(I('playbook',T('email','Email'),'Post-purchase sequence: review + referral','3d na levering: review verzoek. 7d: 10% korting voor een vriend. Kost niets.'));
+  nu.push(I('playbook',T('product','Product'),'Inventaris reorder bij Windspro','40 stuks resterend · ~25 dagen runway · stockout ~8 jul. Lead time 45–65d → bij bestelling vandaag = aankomst 28 jul–17 aug. Bestel NU om gap te minimaliseren.','HOOG'));
   bn.push(I('playbook',T('product','Product'),'2-pack bundel maken op Shopify','€119,90 i.p.v. 2× €69,95. Als 20% bundel kiest: AOV +€15, CAC/stuk -€10.'));
   bn.push(I('playbook',T('cro','CRO'),'LP headline: van specs naar ritueel','Wissel "1.7L · volledig RVS" naar "Zo begint elke ochtend." A/B testen. 7 dagen meten.'));
   bn.push(I('playbook',T('cro','CRO'),'Levenslange garantie op RVS toevoegen','Kost bijna niets (RVS gaat 20+ jaar mee). Noem het expliciet op LP. Expect +15-25% CVR.'));
-  bn.push(I('playbook',T('organic','Organic'),'Pinterest PAUZEREN','Intent-product, niet discovery. 30d+ conversiecyclus. Heroverweeg in Q4.'));
   later.push(I('playbook',T('pr','PR/Creator'),'15 micro-influencers NL giften (food/lifestyle, 5k–30k)','€1.050 COGS, €0 spend. 8 van 15 posten = 120k bereik voor €8,75 CPM. Content hergebruiken als UGC in ads.'));
   later.push(I('playbook',T('organic','Organic'),'Organisch: 1× per week Reels/TikTok (Higgsfield hergebruiken)','Algoritme-boost na 8 weken. Verlaagt paid CPM doordat organisch social proof toevoegt.'));
   later.push(I('playbook',T('pr','PR'),'Seizoensplan: Sinterklaas + Kerst (start prep sept)','Waterkokers zijn top-cadeau. Q4 is 3–5× hogere ROAS window. Creatieve brief starten in september.'));
