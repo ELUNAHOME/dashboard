@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ELÛNA · Brand Dashboard</title>
+<style>
+  :root{
+    --bg:#EEF0E4;--card:#FAFBF4;--line:#DDE0CC;--sage:#AEB893;
+    --ink:#2B2E26;--muted:#85897A;--good:#5E7B5A;--warn:#B0703F;--pist:#C7D2A8;
+    --shadow:0 1px 2px rgba(43,46,38,.04),0 8px 24px rgba(43,46,38,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Inter","Helvetica Neue",-apple-system,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.45;font-variant-numeric:tabular-nums}
+  .wrap{max-width:1180px;margin:0 auto;padding:40px 28px 64px}
+
+  header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:14px}
+  .brand{font-size:30px;letter-spacing:.18em;font-weight:600}
+  .brand small{display:block;font-size:11px;letter-spacing:.22em;color:var(--muted);font-weight:500;margin-top:6px}
+  .meta-h{text-align:right;font-size:12px;color:var(--muted)}
+  .tag{display:inline-block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+       border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--muted);background:var(--card)}
+  .rule{height:1px;background:var(--line);margin:20px 0 22px}
+  h2{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 14px}
+
+  .switch{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px;width:max-content;margin-bottom:24px}
+  .switch button{border:0;background:transparent;font:inherit;font-size:13px;color:var(--muted);padding:7px 16px;border-radius:999px;cursor:pointer;transition:.15s}
+  .switch button.active{background:var(--pist);color:var(--ink);font-weight:600}
+
+  .grid{display:grid;gap:16px}
+  .kpis{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:880px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow)}
+
+  .kpi .label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px}
+  .kpi .val{font-size:29px;font-weight:600;margin:8px 0 2px;letter-spacing:-.01em}
+  .kpi .val.warn{color:var(--warn)} .kpi .val.good{color:var(--good)}
+  .kpi .sub{font-size:12px;color:var(--muted)}
+  .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+  .dot.live{background:var(--good)} .dot.flag{background:var(--warn)} .dot.idle{background:var(--line)}
+
+  .chart-wrap{overflow:hidden}
+  .chart-bars{display:flex;align-items:flex-end;gap:3px;height:56px}
+  .chart-bar{flex:1;border-radius:3px 3px 0 0;background:var(--sage);min-width:0}
+  .chart-bar.today{background:var(--good)}
+  .chart-labels{display:flex;gap:3px;margin-top:5px}
+  .chart-label{flex:1;font-size:9px;color:var(--muted);text-align:center;min-width:0;overflow:hidden;white-space:nowrap}
+
+  .cols{grid-template-columns:1.35fr 1fr;margin-top:26px}
+  @media(max-width:880px){.cols{grid-template-columns:1fr}}
+
+  .wf{display:flex;flex-direction:column;gap:9px;margin-top:4px}
+  .wf .row{display:grid;grid-template-columns:175px 1fr 86px;align-items:center;gap:12px;font-size:13px}
+  .wf .bar{height:14px;border-radius:5px;background:var(--sage);opacity:.9}
+  .wf .bar.cost{background:#CFD6B8}.wf .bar.net{background:var(--good)}.wf .bar.neg{background:#C98A6B}
+  .wf .amt{text-align:right;color:var(--muted)} .wf .name{color:var(--ink)}
+  .wf .amt.warn{color:var(--warn)} .wf .amt.good{color:var(--good)}
+
+  .signal{display:flex;gap:12px;align-items:flex-start;font-size:13px;padding:13px 15px;border-radius:12px;
+          background:#F7EEE6;border:1px solid #E4C9B5;margin-bottom:12px}
+  .signal.good{background:#EFF3E7;border-color:#CFD6B8}
+  .signal.neutral{background:var(--card);border-color:var(--line)}
+  .signal b{display:block;margin-bottom:2px}
+
+  .ctable{width:100%;border-collapse:collapse;font-size:13px}
+  .ctable th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;
+             text-align:right;padding:0 10px 10px;white-space:nowrap}
+  .ctable th:first-child{text-align:left}
+  .ctable td{padding:9px 10px;border-top:1px solid var(--line);text-align:right;white-space:nowrap}
+  .ctable td:first-child{text-align:left;font-weight:500}
+  .ctable tr:last-child td{border-top:1px solid var(--sage);font-weight:600}
+  .ctable .muted{color:var(--muted)} .ctable .warn{color:var(--warn)} .ctable .good{color:var(--good)}
+  .badge-ip{display:inline-block;font-size:9px;text-transform:uppercase;border:1px solid var(--line);
+            border-radius:999px;padding:1px 6px;color:var(--muted);margin-left:5px}
+
+  /* action engine */
+  .ae-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:900px){.ae-cols{grid-template-columns:1fr}}
+  .ae-col-head{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+               color:var(--muted);margin-bottom:10px}
+  .ae-badge{border-radius:999px;padding:2px 8px;font-size:9px;letter-spacing:.1em;margin-right:6px}
+  .ae-badge.now{background:#B0703F;color:#fff}
+  .ae-badge.soon{background:var(--sage);color:var(--ink)}
+  .ae-badge.later{background:var(--line);color:var(--muted)}
+  .ae-item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:9px;font-size:13px;position:relative}
+  .ae-item.data{border-left:3px solid #B0703F}
+  .ae-item.data.ok{border-left-color:var(--good)}
+  .ae-item.research{border-left:3px solid #3A5BD9}
+  .ae-item.playbook{border-left:3px solid var(--line)}
+  .ae-item-title{font-weight:600;color:var(--ink);margin-bottom:4px;line-height:1.35}
+  .ae-item-body{font-size:12px;color:var(--muted);line-height:1.5}
+  .ae-tags{display:flex;gap:5px;margin-bottom:7px;flex-wrap:wrap}
+  .ae-tag{font-size:9px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;border-radius:999px;padding:2px 7px}
+  .ae-tag.meta{background:#E8ECFA;color:#3A5BD9}
+  .ae-tag.google{background:#E8F5EC;color:#1F7A45}
+  .ae-tag.cro{background:#FDF3E7;color:#9A5C2A}
+  .ae-tag.product{background:#F3F0E8;color:#6B6650}
+  .ae-tag.organic{background:#EDF3F0;color:#2E6B5A}
+  .ae-tag.email{background:#F0EBF5;color:#6A3D9A}
+  .ae-tag.pr{background:#FBF0F0;color:#9A3D3D}
+  .ae-tag.data-tag{background:#F7EEE6;color:#B0703F}
+  .ae-tag.research-tag{background:#E8ECFA;color:#3A5BD9}
+  .ae-impact{font-size:9px;position:absolute;top:12px;right:12px;color:var(--muted);font-weight:700;letter-spacing:.06em}
+
+  /* creative briefs */
+  .brief-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:900px){.brief-grid{grid-template-columns:1fr}}
+  .brief{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+  .brief-num{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-weight:700}
+  .brief-hook{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:10px;line-height:1.3}
+  .brief-row{font-size:12px;color:var(--muted);margin-bottom:6px;display:grid;grid-template-columns:80px 1fr;gap:8px}
+  .brief-row b{color:var(--ink);font-weight:600}
+  .brief-cta{display:inline-block;margin-top:12px;font-size:11px;font-weight:700;letter-spacing:.08em;
+             text-transform:uppercase;background:var(--pist);color:var(--ink);border-radius:999px;padding:5px 14px}
+  .brief-why{font-size:11px;color:var(--good);border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+
+  /* operator pov */
+  .pov-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  @media(max-width:760px){.pov-grid{grid-template-columns:1fr}}
+  .pov{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+  .pov-name{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+  .pov-role{font-size:11px;color:var(--muted);margin-bottom:12px}
+  .pov-quote{font-size:13px;color:var(--ink);line-height:1.6;margin-bottom:10px}
+  .pov-action{font-size:12px;font-weight:600;color:var(--warn);border-top:1px solid var(--line);padding-top:10px}
+
+  /* forecast */
+  .fc-row{display:grid;grid-template-columns:140px 1fr 90px;align-items:center;gap:10px;margin-bottom:10px;font-size:13px}
+  .fc-bar-wrap{background:var(--line);border-radius:4px;height:8px;overflow:hidden}
+  .fc-bar{height:100%;border-radius:4px}
+
+  /* google placeholder */
+  .g-pending{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:12px;
+             background:var(--card);border:1px solid var(--line);font-size:13px;color:var(--muted)}
+  .g-pending strong{color:var(--ink);display:block;margin-bottom:2px}
+  .g-dot{width:8px;height:8px;border-radius:50%;background:var(--line);flex-shrink:0}
+
+  /* github pages box */
+  .gh-box{background:#0D1117;border-radius:12px;padding:16px 18px;font-size:13px}
+  .gh-box code{display:block;color:#7ee787;font-family:"SF Mono",Monaco,monospace;font-size:12px;
+               background:#161B22;border-radius:8px;padding:12px 14px;margin:10px 0;white-space:pre-wrap;word-break:break-all;line-height:1.6}
+  .gh-box .gh-step{color:#8b949e;margin-bottom:6px}
+  .gh-box .gh-step b{color:#f0f6fc}
+  .gh-url{color:#58a6ff;font-weight:700}
+
+  .foot{margin-top:34px;font-size:11px;color:var(--muted);text-align:center;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">EL&Ucirc;NA<small>BRAND DASHBOARD · BUILT FOR RITUALS</small></div>
+    <div class="meta-h">
+      <div class="tag">Pistache Crème · Waterkoker</div>
+      <div style="margin-top:8px">Live · bijgewerkt <b>13 juni 2026</b></div>
+      <div id="rangelbl" style="margin-top:2px"></div>
+    </div>
+  </header>
+  <div class="rule"></div>
+
+  <div class="switch" id="switch">
+    <button data-k="today">Vandaag</button>
+    <button data-k="d7">7 dagen</button>
+    <button data-k="mtd" class="active">Deze maand</button>
+    <button data-k="d30">30 dagen</button>
+  </div>
+
+  <div class="grid kpis" id="kpis"></div>
+
+  <div class="card chart-wrap" id="chart-section" style="margin-top:16px">
+    <h2>Dagelijkse omzet (Shopify incl. btw)</h2>
+    <div class="chart-bars" id="chart-bars"></div>
+    <div class="chart-labels" id="chart-labels"></div>
+  </div>
+
+  <div class="grid cols">
+    <div class="card">
+      <h2>Unit-economics · per waterkoker (ex btw)</h2>
+      <div class="wf" id="wf"></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:13px">Vast marge-model Drive · CAC schaalt mee per periode.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card"><h2>Signalen</h2><div id="signals"></div></div>
+    </div>
+  </div>
+
+  <!-- META CAMPAIGNS -->
+  <h2 style="margin-top:34px">Meta campagnes · breakdown</h2>
+  <div class="card"><table class="ctable" id="meta-table"></table></div>
+
+  <!-- ACTION ENGINE -->
+  <div style="margin-top:34px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px">
+      <h2 style="margin:0">Actie-engine · data + research + playbook</h2>
+      <div style="display:flex;gap:10px;font-size:11px;color:var(--muted)">
+        <span><span style="width:9px;height:9px;border-radius:2px;background:#B0703F;display:inline-block;vertical-align:middle;margin-right:4px"></span>Data</span>
+        <span><span style="width:9px;height:9px;border-radius:2px;background:#3A5BD9;display:inline-block;vertical-align:middle;margin-right:4px"></span>Research</span>
+        <span><span style="width:9px;height:9px;border-radius:2px;background:var(--line);display:inline-block;vertical-align:middle;margin-right:4px"></span>Playbook</span>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Data-gedreven regels schakelen mee per geselecteerde periode. Research is gebaseerd op Meta Ad Library scan 13-06-2026.</div>
+    <div class="ae-cols">
+      <div><div class="ae-col-head"><span class="ae-badge now">Nu</span>Deze week</div><div id="ae-nu"></div></div>
+      <div><div class="ae-col-head"><span class="ae-badge soon">Binnenkort</span>Deze maand</div><div id="ae-binnenkort"></div></div>
+      <div><div class="ae-col-head"><span class="ae-badge later">Later</span>Dit kwartaal</div><div id="ae-later"></div></div>
+    </div>
+  </div>
+
+  <!-- CREATIVE BRIEFS -->
+  <h2 style="margin-top:34px">Creative briefs · klaar voor Higgsfield</h2>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
+    Gebaseerd op Meta Ad Library scan (13-06-2026): geen concurrent adverteert op "zonder plastic", "ochtend ritueel" of "cadeau" hoek in NL.
+    Kokendwatergigant draait "Duurzaam Design" al 4+ maanden &mdash; design-positie bezet maar niet owned door een D2C kettle-merk.
+    Jouw CTR zit op 3,2%; probleem is CVR. Nieuwe hooks moeten de klik omzetten in actie.
+  </div>
+  <div class="brief-grid">
+
+    <div class="brief">
+      <div class="brief-num">Brief 01 · Probleem-bewustzijn</div>
+      <div class="brief-hook">"Weet jij wat er in jouw waterkoker zit?"</div>
+      <div class="brief-row"><span>Opening</span><b>Close-up van plastic onderdelen in een standaard waterkoker (iemand kijkt geschrokken). Cut naar ELÛNA: volledig RVS, geen plastic.</b></div>
+      <div class="brief-row"><span>Hook 3s</span><b>"De meeste waterkokers zijn voor 60% plastic. De jouwe ook?"</b></div>
+      <div class="brief-row"><span>USP</span><b>Volledig RVS · geen plastic smaak · 1.7L · €69,95</b></div>
+      <div class="brief-row"><span>CTA</span><b>"Bestel zonder risico &mdash; 30 dagen retour"</b></div>
+      <div class="brief-row"><span>Formaat</span><b>Vertical 9:16 · 15-20 sec · UGC-stijl · voice-over</b></div>
+      <div class="brief-why">Whitespace: niemand adverteert op dit probleem in NL. Sterkste differentiator van ELÛNA. Verwacht hogere CVR dan design-hooks.</div>
+    </div>
+
+    <div class="brief">
+      <div class="brief-num">Brief 02 · Ritueel / lifestyle</div>
+      <div class="brief-hook">"Zo begint elke ochtend."</div>
+      <div class="brief-row"><span>Opening</span><b>Vroege ochtend, zachte bril. Iemand pakt de ELÛNA, zet hem neer op een schone marmeren aanrechtblad. Stoomwolkje.</b></div>
+      <div class="brief-row"><span>Hook 3s</span><b>"Mijn ochtend begon anders zodra ik dit had."</b></div>
+      <div class="brief-row"><span>USP</span><b>Strak design dat blijft staan. Past in jouw keuken.</b></div>
+      <div class="brief-row"><span>CTA</span><b>"Start jouw ritueel &mdash; gratis verzending"</b></div>
+      <div class="brief-row"><span>Formaat</span><b>Vertical 9:16 · 20 sec · ambient muziek · lifestyle B-roll</b></div>
+      <div class="brief-why">Davie Fogarty (The Oodie) leer: verkoop het gevoel, niet het product. Geen concurrent brengt de ochtend-emotie in NL.</div>
+    </div>
+
+    <div class="brief">
+      <div class="brief-num">Brief 03 · Cadeau / trigger</div>
+      <div class="brief-hook">"Het cadeau dat ze niet weet dat ze wil."</div>
+      <div class="brief-row"><span>Opening</span><b>Cadeau-verpakking op aanrechtblad. Iemand opent het, ziet de ELÛNA. Gezichtsuitdrukking: verrast en blij.</b></div>
+      <div class="brief-row"><span>Hook 3s</span><b>"Zoek je nog een cadeau? Dit staat de rest van haar leven in haar keuken."</b></div>
+      <div class="brief-row"><span>USP</span><b>Gratis verzending · 30 dagen retour · gratis cadeauverpakking</b></div>
+      <div class="brief-row"><span>CTA</span><b>"Bestel vóór [datum] &mdash; morgen in huis"</b></div>
+      <div class="brief-row"><span>Formaat</span><b>Vertical 9:16 · 15 sec · warm kleurenpalet · geen muziek, alleen VO</b></div>
+      <div class="brief-why">Cadeau-intent verhoogt AOV en CVR (minder prijs-gevoelig). Geschikt voor Moederdag, verjaardagen, vaderdag, kerst.</div>
+    </div>
+
+  </div>
+
+  <!-- OPERATOR POV -->
+  <h2 style="margin-top:34px">Operator POV · wat zouden zij zeggen</h2>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
+    Vier lenzen op hetzelfde account. Niet data &mdash; opinie. Concreet, kritisch, uitvoerbaar.
+  </div>
+  <div class="pov-grid">
+
+    <div class="pov">
+      <div class="pov-name">Hormozi-lens</div>
+      <div class="pov-role">Offers, value-stacking, conversion</div>
+      <div class="pov-quote">
+        "Je offer is het probleem, niet je ads. €69,95 voor een single waterkoker zonder garantie, zonder bundle, zonder risk reversal. De klant vraagt zich af: 'waarom zou ik dit nu kopen?' Je hebt geen antwoord. Voeg toe: een levenslange garantie (kost je bijna niets, converteert +30%), een 2-pack optie, en een duidelijke money-back headline boven de fold. Fix het offer voor je één euro extra aan ads uitgeeft."
+      </div>
+      <div class="pov-action">Actie: voeg 'levenslange garantie op RVS' toe aan LP + product. Kost €0, verhoogt CVR direct.</div>
+    </div>
+
+    <div class="pov">
+      <div class="pov-name">Ben Heath-lens</div>
+      <div class="pov-role">Meta Ads, tracking, campagnestructuur</div>
+      <div class="pov-quote">
+        "Je hebt een tracking-probleem, geen ads-probleem. Meta ziet 0,81× terwijl jij 1,24× blended hebt. Dat is een 53% trackinggat. Meta optimaliseert voor conversies die het niet eens ziet. Als je CAPI fix en die match rate van 40% naar 80% gaat, gaat je CPA vanzelf omlaag zonder dat je ook maar één creatief aanraakt. Dit is de aller-eerste stap. Alles daarna pas."
+      </div>
+      <div class="pov-action">Actie: CAPI instellen via Shopify → Events Manager → Maximum Data Sharing. Meting na 7 dagen.</div>
+    </div>
+
+    <div class="pov">
+      <div class="pov-name">DTC Brand Operator-lens</div>
+      <div class="pov-role">Product-led growth, brand, UGC (Davie Fogarty-stijl)</div>
+      <div class="pov-quote">
+        "Stop met het verkopen van een waterkoker. Begin met het verkopen van een ochtend. Niemand wil een RVS cylinder. Ze willen een keuken die er goed uitziet, een ochtend die rustig aanvoelt, een ritueel dat van hen is. The Oodie verkoopt geen deken &mdash; hij verkoopt comfortabele avonden. Jij verkoopt nog steeds specs. '1.7 liter', 'volledig RVS', dat is catalogustaal. Verander de headline: 'Zo begint elke ochtend.' en kijk wat er met CVR gebeurt."
+      </div>
+      <div class="pov-action">Actie: verander LP headline naar ritueel-taal. A/B test Brief 02 vs huidige copy. 7 dagen meten.</div>
+    </div>
+
+    <div class="pov">
+      <div class="pov-name">Dutch DTC Operator-lens</div>
+      <div class="pov-role">Schalen in NL, community-first, lokale kansen</div>
+      <div class="pov-quote">
+        "Je CAC is €52 via paid. Maar je zit in Nederland. Stuur 15 waterkokers naar food- en lifestyle-Instagrammers met 5k–30k volgers in NL. Kost je €1.050 COGS en €0 spend. Als 8 van de 15 posten, bereik je 150k mensen voor €7/duizend impressies &mdash; goedkoper dan Meta. En die content gebruik je daarna als UGC in je ads. Micro-influencers converteren 3–7× beter dan macro. Dat is de eerste echte schaalbeweging voor een NL-merk van jouw formaat."
+      </div>
+      <div class="pov-action">Actie: maak lijst van 20 food/lifestyle NL creators via Instagram. Stuur outreach: gratis waterkoker, geen betaling gevraagd.</div>
+    </div>
+
+  </div>
+
+  <!-- OMZET FORECAST -->
+  <h2 style="margin-top:34px">Omzet-forecast · wanneer schalen we op</h2>
+  <div class="card">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Breakpoints op blended ROAS. Huidige benchmark: <b id="fc-current"></b> spend per dag (Meta + Google).</div>
+    <div class="fc-row"><span style="color:var(--warn);font-weight:600">Verlieslatend</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:100%;background:#C98A6B"></div></div><span style="text-align:right;font-weight:600;font-size:12px;color:var(--warn)">ROAS &lt; 1,8×</span></div>
+    <div class="fc-row"><span>Break-even</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:67%;background:var(--sage)"></div></div><span style="text-align:right;font-weight:600;font-size:12px">ROAS 1,8×</span></div>
+    <div class="fc-row"><span style="font-weight:600">Schalen (doel)</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:100%;background:var(--good)"></div></div><span style="text-align:right;font-weight:600;font-size:12px;color:var(--good)">ROAS 2,5×+</span></div>
+    <div style="font-size:12px;color:var(--muted);margin-top:13px;border-top:1px solid var(--line);padding-top:12px">
+      Bij ROAS 2,5×: elke €100 spend genereert €250 omzet · €100 marge · ~€10 netto/stuk. CAC nu <b>€<span id="fc-cac"></span>/stuk</b>. Breakeven CAC = €26,35. Nodig te reduceren: <span id="fc-gap"></span> (via CAPI + LP-fix + betere targeting, niet meer budget).
+    </div>
+  </div>
+
+  <!-- GOOGLE PLACEHOLDER -->
+  <h2 style="margin-top:34px">Google Ads · API-integratie</h2>
+  <div class="g-pending">
+    <div class="g-dot"></div>
+    <div>
+      <strong>Basic Access aanvraag in behandeling</strong>
+      Ingediend 13-06-2026 · MCC 789-710-2801. Verwachte goedkeuring 1–3 werkdagen. Python-client klaar: <code>google-ads/2026-06-13-google-ads-client.py</code> &mdash; zodra goedgekeurd worden Google-cijfers automatisch ingeladen. Google-spend handmatig: €<span id="fc-gspend"></span>/dag.
+    </div>
+  </div>
+
+  <!-- GITHUB PAGES -->
+  <h2 style="margin-top:34px">GitHub Pages · dashboard als URL</h2>
+  <div class="gh-box">
+    <div class="gh-step">Stap 1 &mdash; <b>Jij (1 minuut):</b> Ga naar github.com/ELUNAHOME, klik "+ New repository", naam: <b>dashboard</b>, Public, geen README, klik Create.</div>
+    <div class="gh-step">Stap 2 &mdash; <b>Kopieer dit commando in Terminal en druk Enter:</b></div>
+    <code>cd "/Users/kneauk/Documents/Claude/Projects/ELÛNA/ELÛNA DASHBOARD" && git init && git add index.html && git commit -m "ELUNA dashboard v6" && git branch -M main && git remote add origin https://github.com/ELUNAHOME/dashboard.git && git push -u origin main</code>
+    <div class="gh-step">Stap 3 &mdash; <b>Jij (30 sec):</b> Ga naar github.com/ELUNAHOME/dashboard &rarr; Settings &rarr; Pages &rarr; Branch: main &rarr; Save.</div>
+    <div class="gh-step" style="margin-top:10px">Resultaat (na ~1 minuut): <span class="gh-url">https://elunahome.github.io/dashboard</span> &mdash; werkt op telefoon, deelbaar. Kosten: <b>€0</b>.</div>
+  </div>
+
+  <div class="foot">ELÛNA v6 · Shopify (MCP) + Meta (MCP) + Google (handmatig, API pending) · bijgewerkt 13-06-2026 · blended = omzet ÷ (Meta + Google) · Zacht in geluid, sterk in design.</div>
+</div>
+
+<script>
+const GROSS = 26.35;
+const P = {
+  today:{label:'Vandaag',      range:'13 jun 2026',rev:188.88,orders:3,units:3,spend:32.91,gspend:8.53,mroas:2.34,groas:7.38,ctr:2.18,cpc:0.73},
+  d7:   {label:'7 dagen',      range:'6–12 jun 2026',rev:594.60,orders:9,units:9,spend:320.63,gspend:254.08,mroas:0.50,groas:1.07,ctr:3.24,cpc:0.35},
+  mtd:  {label:'Deze maand',   range:'1–13 jun 2026',rev:1350.12,orders:20,units:21,spend:582.05,gspend:503.64,mroas:0.81,groas:1.42,ctr:3.14,cpc:0.39},
+  d30:  {label:'30 dagen',     range:'14 mei–12 jun 2026',rev:3525.66,orders:53,units:54,spend:1244.87,gspend:1154.94,mroas:1.46,groas:1.77,ctr:2.73,cpc:0.53},
+};
+const C = {
+  today:[{name:'SALES · NEW CUSTOMERS',spend:26.85,imp:1836,clicks:40,ctr:2.18,cpm:14.62,cpc:0.67,roas:2.34},{name:'SALES · RETARGETING',spend:6.06,imp:227,clicks:5,ctr:2.20,cpm:26.70,cpc:1.21,roas:null}],
+  d7:[{name:'SALES · NEW CUSTOMERS',spend:249.85,imp:25569,clicks:856,ctr:3.35,cpm:9.77,cpc:0.29,roas:0.50},{name:'SALES · RETARGETING',spend:70.78,imp:2732,clicks:60,ctr:2.20,cpm:25.91,cpc:1.18,roas:null}],
+  mtd:[{name:'SALES · NEW CUSTOMERS',spend:467.22,imp:42897,clicks:1385,ctr:3.23,cpm:10.89,cpc:0.34,roas:0.81},{name:'SALES · RETARGETING',spend:114.83,imp:4192,clicks:95,ctr:2.27,cpm:27.39,cpc:1.21,roas:null}],
+  d30:[{name:'SALES · NEW CUSTOMERS',spend:936.30,imp:73881,clicks:2093,ctr:2.83,cpm:12.67,cpc:0.45,roas:1.46},{name:'SALES · RETARGETING',spend:226.61,imp:8271,clicks:194,ctr:2.35,cpm:27.40,cpc:1.17,roas:0.86},{name:'SALES · SCALE',spend:81.96,imp:4611,clicks:80,ctr:1.73,cpm:17.77,cpc:1.02,roas:null}],
+};
+const DAILY_MTD=[{d:'1/6',rev:62.96},{d:'2/6',rev:62.96},{d:'3/6',rev:314.80},{d:'4/6',rev:62.96},{d:'5/6',rev:62.96},{d:'6/6',rev:0},{d:'7/6',rev:202.86},{d:'8/6',rev:265.82},{d:'9/6',rev:0},{d:'10/6',rev:0},{d:'11/6',rev:62.96},{d:'12/6',rev:62.96},{d:'13/6',rev:188.88}];
+
+const eur=(n,d=2)=>'€'+Number(n).toLocaleString('nl-NL',{minimumFractionDigits:d,maximumFractionDigits:d});
+const eur0=n=>'€'+Math.round(n).toLocaleString('nl-NL');
+const pct=n=>n==null?'—':n.toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
+const xfmt=n=>n==null?'—':n.toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2})+'×';
+const num=n=>Math.round(n).toLocaleString('nl-NL');
+const T=(cls,txt)=>`<span class="ae-tag ${cls}">${txt}</span>`;
+const I=(type,tags,title,body,impact='')=>`
+  <div class="ae-item ${type}">
+    ${impact?`<span class="ae-impact">${impact}</span>`:''}
+    <div class="ae-tags">${tags}</div>
+    <div class="ae-item-title">${title}</div>
+    <div class="ae-item-body">${body}</div>
+  </div>`;
+
+function generateActions(k){
+  const p=P[k], camps=C[k]||[];
+  const tot=(p.spend||0)+(p.gspend||0), roas=tot>0?p.rev/tot:0;
+  const cac=p.units>0?tot/p.units:null, net=cac!=null?GROSS-cac:null;
+  const aov=p.orders>0?p.rev/p.orders:null;
+  const retC=camps.find(c=>c.name.includes('RETAR'));
+  const trackGap=roas>0&&p.mroas>0?roas/p.mroas:0;
+  const nu=[], bn=[], later=[];
+
+  // DATA
+  if(cac!=null&&cac>GROSS) nu.unshift(I('data',T('data-tag','Data')+T('meta','Meta')+T('google','Google'),'Budget bevriezen &mdash; CAC verlieslatend',`CAC ${eur(cac)}/stuk vs brutomarge €26,35. Geen opschaling. Fix CAPI + LP eerst.`,'HOOG'));
+  else if(cac!=null) nu.unshift(I('data ok',T('data-tag','Data'),'Winstgevend &mdash; voorzichtig opschalen',`Netto +${eur(net)}/stuk. Verhoog Meta €10/dag per week. Monitor blended ROAS.`,'HOOG'));
+  if(trackGap>=1.7&&roas<1.8) nu.push(I('data',T('data-tag','Data')+T('meta','Meta'),'Trackinggat: blended '+xfmt(roas)+' vs Meta '+xfmt(p.mroas),`Meta ziet ${Math.round((1-1/trackGap)*100)}% van je conversies niet. CAPI fix = direct betere optimalisatie.`,'HOOG'));
+  if(retC&&retC.spend>20&&retC.roas===null) nu.push(I('data',T('data-tag','Data')+T('meta','Meta'),`Retargeting €${retC.spend.toFixed(0)} spend, 0 gemeten conversies`,'Pixel check op thank-you pagina. CAPI verhoogt match rate. Actie vandaag.','MIDDEL'));
+  if(p.ctr>2.8&&p.mroas!=null&&p.mroas<0.8) nu.push(I('data',T('data-tag','Data')+T('cro','CRO'),'CTR '+pct(p.ctr)+' sterk &mdash; conversie zwak','Mensen klikken maar kopen niet. Check LP: laadtijd, reviews, headline, risk reversal.','HOOG'));
+  if(p.gspend>50&&p.rev/p.gspend<1.8) nu.push(I('data',T('data-tag','Data')+T('google','Google'),'Google blended ROAS '+xfmt(p.gspend>0?p.rev/p.gspend:null)+' &mdash; niet kostendekkend',`PMax gepauzeerd houden. Exact-negatief [waterkoker] toevoegen in Shopping.`,'HOOG'));
+  if(aov!=null&&aov<72) bn.push(I('data',T('data-tag','Data')+T('product','Product'),'AOV '+eur(aov)+' &mdash; geen upsell','Bijna alle orders single-unit. 2-pack (€119,90) of post-checkout upsell. +20% AOV = CAC daalt €10.','MIDDEL'));
+  if(retC&&retC.cpm>22) bn.push(I('data',T('data-tag','Data')+T('meta','Meta'),'Retargeting CPM '+eur(retC.cpm)+' &mdash; ad fatigue','Verklein audience (90d i.p.v. 180d) + nieuw creatief voor retargeting.','LAAG'));
+
+  // RESEARCH
+  nu.push(I('research',T('research-tag','Research')+T('meta','Meta'),'Ad Library: "zonder plastic" hoek vrij in NL','Scan 13-06-2026: geen concurrent adverteert op dit onderscheid. Brief 01 test deze whitespace direct. Hoogste kans op CVR-verbetering.','HOOG'));
+  nu.push(I('research',T('research-tag','Research')+T('meta','Meta'),'Ad Library: "duurzaam design" al 4+ maanden actief bij Kokendwatergigant','Zij bewijzen dat deze hoek werkt maar verkopen kokend-water-kranen, geen kettles. ELÛNA kan design-positie opeisen in het kettle-segment.','MIDDEL'));
+
+  // PLAYBOOK
+  nu.push(I('playbook',T('meta','Meta'),'V7 (8,87×) + V47 (7,12×) naar eigen CBO isoleren','Budget lekt nu naar V50 (1,87×). Eigen CBO = direct hogere gemiddelde ROAS zonder extra spend.'));
+  nu.push(I('playbook',T('google','Google'),'Exact-negatief [waterkoker] toevoegen in Shopping','€116,56 voor 1 conversie (30d). Blokkeert alleen kale term, behoudt converters zoals "waterkoker zonder plastic".'));
+  nu.push(I('playbook',T('meta','Meta')+''+T('cro','CRO'),'CAPI instellen via Shopify','Shopify → Sales Channels → Facebook → Data Sharing → Maximum. &lt;20 min. Verhoogt match rate direct.'));
+  bn.push(I('playbook',T('email','Email'),'Klaviyo abandoned cart flow (3 mails)','1u / 24u / 72u. Branche gemiddelde 15% recovery. Gratis extra omzet bovenop spend.'));
+  bn.push(I('playbook',T('email','Email'),'Post-purchase sequence: review + referral','3d na levering: review verzoek. 7d: 10% korting voor een vriend. Kost niets.'));
+  bn.push(I('playbook',T('product','Product'),'2-pack bundel maken op Shopify','€119,90 i.p.v. 2× €69,95. Als 20% bundel kiest: AOV +€15, CAC/stuk -€10.'));
+  bn.push(I('playbook',T('cro','CRO'),'LP headline: van specs naar ritueel','Wissel "1.7L · volledig RVS" naar "Zo begint elke ochtend." A/B testen. 7 dagen meten.'));
+  bn.push(I('playbook',T('cro','CRO'),'Levenslange garantie op RVS toevoegen','Kost bijna niets (RVS gaat 20+ jaar mee). Noem het expliciet op LP. Expect +15-25% CVR.'));
+  bn.push(I('playbook',T('organic','Organic'),'Pinterest PAUZEREN','Intent-product, niet discovery. 30d+ conversiecyclus. Heroverweeg in Q4.'));
+  later.push(I('playbook',T('pr','PR/Creator'),'15 micro-influencers NL giften (food/lifestyle, 5k–30k)','€1.050 COGS, €0 spend. 8 van 15 posten = 120k bereik voor €8,75 CPM. Content hergebruiken als UGC in ads.'));
+  later.push(I('playbook',T('organic','Organic'),'Organisch: 1× per week Reels/TikTok (Higgsfield hergebruiken)','Algoritme-boost na 8 weken. Verlaagt paid CPM doordat organisch social proof toevoegt.'));
+  later.push(I('playbook',T('pr','PR'),'Seizoensplan: Sinterklaas + Kerst (start prep sept)','Waterkokers zijn top-cadeau. Q4 is 3–5× hogere ROAS window. Creatieve brief starten in september.'));
+  later.push(I('playbook',T('pr','PR'),'PR: Libelle, Margriet, HLN Lifestyle','Gratis product + persbericht "duurzame waterkoker zonder plastic". 1 placement = €5k–€10k omzet + SEO backlinks.'));
+  later.push(I('playbook',T('google','Google'),'Google API live → volledig automatisch dashboard','Zodra Basic Access goedgekeurd: dashboard vernieuwt Google-data automatisch.'));
+
+  return {nu,bn,later};
+}
+
+function renderChart(k){
+  const sec=document.getElementById('chart-section');
+  if(k!=='mtd'){sec.style.display='none';return;}
+  sec.style.display='block';
+  const max=Math.max(...DAILY_MTD.map(d=>d.rev),1);
+  const last=DAILY_MTD[DAILY_MTD.length-1].d;
+  document.getElementById('chart-bars').innerHTML=DAILY_MTD.map(d=>`<div class="chart-bar${d.d===last?' today':''}" style="height:${Math.max(3,Math.round(d.rev/max*100))}%" title="${d.d}: ${eur(d.rev)}"></div>`).join('');
+  document.getElementById('chart-labels').innerHTML=DAILY_MTD.map(d=>`<span class="chart-label">${d.d}</span>`).join('');
+}
+
+function renderMeta(k){
+  const camps=C[k]||[];
+  const tS=camps.reduce((s,c)=>s+c.spend,0),tI=camps.reduce((s,c)=>s+c.imp,0),tCl=camps.reduce((s,c)=>s+c.clicks,0);
+  document.getElementById('meta-table').innerHTML=`
+    <thead><tr><th style="text-align:left">Campagne</th><th>Spend</th><th>Impressies</th><th>Clicks</th><th>CTR</th><th>CPM</th><th>CPC</th><th>ROAS</th></tr></thead>
+    <tbody>${camps.map(c=>`<tr><td>${c.name}</td><td>${eur(c.spend)}</td><td>${num(c.imp)}</td><td>${num(c.clicks)}</td><td>${pct(c.ctr)}</td><td>${eur(c.cpm)}</td><td>${eur(c.cpc)}</td><td class="${c.roas!=null&&c.roas>=1.8?'good':c.roas!=null?'warn':''}">${xfmt(c.roas)}<span class="badge-ip">in-platform</span></td></tr>`).join('')}
+    <tr><td>Totaal Meta</td><td>${eur(tS)}</td><td>${num(tI)}</td><td>${num(tCl)}</td><td>${pct(tI>0?tCl/tI*100:null)}</td><td>${eur(tI>0?tS/tI*1000:0)}</td><td>${eur(tCl>0?tS/tCl:0)}</td><td class="muted">zie blended</td></tr>
+    </tbody>`;
+}
+
+function render(k){
+  const p=P[k];
+  const tot=(p.spend||0)+(p.gspend||0),roas=tot>0?p.rev/tot:0;
+  const cac=p.units>0?tot/p.units:null,net=cac!=null?GROSS-cac:null,aov=p.orders>0?p.rev/p.orders:null;
+  document.getElementById('rangelbl').textContent='Periode: '+p.range;
+
+  document.getElementById('kpis').innerHTML=`
+    <div class="card kpi"><div class="label"><span class="dot live"></span>Omzet (Shopify)</div><div class="val">${eur0(p.rev)}</div><div class="sub">${p.orders} orders · ${p.units} stuks · AOV ${aov?eur(aov):'—'}</div></div>
+    <div class="card kpi"><div class="label"><span class="dot ${roas>=1.8?'live':'flag'}"></span>Blended ROAS</div><div class="val ${roas>=1.8?'good':'warn'}">${roas>0?xfmt(roas):'—'}</div><div class="sub">Meta + Google · break-even ~1,8×</div></div>
+    <div class="card kpi"><div class="label"><span class="dot ${cac&&cac>GROSS?'flag':'live'}"></span>CAC / stuk</div><div class="val ${cac&&cac>GROSS?'warn':'good'}">${cac?eur(cac):'—'}</div><div class="sub">doel ≤ €14,45 · brutomarge €26,35</div></div>
+    <div class="card kpi"><div class="label"><span class="dot live"></span>Ad-spend totaal</div><div class="val">${eur(tot)}</div><div class="sub">Meta ${eur(p.spend)} · Google ${eur(p.gspend)}</div></div>`;
+
+  const netNeg=net!=null&&net<0,cacW=cac?Math.min(100,cac/57.81*100):0;
+  document.getElementById('wf').innerHTML=`
+    <div class="row"><span class="name">Verkoopprijs</span><div class="bar" style="width:100%"></div><span class="amt">€57,81</span></div>
+    <div class="row"><span class="name">− COGS</span><div class="bar cost" style="width:20%"></div><span class="amt">€11,50</span></div>
+    <div class="row"><span class="name">− Logistiek</span><div class="bar cost" style="width:27%"></div><span class="amt">€15,42</span></div>
+    <div class="row"><span class="name">− Fees + retouren</span><div class="bar cost" style="width:9%"></div><span class="amt">€4,23</span></div>
+    <div class="row"><span class="name">= Brutomarge</span><div class="bar" style="width:46%"></div><span class="amt"><b>€26,35</b></span></div>
+    <div class="row"><span class="name">− CAC (${p.label.toLowerCase()})</span><div class="bar ${netNeg?'neg':'net'}" style="width:${cacW}%"></div><span class="amt ${netNeg?'warn':''}">${cac?eur(cac):'—'}</span></div>
+    <div class="row"><span class="name">= Netto / stuk</span><div class="bar ${netNeg?'neg':'net'}" style="width:${net?Math.max(2,Math.abs(net)/57.81*100):2}%"></div><span class="amt ${netNeg?'warn':'good'}"><b>${net?(net<0?'−':'')+eur(Math.abs(net)):'—'}</b></span></div>`;
+
+  let s='';
+  if(net!=null&&net<0) s+=`<div class="signal"><span class="dot flag" style="margin-top:6px"></span><span><b>Verlieslatend (${p.label})</b>CAC ${eur(cac)} &gt; brutomarge €26,35 &rarr; netto ${eur(net)}/stuk.</span></div>`;
+  else if(net!=null) s+=`<div class="signal good"><span class="dot live" style="margin-top:6px"></span><span><b>Winstgevend (${p.label})</b>Netto +${eur(net)}/stuk. Voorzichtig opschalen.</span></div>`;
+  s+=`<div class="signal neutral"><span class="dot idle" style="margin-top:6px"></span><span><b>Meta in-platform: ${xfmt(p.mroas)} vs blended: ${xfmt(roas)}</b>Alleen blended (omzet ÷ ${eur(tot)} totale spend) is de waarheid.</span></div>`;
+  if(roas<1.8) s+=`<div class="signal"><span class="dot flag" style="margin-top:6px"></span><span><b>Blended ROAS onder break-even</b>Break-even ~1,8×. Nu ${xfmt(roas)}. CAPI + LP-fix vóór opschalen.</span></div>`;
+  document.getElementById('signals').innerHTML=s;
+
+  const {nu,bn,later}=generateActions(k);
+  document.getElementById('ae-nu').innerHTML=nu.join('');
+  document.getElementById('ae-binnenkort').innerHTML=bn.join('');
+  document.getElementById('ae-later').innerHTML=later.join('');
+
+  const mtdCac=(P.mtd.spend+P.mtd.gspend)/P.mtd.units;
+  document.getElementById('fc-current').textContent=eur((P.mtd.spend+P.mtd.gspend)/13);
+  document.getElementById('fc-cac').textContent=mtdCac.toFixed(0);
+  document.getElementById('fc-gap').textContent=(mtdCac-GROSS).toFixed(0)+' ('+Math.round((1-GROSS/mtdCac)*100)+'% daling nodig)';
+  document.getElementById('fc-gspend').textContent=(P.mtd.gspend/13).toFixed(0);
+
+  renderChart(k);
+  renderMeta(k);
+  document.querySelectorAll('#switch button').forEach(b=>b.classList.toggle('active',b.dataset.k===k));
+}
+
+document.querySelectorAll('#switch button').forEach(b=>b.addEventListener('click',()=>render(b.dataset.k)));
+render('mtd');
+</script>
+</body>
+</html>
