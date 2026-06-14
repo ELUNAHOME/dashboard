@@ -184,23 +184,77 @@
     border-radius:999px;padding:6px 16px;cursor:pointer;transition:.15s}
   .btw-toggle:hover{border-color:var(--sage);color:var(--ink)}
   .btw-toggle.active{background:var(--pist);color:var(--ink);border-color:var(--pist)}
+
+/* ── topbar ── */
+.topbar{position:sticky;top:0;z-index:100;background:var(--card);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+  padding:12px 28px;margin:-40px -28px 28px;box-shadow:0 1px 4px rgba(43,46,38,.07)}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.topbar-logo{height:30px;width:auto;display:block}
+.topbar-brand{font-size:10px;letter-spacing:.18em;color:var(--muted);font-weight:600;text-transform:uppercase}
+.topbar-right{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.topbar-meta{font-size:11px;color:var(--muted);line-height:1.5}
+/* BTW slide-switch (stijl: MerchantSpring Include tax) */
+.btw-pill{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.btw-pill-lbl{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.btw-sw{width:36px;height:20px;border-radius:999px;background:var(--line);border:none;
+  position:relative;cursor:pointer;flex-shrink:0;transition:background .2s;padding:0}
+.btw-sw::after{content:'';position:absolute;width:14px;height:14px;background:#fff;
+  border-radius:50%;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.btw-sw.active{background:var(--sage)}
+.btw-sw.active::after{transform:translateX(16px)}
+/* period bar */
+.period-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:24px}
+/* overview grid */
+.overview-grid{display:grid;grid-template-columns:1.65fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:820px){.overview-grid{grid-template-columns:1fr}}
+/* performance card inner */
+.perf-inner{display:grid;grid-template-columns:1.5fr 1fr;gap:0}
+.perf-inner.no-chart{grid-template-columns:1fr}
+@media(max-width:640px){.perf-inner{grid-template-columns:1fr}}
+.perf-chart-col{border-right:1px solid var(--line);padding-right:20px}
+.perf-stats-col{padding-left:22px;display:flex;flex-direction:column;justify-content:center;gap:0}
+@media(max-width:640px){.perf-chart-col{border-right:none;border-bottom:1px solid var(--line);padding-right:0;padding-bottom:14px;margin-bottom:14px}.perf-stats-col{padding-left:0}}
+.ps-total{font-size:30px;font-weight:700;letter-spacing:-.02em;color:var(--ink);margin-bottom:2px}
+.ps-sub{font-size:12px;color:var(--muted);margin-bottom:12px}
+.ps-divider{height:1px;background:var(--line);margin:10px 0}
+.ps-row{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;padding:4px 0}
+.ps-row .ps-lbl{color:var(--muted)}
+.ps-row .ps-val{font-weight:600}
+.ps-row .ps-val.good{color:var(--good)}
+.ps-row .ps-val.warn{color:var(--warn)}
+/* admix card */
+.admix-tot{font-size:22px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.admix-tot-sub{font-size:12px;color:var(--muted);margin-bottom:18px}
+.admix-row{margin-bottom:14px}
+.admix-lbl{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px}
+.admix-lbl span:last-child{font-size:12px;color:var(--ink);font-weight:700;letter-spacing:0;text-transform:none}
+.admix-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0}
+.admix-bar-track{background:var(--line);border-radius:4px;height:6px;overflow:hidden}
+.admix-bar-fill{height:100%;border-radius:4px}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <header>
-    <div class="brand"><img src="logo.png" alt="ELÛNA" /><small>BRAND DASHBOARD · BUILT FOR RITUALS</small></div>
-    <div class="meta-h">
-      <div class="tag">Pistache Crème · Waterkoker</div>
-      <div style="margin-top:8px">Live · bijgewerkt <b id="updated-lbl">—</b></div>
-      <div id="rangelbl" style="margin-top:2px"></div>
-      <button class="refresh-btn" id="refresh-btn" onclick="refreshData()">↻ Ververs</button>
+  <!-- STICKY TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <img src="logo.png" alt="ELÛNA" class="topbar-logo" />
+      <span class="topbar-brand">Brand Dashboard</span>
     </div>
-  </header>
-  <div class="rule"></div>
+    <div class="topbar-right">
+      <div class="topbar-meta">Live · bijgewerkt <b id="updated-lbl">—</b><br><span id="rangelbl"></span></div>
+      <button class="refresh-btn" id="refresh-btn" onclick="refreshData()">↻ Ververs</button>
+      <div class="btw-pill" onclick="toggleBTW()">
+        <span class="btw-pill-lbl">Incl. BTW</span>
+        <button class="btw-sw" id="btw-toggle" type="button"></button>
+      </div>
+    </div>
+  </div>
 
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:24px">
+  <!-- PERIOD BAR -->
+  <div class="period-bar">
     <div class="switch" id="switch" style="margin-bottom:0">
       <button data-k="today">Vandaag</button>
       <button data-k="gisteren">Gisteren</button>
@@ -208,15 +262,25 @@
       <button data-k="mtd" class="active">Deze maand</button>
       <button data-k="d30">30 dagen</button>
     </div>
-    <button class="btw-toggle" id="btw-toggle" onclick="toggleBTW()">BTW <span id="btw-lbl">ex</span></button>
+    <div class="tag">Pistache Crème · Waterkoker</div>
   </div>
 
-  <div class="grid kpis" id="kpis"></div>
-
-  <div class="card chart-wrap" id="chart-section" style="margin-top:16px">
-    <h2>Dagelijkse omzet (Shopify incl. btw)</h2>
-    <div class="chart-bars" id="chart-bars"></div>
-    <div class="chart-labels" id="chart-labels"></div>
+  <!-- OVERVIEW GRID: Performance card + Ad-mix card -->
+  <div class="overview-grid">
+    <div class="card" id="perf-card">
+      <h2 id="perf-title">Omzetprestatie</h2>
+      <div class="perf-inner" id="perf-inner">
+        <div class="perf-chart-col" id="perf-chart-col">
+          <div class="chart-bars" id="chart-bars"></div>
+          <div class="chart-labels" id="chart-labels"></div>
+        </div>
+        <div class="perf-stats-col" id="perf-stats"></div>
+      </div>
+    </div>
+    <div class="card" id="admix-card">
+      <h2>Ad-spend mix</h2>
+      <div id="admix-content"></div>
+    </div>
   </div>
 
   <div class="grid cols">
@@ -480,6 +544,44 @@ function generateActions(k){
   return {nu,bn,later};
 }
 
+function renderPerfStats(k, grossEx, cac, net){
+  const p=P[k];
+  const tot=(p.spend||0)+(p.gspend||0), roas=tot>0?p.rev/tot:0;
+  const bF=showBTW?1:1/BTW;
+  const aov=p.orders>0?p.rev/p.orders:null;
+  document.getElementById('perf-stats').innerHTML=`
+    <div class="ps-total">${eur0(p.rev*bF)}</div>
+    <div class="ps-sub">${p.orders} orders · ${p.units} stuks · AOV ${aov?eur(aov*bF):'—'} <span style="font-size:10px;text-transform:uppercase;letter-spacing:.06em">${showBTW?'incl':'ex'} btw</span></div>
+    <div class="ps-divider"></div>
+    <div class="ps-row"><span class="ps-lbl">Blended ROAS</span><span class="ps-val ${roas>=1.8?'good':'warn'}">${roas>0?xfmt(roas):'—'}</span></div>
+    <div class="ps-row"><span class="ps-lbl">CAC / stuk</span><span class="ps-val ${cac&&cac>grossEx?'warn':'good'}">${cac?eur(cac):'—'}</span></div>
+    <div class="ps-row"><span class="ps-lbl">Netto / stuk</span><span class="ps-val ${net&&net<0?'warn':'good'}">${net?(net<0?'−':'+')+eur(Math.abs(net)):'—'}</span></div>
+    <div class="ps-row"><span class="ps-lbl">Ad-spend totaal</span><span class="ps-val">${eur(tot)}</span></div>`;
+}
+
+function renderAdMix(k){
+  const p=P[k];
+  const meta=p.spend||0, goog=p.gspend||0, tot=meta+goog;
+  const card=document.getElementById('admix-card');
+  if(tot===0){card.style.display='none';return;}
+  card.style.display='';
+  const mp=Math.round(meta/tot*100), gp=100-mp;
+  document.getElementById('admix-content').innerHTML=`
+    <div class="admix-tot">${eur(tot)}</div>
+    <div class="admix-tot-sub">totale ad-spend ${p.label.toLowerCase()}</div>
+    <div class="admix-row">
+      <div class="admix-lbl"><span><span class="admix-dot" style="background:#3A5BD9"></span>Meta Ads</span><span>${eur(meta)} · ${mp}%</span></div>
+      <div class="admix-bar-track"><div class="admix-bar-fill" style="width:${mp}%;background:#3A5BD9"></div></div>
+    </div>
+    <div class="admix-row">
+      <div class="admix-lbl"><span><span class="admix-dot" style="background:var(--good)"></span>Google Ads</span><span>${eur(goog)} · ${gp}%</span></div>
+      <div class="admix-bar-track"><div class="admix-bar-fill" style="width:${gp}%;background:var(--good)"></div></div>
+    </div>
+    <div class="ps-divider" style="margin-top:16px"></div>
+    <div class="ps-row"><span class="ps-lbl" style="font-size:11px">Meta in-platform ROAS</span><span class="ps-val" style="font-size:12px">${xfmt(p.mroas)}</span></div>
+    <div class="ps-row"><span class="ps-lbl" style="font-size:11px">Google ROAS</span><span class="ps-val" style="font-size:12px">${xfmt(p.groas)}</span></div>`;
+}
+
 function renderKlaviyo(){
   const k = KLAVIYO;
   if(!k || !k.mtd_received) {
@@ -512,13 +614,19 @@ function renderKlaviyo(){
 }
 
 function renderChart(k){
-  const sec=document.getElementById('chart-section');
-  if(k==='today'||k==='gisteren'||k==='d30'){sec.style.display='none';return;}
-  sec.style.display='block';
+  const inner = document.getElementById('perf-inner');
+  const chartCol = document.getElementById('perf-chart-col');
+  if(k==='today'||k==='gisteren'||k==='d30'){
+    inner.classList.add('no-chart');
+    chartCol.style.display='none';
+    return;
+  }
+  inner.classList.remove('no-chart');
+  chartCol.style.display='';
   const days = k==='d7' ? DAILY_D7 : DAILY_MTD;
-  if(!days||!days.length){sec.style.display='none';return;}
-  const label = k==='d7' ? 'Dagelijkse omzet · 7 dagen (Shopify incl. btw)' : 'Dagelijkse omzet · MTD (Shopify incl. btw)';
-  document.querySelector('#chart-section h2').textContent=label;
+  if(!days||!days.length){inner.classList.add('no-chart');chartCol.style.display='none';return;}
+  const label = k==='d7' ? '7 DAGEN' : 'MTD';
+  document.getElementById('perf-title').textContent = 'Omzetprestatie · ' + label;
   const max=Math.max(...days.map(d=>d.rev),1);
   const last=days[days.length-1].d;
   document.getElementById('chart-bars').innerHTML=days.map(d=>`<div class="chart-bar${d.d===last?' today':''}" style="height:${Math.max(3,Math.round(d.rev/max*100))}%" title="${d.d}: ${eur(d.rev)}"></div>`).join('');
@@ -537,9 +645,8 @@ function renderMeta(k){
 
 function toggleBTW(){
   showBTW = !showBTW;
-  const btn = document.getElementById('btw-toggle');
-  btn.classList.toggle('active', showBTW);
-  document.getElementById('btw-lbl').textContent = showBTW ? 'incl' : 'ex';
+  const sw = document.getElementById('btw-toggle');
+  sw.classList.toggle('active', showBTW);
   const active = document.querySelector('#switch button.active');
   render(active ? active.dataset.k : 'mtd');
 }
@@ -565,15 +672,11 @@ function render(k){
   const net=cac!=null?grossEx-cac:null;
   const netNeg=net!=null&&net<0;
 
-  document.getElementById('rangelbl').textContent='Periode: '+p.range;
+  document.getElementById('rangelbl').textContent=p.range;
   document.getElementById('wf-btw-lbl').textContent=showBTW?'incl. btw':'ex btw';
 
-  // KPI's
-  document.getElementById('kpis').innerHTML=`
-    <div class="card kpi"><div class="label"><span class="dot live"></span>Omzet <span style="font-size:10px">(${showBTW?'incl':'ex'} btw)</span></div><div class="val">${eur0(p.rev*bF)}</div><div class="sub">${p.orders} orders · ${p.units} stuks · AOV ${aov?eur(aov*bF):'—'}</div></div>
-    <div class="card kpi"><div class="label"><span class="dot ${roas>=1.8?'live':'flag'}"></span>Blended ROAS</div><div class="val ${roas>=1.8?'good':'warn'}">${roas>0?xfmt(roas):'—'}</div><div class="sub">Meta + Google · break-even ~1,8×</div></div>
-    <div class="card kpi"><div class="label"><span class="dot ${cac&&cac>grossEx?'flag':'live'}"></span>CAC / stuk</div><div class="val ${cac&&cac>grossEx?'warn':'good'}">${cac?eur(cac):'—'}</div><div class="sub">doel ≤ €14,45 · brutomarge ${eur(grossEx*wF)}</div></div>
-    <div class="card kpi"><div class="label"><span class="dot live"></span>Ad-spend totaal</div><div class="val">${eur(tot)}</div><div class="sub">Meta ${eur(p.spend)} · Google ${eur(p.gspend)}</div></div>`;
+  renderPerfStats(k, grossEx, cac, net);
+  renderAdMix(k);
 
   // Waterfall — barbreedtes altijd relatief aan lijstprijs ex BTW
   const BASE=LIST_EX, cacW=cac?Math.min(100,cac/BASE*100):0;
