@@ -573,30 +573,46 @@ let chartType = localStorage.getItem('eluna-chart-type') || 'bar';
 let P = {}, C = {}, DAILY_MTD = [], DAILY_D7 = [], KLAVIYO = {}, DATA_META = {};
 
 // ── data loading ────────────────────────────────────────────────
-// Probeert eerst de live Vercel API; valt terug op statisch data.json
+// Probeert eerst de live Vercel API; valt terug op statisch data.json.
+// Google Ads: live API heeft gspend=null zolang GOOGLE_SPEND_* env vars niet ingesteld zijn.
+// In dat geval worden gspend/groas uit data.json gehaald als handmatige fallback.
 async function loadData(bustCache) {
   const cacheBust = bustCache ? '?v=' + Date.now() : '';
   let d;
+  let usedLiveApi = false;
   try {
-    // Op Vercel: /api/data geeft live data
     const liveRes = await fetch('/api/data' + cacheBust);
     if (liveRes.ok) {
       d = await liveRes.json();
+      usedLiveApi = true;
     } else {
       throw new Error('api niet beschikbaar');
     }
   } catch(_) {
-    // Fallback: statisch data.json (GitHub Pages / lokaal)
     const res = await fetch('./data.json' + cacheBust);
     d = await res.json();
   }
+
+  // Google fallback: live API heeft nog geen env vars → haal gspend/groas uit data.json
+  if (usedLiveApi && Object.values(d.P || {}).every(p => p.gspend === null)) {
+    try {
+      const fb = await fetch('./data.json');
+      if (fb.ok) {
+        const fbData = await fb.json();
+        for (const k of Object.keys(d.P)) {
+          if (fbData.P?.[k]?.gspend != null) d.P[k].gspend = fbData.P[k].gspend;
+          if (fbData.P?.[k]?.groas  != null) d.P[k].groas  = fbData.P[k].groas;
+        }
+      }
+    } catch(_) {}
+  }
+
   P = d.P;
   C = d.C;
   DAILY_MTD = d.daily_mtd;
   DAILY_D7 = d.daily_d7 || [];
   KLAVIYO = d.klaviyo || {};
   DATA_META = d;
-  // Toon alleen dag+maand, geen "Live · bijgewerkt" prefix
   const lbl = d.updated_label || '—';
   document.getElementById('updated-lbl').textContent = lbl;
 }
