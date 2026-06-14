@@ -289,6 +289,13 @@ function flowTrigger(name, triggerType) {
 function flowNote(stats, name) {
   const or = r2((stats.open_rate || 0) * 100);
   const cr = r2((stats.click_rate || 0) * 100);
+  const isReview = (name || '').toLowerCase().includes('review') || (name || '').toLowerCase().includes('trustpilot');
+
+  if (isReview) {
+    // Review flows hebben geen conversies per definitie (product al betaald)
+    if (cr === 0) return `Open rate ${or}% · CTR 0% — review-CTA werkt niet, A/B testen.`;
+    return `Open rate ${or}% · CTR ${cr}% naar Trustpilot.`;
+  }
   if (stats.conversions > 0) {
     return `${stats.conversions} conversie${stats.conversions > 1 ? 's' : ''} · €${(stats.conversion_value || 0).toFixed(2)} omzet in 30 dagen.`;
   }
