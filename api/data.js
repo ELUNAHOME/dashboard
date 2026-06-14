@@ -72,6 +72,7 @@ async function shopifyOrders(dateMin, dateMax) {
     created_at_min: dateMin + 'T00:00:00+02:00',
     created_at_max:  dateMax + 'T23:59:59+02:00',
     financial_status: 'paid',
+    status: 'any',
     limit: '250',
     fields: 'id,total_price,line_items,created_at'
   });
