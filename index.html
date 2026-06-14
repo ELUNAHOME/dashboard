@@ -177,6 +177,13 @@
   .klav-kpi .klabel{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
   .klav-kpi .kval{font-size:22px;font-weight:700;letter-spacing:-.01em}
   .klav-kpi .ksub{font-size:11px;color:var(--muted);margin-top:2px}
+
+  /* BTW toggle */
+  .btw-toggle{border:1px solid var(--line);background:var(--card);color:var(--muted);font-size:11px;
+    font-family:inherit;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    border-radius:999px;padding:6px 16px;cursor:pointer;transition:.15s}
+  .btw-toggle:hover{border-color:var(--sage);color:var(--ink)}
+  .btw-toggle.active{background:var(--pist);color:var(--ink);border-color:var(--pist)}
 </style>
 </head>
 <body>
@@ -193,11 +200,15 @@
   </header>
   <div class="rule"></div>
 
-  <div class="switch" id="switch">
-    <button data-k="today">Vandaag</button>
-    <button data-k="d7">7 dagen</button>
-    <button data-k="mtd" class="active">Deze maand</button>
-    <button data-k="d30">30 dagen</button>
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:24px">
+    <div class="switch" id="switch" style="margin-bottom:0">
+      <button data-k="today">Vandaag</button>
+      <button data-k="gisteren">Gisteren</button>
+      <button data-k="d7">7 dagen</button>
+      <button data-k="mtd" class="active">Deze maand</button>
+      <button data-k="d30">30 dagen</button>
+    </div>
+    <button class="btw-toggle" id="btw-toggle" onclick="toggleBTW()">BTW <span id="btw-lbl">ex</span></button>
   </div>
 
   <div class="grid kpis" id="kpis"></div>
@@ -210,7 +221,7 @@
 
   <div class="grid cols">
     <div class="card">
-      <h2>Unit-economics · per waterkoker (ex btw)</h2>
+      <h2>Unit-economics · per waterkoker (<span id="wf-btw-lbl">ex btw</span>)</h2>
       <div class="wf" id="wf"></div>
       <div style="font-size:11px;color:var(--muted);margin-top:13px">Vast marge-model Drive · CAC schaalt mee per periode.</div>
     </div>
@@ -355,7 +366,7 @@
     <div class="fc-row"><span>Break-even</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:67%;background:var(--sage)"></div></div><span style="text-align:right;font-weight:600;font-size:12px">ROAS 1,8×</span></div>
     <div class="fc-row"><span style="font-weight:600">Schalen (doel)</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:100%;background:var(--good)"></div></div><span style="text-align:right;font-weight:600;font-size:12px;color:var(--good)">ROAS 2,5×+</span></div>
     <div style="font-size:12px;color:var(--muted);margin-top:13px;border-top:1px solid var(--line);padding-top:12px">
-      Bij ROAS 2,5×: elke €100 spend genereert €250 omzet · €100 marge · ~€10 netto/stuk. CAC nu <b>€<span id="fc-cac"></span>/stuk</b>. Breakeven CAC = €26,35. Nodig te reduceren: <span id="fc-gap"></span> (via CAPI + LP-fix + betere targeting, niet meer budget).
+      Bij ROAS 2,5×: elke €100 spend genereert €250 omzet · €100 marge · ~€10 netto/stuk. CAC nu <b>€<span id="fc-cac"></span>/stuk</b>. Breakeven CAC = €<span id="fc-gross">26,35</span>. Nodig te reduceren: <span id="fc-gap"></span> (via CAPI + LP-fix + betere targeting, niet meer budget).
     </div>
   </div>
 
@@ -373,8 +384,16 @@
 </div>
 
 <script>
-const GROSS = 26.35;
-let P = {}, C = {}, DAILY_MTD = [], KLAVIYO = {}, DATA_META = {};
+const BTW = 1.21;
+const LIST_EX   = 57.81;   // lijstprijs ex BTW
+const LIST_INCL = 69.95;   // lijstprijs incl BTW
+const COGS_EX   = 11.50;
+const LOG_EX    = 15.42;
+const FEES_EX   =  4.23;
+const FIXED_EX  = COGS_EX + LOG_EX + FEES_EX; // 31.15
+let GROSS = LIST_EX - FIXED_EX;  // wordt per render overschreven met werkelijke marge
+let showBTW = false;
+let P = {}, C = {}, DAILY_MTD = [], DAILY_D7 = [], KLAVIYO = {}, DATA_META = {};
 
 // ── data loading ────────────────────────────────────────────────
 async function loadData(bustCache) {
@@ -384,6 +403,7 @@ async function loadData(bustCache) {
   P = d.P;
   C = d.C;
   DAILY_MTD = d.daily_mtd;
+  DAILY_D7 = d.daily_d7 || [];
   KLAVIYO = d.klaviyo || {};
   DATA_META = d;
   document.getElementById('updated-lbl').textContent = d.updated_label || '—';
@@ -432,7 +452,7 @@ function generateActions(k){
   const nu=[], bn=[], later=[];
 
   // DATA
-  if(cac!=null&&cac>GROSS) nu.unshift(I('data',T('data-tag','Data')+T('meta','Meta')+T('google','Google'),'Budget bevriezen &mdash; CAC verlieslatend',`CAC ${eur(cac)}/stuk vs brutomarge €26,35. Geen opschaling. Fix CAPI + LP eerst.`,'HOOG'));
+  if(cac!=null&&cac>GROSS) nu.unshift(I('data',T('data-tag','Data')+T('meta','Meta')+T('google','Google'),'Budget bevriezen &mdash; CAC verlieslatend',`CAC ${eur(cac)}/stuk vs brutomarge ${eur(GROSS)}. Geen opschaling. Fix CAPI + LP eerst.`,'HOOG'));
   else if(cac!=null) nu.unshift(I('data ok',T('data-tag','Data'),'Winstgevend &mdash; voorzichtig opschalen',`Netto +${eur(net)}/stuk. Verhoog Meta €10/dag per week. Monitor blended ROAS.`,'HOOG'));
   if(trackGap>=1.7&&roas<1.8) nu.push(I('data',T('data-tag','Data')+T('meta','Meta'),'Trackinggat: blended '+xfmt(roas)+' vs Meta '+xfmt(p.mroas),`Meta ziet ${Math.round((1-1/trackGap)*100)}% van je conversies niet. CAPI fix = direct betere optimalisatie.`,'HOOG'));
   if(retC&&retC.spend>20&&retC.roas===null) nu.push(I('data',T('data-tag','Data')+T('meta','Meta'),`Retargeting €${retC.spend.toFixed(0)} spend, 0 gemeten conversies`,'Pixel check op thank-you pagina. CAPI verhoogt match rate. Actie vandaag.','MIDDEL'));
@@ -493,12 +513,16 @@ function renderKlaviyo(){
 
 function renderChart(k){
   const sec=document.getElementById('chart-section');
-  if(k!=='mtd'){sec.style.display='none';return;}
+  if(k==='today'||k==='gisteren'||k==='d30'){sec.style.display='none';return;}
   sec.style.display='block';
-  const max=Math.max(...DAILY_MTD.map(d=>d.rev),1);
-  const last=DAILY_MTD[DAILY_MTD.length-1].d;
-  document.getElementById('chart-bars').innerHTML=DAILY_MTD.map(d=>`<div class="chart-bar${d.d===last?' today':''}" style="height:${Math.max(3,Math.round(d.rev/max*100))}%" title="${d.d}: ${eur(d.rev)}"></div>`).join('');
-  document.getElementById('chart-labels').innerHTML=DAILY_MTD.map(d=>`<span class="chart-label">${d.d}</span>`).join('');
+  const days = k==='d7' ? DAILY_D7 : DAILY_MTD;
+  if(!days||!days.length){sec.style.display='none';return;}
+  const label = k==='d7' ? 'Dagelijkse omzet · 7 dagen (Shopify incl. btw)' : 'Dagelijkse omzet · MTD (Shopify incl. btw)';
+  document.querySelector('#chart-section h2').textContent=label;
+  const max=Math.max(...days.map(d=>d.rev),1);
+  const last=days[days.length-1].d;
+  document.getElementById('chart-bars').innerHTML=days.map(d=>`<div class="chart-bar${d.d===last?' today':''}" style="height:${Math.max(3,Math.round(d.rev/max*100))}%" title="${d.d}: ${eur(d.rev)}"></div>`).join('');
+  document.getElementById('chart-labels').innerHTML=days.map(d=>`<span class="chart-label">${d.d}</span>`).join('');
 }
 
 function renderMeta(k){
@@ -511,30 +535,65 @@ function renderMeta(k){
     </tbody>`;
 }
 
+function toggleBTW(){
+  showBTW = !showBTW;
+  const btn = document.getElementById('btw-toggle');
+  btn.classList.toggle('active', showBTW);
+  document.getElementById('btw-lbl').textContent = showBTW ? 'incl' : 'ex';
+  const active = document.querySelector('#switch button.active');
+  render(active ? active.dataset.k : 'mtd');
+}
+
 function render(k){
   const p=P[k];
-  const tot=(p.spend||0)+(p.gspend||0),roas=tot>0?p.rev/tot:0;
-  const cac=p.units>0?tot/p.units:null,net=cac!=null?GROSS-cac:null,aov=p.orders>0?p.rev/p.orders:null;
-  document.getElementById('rangelbl').textContent='Periode: '+p.range;
+  const tot=(p.spend||0)+(p.gspend||0), roas=tot>0?p.rev/tot:0;
+  const aov=p.orders>0?p.rev/p.orders:null;
 
+  // Werkelijke gemiddelde verkoopprijs ex BTW uit Shopify-data
+  const actualSellEx = p.units>0 ? (p.rev/p.units)/BTW : LIST_EX;
+  const discountEx   = LIST_EX - actualSellEx;
+  const hasDiscount  = discountEx > 0.50;
+  const grossEx      = actualSellEx - FIXED_EX;
+  GROSS = grossEx; // wordt gebruikt door generateActions()
+
+  // bF: pas toe op incl-BTW Shopify-bedragen voor display
+  // wF: pas toe op ex-BTW kostenbedragen voor display
+  const bF = showBTW ? 1 : 1/BTW;
+  const wF = showBTW ? BTW : 1;
+
+  const cac=p.units>0?tot/p.units:null;
+  const net=cac!=null?grossEx-cac:null;
+  const netNeg=net!=null&&net<0;
+
+  document.getElementById('rangelbl').textContent='Periode: '+p.range;
+  document.getElementById('wf-btw-lbl').textContent=showBTW?'incl. btw':'ex btw';
+
+  // KPI's
   document.getElementById('kpis').innerHTML=`
-    <div class="card kpi"><div class="label"><span class="dot live"></span>Omzet (Shopify)</div><div class="val">${eur0(p.rev)}</div><div class="sub">${p.orders} orders · ${p.units} stuks · AOV ${aov?eur(aov):'—'}</div></div>
+    <div class="card kpi"><div class="label"><span class="dot live"></span>Omzet <span style="font-size:10px">(${showBTW?'incl':'ex'} btw)</span></div><div class="val">${eur0(p.rev*bF)}</div><div class="sub">${p.orders} orders · ${p.units} stuks · AOV ${aov?eur(aov*bF):'—'}</div></div>
     <div class="card kpi"><div class="label"><span class="dot ${roas>=1.8?'live':'flag'}"></span>Blended ROAS</div><div class="val ${roas>=1.8?'good':'warn'}">${roas>0?xfmt(roas):'—'}</div><div class="sub">Meta + Google · break-even ~1,8×</div></div>
-    <div class="card kpi"><div class="label"><span class="dot ${cac&&cac>GROSS?'flag':'live'}"></span>CAC / stuk</div><div class="val ${cac&&cac>GROSS?'warn':'good'}">${cac?eur(cac):'—'}</div><div class="sub">doel ≤ €14,45 · brutomarge €26,35</div></div>
+    <div class="card kpi"><div class="label"><span class="dot ${cac&&cac>grossEx?'flag':'live'}"></span>CAC / stuk</div><div class="val ${cac&&cac>grossEx?'warn':'good'}">${cac?eur(cac):'—'}</div><div class="sub">doel ≤ €14,45 · brutomarge ${eur(grossEx*wF)}</div></div>
     <div class="card kpi"><div class="label"><span class="dot live"></span>Ad-spend totaal</div><div class="val">${eur(tot)}</div><div class="sub">Meta ${eur(p.spend)} · Google ${eur(p.gspend)}</div></div>`;
 
-  const netNeg=net!=null&&net<0,cacW=cac?Math.min(100,cac/57.81*100):0;
-  document.getElementById('wf').innerHTML=`
-    <div class="row"><span class="name">Verkoopprijs</span><div class="bar" style="width:100%"></div><span class="amt">€57,81</span></div>
-    <div class="row"><span class="name">− COGS</span><div class="bar cost" style="width:20%"></div><span class="amt">€11,50</span></div>
-    <div class="row"><span class="name">− Logistiek</span><div class="bar cost" style="width:27%"></div><span class="amt">€15,42</span></div>
-    <div class="row"><span class="name">− Fees + retouren</span><div class="bar cost" style="width:9%"></div><span class="amt">€4,23</span></div>
-    <div class="row"><span class="name">= Brutomarge</span><div class="bar" style="width:46%"></div><span class="amt"><b>€26,35</b></span></div>
+  // Waterfall — barbreedtes altijd relatief aan lijstprijs ex BTW
+  const BASE=LIST_EX, cacW=cac?Math.min(100,cac/BASE*100):0;
+  let wfHtml=`
+    <div class="row"><span class="name">Lijstprijs</span><div class="bar" style="width:100%"></div><span class="amt">${eur(LIST_EX*wF)}</span></div>`;
+  if(hasDiscount) wfHtml+=`
+    <div class="row"><span class="name">− Korting (gem.)</span><div class="bar cost" style="width:${Math.round(discountEx/BASE*100)}%"></div><span class="amt warn">−${eur(discountEx*wF)}</span></div>
+    <div class="row"><span class="name">= Verkoopprijs</span><div class="bar" style="width:${Math.round(actualSellEx/BASE*100)}%"></div><span class="amt">${eur(actualSellEx*wF)}</span></div>`;
+  wfHtml+=`
+    <div class="row"><span class="name">− COGS</span><div class="bar cost" style="width:${Math.round(COGS_EX/BASE*100)}%"></div><span class="amt">${eur(COGS_EX*wF)}</span></div>
+    <div class="row"><span class="name">− Logistiek</span><div class="bar cost" style="width:${Math.round(LOG_EX/BASE*100)}%"></div><span class="amt">${eur(LOG_EX*wF)}</span></div>
+    <div class="row"><span class="name">− Fees + retouren</span><div class="bar cost" style="width:${Math.round(FEES_EX/BASE*100)}%"></div><span class="amt">${eur(FEES_EX*wF)}</span></div>
+    <div class="row"><span class="name">= Brutomarge</span><div class="bar ${grossEx<0?'neg':''}" style="width:${Math.round(Math.max(2,grossEx/BASE*100))}%"></div><span class="amt ${grossEx<0?'warn':''}"><b>${eur(grossEx*wF)}</b></span></div>
     <div class="row"><span class="name">− CAC (${p.label.toLowerCase()})</span><div class="bar ${netNeg?'neg':'net'}" style="width:${cacW}%"></div><span class="amt ${netNeg?'warn':''}">${cac?eur(cac):'—'}</span></div>
-    <div class="row"><span class="name">= Netto / stuk</span><div class="bar ${netNeg?'neg':'net'}" style="width:${net?Math.max(2,Math.abs(net)/57.81*100):2}%"></div><span class="amt ${netNeg?'warn':'good'}"><b>${net?(net<0?'−':'')+eur(Math.abs(net)):'—'}</b></span></div>`;
+    <div class="row"><span class="name">= Netto / stuk</span><div class="bar ${netNeg?'neg':'net'}" style="width:${net?Math.max(2,Math.abs(net)/BASE*100):2}%"></div><span class="amt ${netNeg?'warn':'good'}"><b>${net?(net<0?'−':'')+eur(Math.abs(net)):'—'}</b></span></div>`;
+  document.getElementById('wf').innerHTML=wfHtml;
 
+  // Signalen
   let s='';
-  if(net!=null&&net<0) s+=`<div class="signal"><span class="dot flag" style="margin-top:6px"></span><span><b>Verlieslatend (${p.label})</b>CAC ${eur(cac)} &gt; brutomarge €26,35 &rarr; netto ${eur(net)}/stuk.</span></div>`;
+  if(net!=null&&net<0) s+=`<div class="signal"><span class="dot flag" style="margin-top:6px"></span><span><b>Verlieslatend (${p.label})</b>CAC ${eur(cac)} &gt; brutomarge ${eur(grossEx)} &rarr; netto ${eur(net)}/stuk.</span></div>`;
   else if(net!=null) s+=`<div class="signal good"><span class="dot live" style="margin-top:6px"></span><span><b>Winstgevend (${p.label})</b>Netto +${eur(net)}/stuk. Voorzichtig opschalen.</span></div>`;
   s+=`<div class="signal neutral"><span class="dot idle" style="margin-top:6px"></span><span><b>Meta in-platform: ${xfmt(p.mroas)} vs blended: ${xfmt(roas)}</b>Alleen blended (omzet ÷ ${eur(tot)} totale spend) is de waarheid.</span></div>`;
   if(roas<1.8) s+=`<div class="signal"><span class="dot flag" style="margin-top:6px"></span><span><b>Blended ROAS onder break-even</b>Break-even ~1,8×. Nu ${xfmt(roas)}. CAPI + LP-fix vóór opschalen.</span></div>`;
@@ -545,10 +604,13 @@ function render(k){
   document.getElementById('ae-binnenkort').innerHTML=bn.join('');
   document.getElementById('ae-later').innerHTML=later.join('');
 
+  // Forecast
   const mtdCac=(P.mtd.spend+P.mtd.gspend)/P.mtd.units;
+  const mtdGrossEx=P.mtd.units>0?(P.mtd.rev/P.mtd.units)/BTW-FIXED_EX:LIST_EX-FIXED_EX;
   document.getElementById('fc-current').textContent=eur((P.mtd.spend+P.mtd.gspend)/13);
   document.getElementById('fc-cac').textContent=mtdCac.toFixed(0);
-  document.getElementById('fc-gap').textContent=(mtdCac-GROSS).toFixed(0)+' ('+Math.round((1-GROSS/mtdCac)*100)+'% daling nodig)';
+  document.getElementById('fc-gross').textContent=mtdGrossEx.toFixed(2).replace('.',',');
+  document.getElementById('fc-gap').textContent=(mtdCac-mtdGrossEx).toFixed(0)+' ('+Math.round((1-mtdGrossEx/mtdCac)*100)+'% daling nodig)';
   document.getElementById('fc-gspend').textContent=(P.mtd.gspend/13).toFixed(0);
 
   renderChart(k);
