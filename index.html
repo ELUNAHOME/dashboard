@@ -17,7 +17,8 @@
   body{margin:0;background:var(--bg);color:var(--ink);
     font-family:"Inter","Helvetica Neue",-apple-system,system-ui,sans-serif;
     -webkit-font-smoothing:antialiased;line-height:1.45;font-variant-numeric:tabular-nums}
-  .wrap{max-width:1180px;margin:0 auto;padding:40px 28px 64px}
+  .wrap{max-width:1180px;margin:0 auto;padding:40px 28px 64px;transition:opacity .18s ease}
+  .wrap.refreshing{opacity:.5;pointer-events:none}
 
   header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:14px}
   .brand img{height:48px;width:auto;display:block}
@@ -232,6 +233,45 @@
 .admix-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0}
 .admix-bar-track{background:var(--line);border-radius:4px;height:6px;overflow:hidden}
 .admix-bar-fill{height:100%;border-radius:4px}
+
+/* ── tabs ── */
+.tab-nav{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:28px}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:10px 20px;font:inherit;font-size:13px;color:var(--muted);cursor:pointer;font-weight:500;transition:.15s;margin-bottom:-1px;letter-spacing:.02em}
+.tab-btn:hover{color:var(--ink)}
+.tab-btn.active{color:var(--ink);font-weight:700;border-bottom-color:var(--sage)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* ── chart type toggle ── */
+.chart-toggle{background:none;border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:13px;cursor:pointer;color:var(--muted);transition:.15s;line-height:1}
+.chart-toggle:hover{border-color:var(--sage);color:var(--ink)}
+
+/* ── attributie badge (vandaag/gisteren) ── */
+.attr-badge{display:inline-flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 12px;margin-bottom:12px}
+.attr-dot{width:6px;height:6px;border-radius:50%;background:var(--warn);flex-shrink:0}
+
+/* ── dagpuls (vandaag/gisteren single-day view) ── */
+.dagpuls{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;height:80px;padding:0 4px}
+.dagpuls-num{font-size:38px;font-weight:700;letter-spacing:-.025em;color:var(--ink);line-height:1}
+.dagpuls-sub{font-size:12px;color:var(--muted);margin-top:5px}
+
+/* ── pov bullets ── */
+.pov-bullets{list-style:none;margin:0;padding:0}
+.pov-bullets li{font-size:13px;color:var(--ink);line-height:1.55;padding:5px 0;border-bottom:1px solid var(--line);display:flex;gap:9px}
+.pov-bullets li:last-child{border-bottom:none}
+.pov-bullets li::before{content:'›';color:var(--sage);font-weight:700;flex-shrink:0;margin-top:1px}
+
+/* ── richon pov ── */
+.richon-card{background:var(--ink);color:#F5F6EF;border-radius:16px;padding:18px 20px;border:none}
+.richon-card h2{color:#9BA88A;margin-bottom:6px}
+.richon-name{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#9BA88A;margin-bottom:2px}
+.richon-role{font-size:11px;color:#6E7565;margin-bottom:14px}
+.richon-bullets{list-style:none;margin:0;padding:0}
+.richon-bullets li{font-size:13px;color:#E8EADE;line-height:1.55;padding:6px 0;border-bottom:1px solid #3A3D33;display:flex;gap:10px}
+.richon-bullets li:last-child{border-bottom:none}
+.richon-bullets li::before{content:'›';color:#AEB893;font-weight:700;flex-shrink:0}
+.richon-action{font-size:12px;font-weight:600;color:#AEB893;border-top:1px solid #3A3D33;padding-top:11px;margin-top:8px}
+.richon-forward{font-size:11px;color:#6E7565;margin-top:8px;font-style:italic}
 </style>
 </head>
 <body>
@@ -247,7 +287,7 @@
       <div class="topbar-meta">Live · bijgewerkt <b id="updated-lbl">—</b><br><span id="rangelbl"></span></div>
       <button class="refresh-btn" id="refresh-btn" onclick="refreshData()">↻ Ververs</button>
       <div class="btw-pill" onclick="toggleBTW()">
-        <span class="btw-pill-lbl">Incl. BTW</span>
+        <span class="btw-pill-lbl" id="btw-pill-lbl">Ex BTW</span>
         <button class="btw-sw" id="btw-toggle" type="button"></button>
       </div>
     </div>
@@ -268,7 +308,10 @@
   <!-- OVERVIEW GRID: Performance card + Ad-mix card -->
   <div class="overview-grid">
     <div class="card" id="perf-card">
-      <h2 id="perf-title">Omzetprestatie</h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h2 style="margin:0" id="perf-title">Omzetprestatie</h2>
+        <button class="chart-toggle" id="chart-type-toggle" onclick="toggleChartType()" title="Wissel bar / lijn">&#x25a6;</button>
+      </div>
       <div class="perf-inner" id="perf-inner">
         <div class="perf-chart-col" id="perf-chart-col">
           <div class="chart-bars" id="chart-bars"></div>
@@ -283,169 +326,203 @@
     </div>
   </div>
 
-  <div class="grid cols">
+  <!-- TAB NAVIGATION -->
+  <div class="tab-nav" id="tab-nav">
+    <button class="tab-btn active" data-tab="overzicht">Overzicht</button>
+    <button class="tab-btn" data-tab="campagnes">Campagnes</button>
+    <button class="tab-btn" data-tab="marges">Marges</button>
+    <button class="tab-btn" data-tab="email">Email</button>
+  </div>
+
+  <!-- TAB: OVERZICHT -->
+  <div class="tab-pane active" id="tab-overzicht">
+
+    <!-- SIGNALEN + ACTIE-ENGINE -->
+    <div class="grid cols">
+      <div class="card">
+        <h2>Unit-economics · per waterkoker (<span id="wf-btw-lbl">ex btw</span>)</h2>
+        <div class="wf" id="wf"></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:13px">Vast marge-model · CAC schaalt mee per periode.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card"><h2>Signalen</h2><div id="signals"></div></div>
+      </div>
+    </div>
+
+    <!-- ACTIE-ENGINE -->
+    <div style="margin-top:28px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px">
+        <h2 style="margin:0">Actie-engine · data + research + playbook</h2>
+        <div style="display:flex;gap:10px;font-size:11px;color:var(--muted)">
+          <span><span style="width:9px;height:9px;border-radius:2px;background:#B0703F;display:inline-block;vertical-align:middle;margin-right:4px"></span>Data</span>
+          <span><span style="width:9px;height:9px;border-radius:2px;background:#3A5BD9;display:inline-block;vertical-align:middle;margin-right:4px"></span>Research</span>
+          <span><span style="width:9px;height:9px;border-radius:2px;background:var(--line);display:inline-block;vertical-align:middle;margin-right:4px"></span>Playbook</span>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Data-gedreven regels schakelen mee per geselecteerde periode. Research gebaseerd op Meta Ad Library scan 13-06-2026.</div>
+      <div style="background:#f0f4e8;border:1px solid #c8d4a0;border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:12px">
+        <div style="font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#5E7B5A;margin-bottom:8px">Gedaan 13 jun 2026</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">&#x2713; Meta Retargeting gepauzeerd (&#x2212;&#x20AC;7,55/dag)</span>
+          <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">&#x2713; Google budget &#x20AC;75 &#x2192; &#x20AC;20/dag</span>
+          <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">&#x2713; [waterkoker] negatief zoekwoord Shopping</span>
+          <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">&#x2713; CAPI op Geoptimaliseerd</span>
+          <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">&#x2713; Pinterest ads gepauzeerd</span>
+          <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">&#x2713; Dashboard live</span>
+        </div>
+      </div>
+      <div class="ae-cols">
+        <div class="ae-col" id="col-nu"><div class="ae-col-head"><span class="ae-badge now">Nu</span>Deze week</div><div id="ae-nu"></div><div class="ae-footer" onclick="aeRestore('col-nu')"></div></div>
+        <div class="ae-col" id="col-bn"><div class="ae-col-head"><span class="ae-badge soon">Binnenkort</span>Deze maand</div><div id="ae-binnenkort"></div><div class="ae-footer" onclick="aeRestore('col-bn')"></div></div>
+        <div class="ae-col" id="col-later"><div class="ae-col-head"><span class="ae-badge later">Later</span>Dit kwartaal</div><div id="ae-later"></div><div class="ae-footer" onclick="aeRestore('col-later')"></div></div>
+      </div>
+    </div>
+
+    <!-- OPERATOR POV (bullets) -->
+    <h2 style="margin-top:34px">Strategisch perspectief · vier lenzen</h2>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Niet data — opinie. Concreet, kritisch, uitvoerbaar. Bijgewerkt per geselecteerde periode.</div>
+    <div class="pov-grid" id="pov-grid">
+
+      <div class="pov">
+        <div class="pov-name">Hormozi-lens</div>
+        <div class="pov-role">Offers, value-stacking, conversie</div>
+        <ul class="pov-bullets">
+          <li>Geen bundle = mislukte conversie. &#x20AC;69,95 solo vs &#x20AC;89,95 met garantie + accessoire &#x2014; test de combinatie.</li>
+          <li>Geen risk reversal boven de fold. "30 dagen retour" moet de grootste tekst op de LP zijn, niet de kleinste.</li>
+          <li>Levenslange garantie op RVS kost je bijna niets, verhoogt CVR aantoonbaar met 20&#x2013;30%. Voeg toe v&#xF3;&#xF3;r je &#xE9;&#xE9;n euro extra uitgeeft.</li>
+          <li>Fix het offer eerst. Daarna pas creatief, dan pas budget.</li>
+        </ul>
+        <div class="pov-action">Actie: voeg levenslange garantie + risk reversal toe aan LP. Kost &#x20AC;0, test 7 dagen.</div>
+      </div>
+
+      <div class="pov">
+        <div class="pov-name">Ben Heath-lens</div>
+        <div class="pov-role">Meta Ads, tracking, campagnestructuur</div>
+        <ul class="pov-bullets">
+          <li>CAPI match rate &lt;50% &#x2192; Meta optimaliseert op conversies die het niet ziet. Dit is een blinde motor.</li>
+          <li>Fix: Shopify &#x2192; Events Manager &#x2192; Maximum Data Sharing. Zet dit aan v&#xF3;&#xF3;r je creatief test.</li>
+          <li>Na CAPI-fix daalt CPA zonder budgetverhoging. Meten na 7 dagen full-funnel.</li>
+          <li>Pas daarna campagnestructuur herzien. In die volgorde &#x2014; niet andersom.</li>
+        </ul>
+        <div class="pov-action">Actie: CAPI Maximum Data Sharing activeren. ETA: 30 min werk, effect meetbaar in 7 dgn.</div>
+      </div>
+
+      <div class="pov">
+        <div class="pov-name">DTC Brand Operator-lens</div>
+        <div class="pov-role">Product-led growth, brand, UGC</div>
+        <ul class="pov-bullets">
+          <li>Je verkoopt specs. Niemand koopt specs &#x2014; ze kopen gevoel, identiteit, een ritueel.</li>
+          <li>"1,7L RVS waterkoker" &#x2192; "Zo begint elke ochtend." Test de LP headline vandaag nog.</li>
+          <li>Stuur 10&#x2013;15 waterkokers naar food/lifestyle creators (5k&#x2013;30k NL). Kost &#x20AC;1.050 COGS, &#x20AC;0 spend &#x2014; CAC van &#x20AC;70 wordt &#x20AC;10.</li>
+          <li>Die UGC gebruik je daarna als ad-creatief. Micro-influencer content converteert 3&#x2013;7&#xD7; beter dan branded video.</li>
+        </ul>
+        <div class="pov-action">Actie: brief Brief 02 (ritueel-hook) als eerste Higgsfield-video. LP headline parallel testen.</div>
+      </div>
+
+      <!-- RICHON — dynamisch via JS -->
+      <div class="richon-card" id="richon-pov">
+        <div class="richon-name">Richon</div>
+        <div class="richon-role">Eigenaar van de portemonnee &#xB7; kapitaaldiscipline</div>
+        <ul class="richon-bullets" id="richon-bullets">
+          <li>Laden&#x2026;</li>
+        </ul>
+        <div class="richon-action" id="richon-action"></div>
+        <div class="richon-forward" id="richon-forward"></div>
+      </div>
+
+    </div>
+
+  </div><!-- /tab-overzicht -->
+
+  <!-- TAB: CAMPAGNES -->
+  <div class="tab-pane" id="tab-campagnes">
+
+    <h2>Meta campagnes · breakdown</h2>
+    <div class="card"><table class="ctable" id="meta-table"></table></div>
+
+    <h2 style="margin-top:28px">Creative briefs · klaar voor Higgsfield</h2>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
+      Gebaseerd op Meta Ad Library scan (13-06-2026): geen concurrent adverteert op "zonder plastic", "ochtend ritueel" of "cadeau" hoek in NL.
+    </div>
+    <div class="brief-grid">
+      <div class="brief">
+        <div class="brief-num">Brief 01 · Probleem-bewustzijn</div>
+        <div class="brief-hook">"Weet jij wat er in jouw waterkoker zit?"</div>
+        <div class="brief-row"><span>Opening</span><b>Close-up plastic onderdelen in standaard waterkoker. Cut naar EL&#xDB;NA: volledig RVS.</b></div>
+        <div class="brief-row"><span>Hook 3s</span><b>"De meeste waterkokers zijn voor 60% plastic. De jouwe ook?"</b></div>
+        <div class="brief-row"><span>USP</span><b>Volledig RVS · geen plastic smaak · 1.7L · &#x20AC;69,95</b></div>
+        <div class="brief-row"><span>CTA</span><b>"Bestel zonder risico &#x2014; 30 dagen retour"</b></div>
+        <div class="brief-row"><span>Formaat</span><b>Vertical 9:16 · 15-20 sec · UGC-stijl · voice-over</b></div>
+        <div class="brief-why">Whitespace: niemand adverteert op dit probleem in NL. Sterkste differentiator van EL&#xDB;NA.</div>
+      </div>
+      <div class="brief">
+        <div class="brief-num">Brief 02 · Ritueel / lifestyle</div>
+        <div class="brief-hook">"Zo begint elke ochtend."</div>
+        <div class="brief-row"><span>Opening</span><b>Vroege ochtend. EL&#xDB;NA op marmeren aanrechtblad. Stoomwolkje.</b></div>
+        <div class="brief-row"><span>Hook 3s</span><b>"Mijn ochtend begon anders zodra ik dit had."</b></div>
+        <div class="brief-row"><span>USP</span><b>Strak design dat blijft staan. Past in jouw keuken.</b></div>
+        <div class="brief-row"><span>CTA</span><b>"Start jouw ritueel &#x2014; gratis verzending"</b></div>
+        <div class="brief-row"><span>Formaat</span><b>Vertical 9:16 · 20 sec · ambient muziek · lifestyle B-roll</b></div>
+        <div class="brief-why">Davie Fogarty-principe: verkoop het gevoel, niet het product.</div>
+      </div>
+      <div class="brief">
+        <div class="brief-num">Brief 03 · Cadeau / trigger</div>
+        <div class="brief-hook">"Het cadeau dat ze niet weet dat ze wil."</div>
+        <div class="brief-row"><span>Opening</span><b>Cadeau-verpakking op aanrechtblad. Iemand opent het, ziet EL&#xDB;NA. Verrast en blij.</b></div>
+        <div class="brief-row"><span>Hook 3s</span><b>"Zoek je nog een cadeau? Dit staat de rest van haar leven in haar keuken."</b></div>
+        <div class="brief-row"><span>USP</span><b>Gratis verzending · 30 dagen retour · gratis cadeauverpakking</b></div>
+        <div class="brief-row"><span>CTA</span><b>"Bestel v&#xF3;&#xF3;r [datum] &#x2014; morgen in huis"</b></div>
+        <div class="brief-row"><span>Formaat</span><b>Vertical 9:16 · 15 sec · warm kleurenpalet · VO zonder muziek</b></div>
+        <div class="brief-why">Cadeau-intent verhoogt AOV en CVR &#x2014; minder prijsgevoelig publiek.</div>
+      </div>
+    </div>
+
+    <h2 style="margin-top:28px">Google Ads · API-integratie</h2>
+    <div class="g-pending">
+      <div class="g-dot"></div>
+      <div>
+        <strong>Basic Access aanvraag in behandeling</strong>
+        Ingediend 13-06-2026 &#xB7; MCC 789-710-2801. Verwachte goedkeuring 1&#x2013;3 werkdagen. Python-client klaar zodra goedgekeurd. Google-spend handmatig: &#x20AC;<span id="fc-gspend"></span>/dag.
+      </div>
+    </div>
+
+  </div><!-- /tab-campagnes -->
+
+  <!-- TAB: MARGES -->
+  <div class="tab-pane" id="tab-marges">
+
+    <div class="grid cols">
+      <div class="card">
+        <h2>Unit-economics · per waterkoker (<span id="wf-btw-lbl2">ex btw</span>)</h2>
+        <div class="wf" id="wf2"></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:13px">Vast marge-model · CAC schaalt mee per periode.</div>
+      </div>
+      <div class="card">
+        <h2>Omzet-forecast · wanneer schalen</h2>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Breakpoints op blended ROAS. Huidig: <b id="fc-current"></b> spend/dag.</div>
+        <div class="fc-row"><span style="color:var(--warn);font-weight:600">Verlieslatend</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:100%;background:#C98A6B"></div></div><span style="text-align:right;font-weight:600;font-size:12px;color:var(--warn)">ROAS &lt; 1,8&#xD7;</span></div>
+        <div class="fc-row"><span>Break-even</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:67%;background:var(--sage)"></div></div><span style="text-align:right;font-weight:600;font-size:12px">ROAS 1,8&#xD7;</span></div>
+        <div class="fc-row"><span style="font-weight:600">Schalen (doel)</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:100%;background:var(--good)"></div></div><span style="text-align:right;font-weight:600;font-size:12px;color:var(--good)">ROAS 2,5&#xD7;+</span></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:13px;border-top:1px solid var(--line);padding-top:12px">
+          CAC nu <b>&#x20AC;<span id="fc-cac"></span>/stuk</b>. Break-even CAC = &#x20AC;<span id="fc-gross">31,15</span>. Gap: <span id="fc-gap"></span>.
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab-marges -->
+
+  <!-- TAB: EMAIL -->
+  <div class="tab-pane" id="tab-email">
+
+    <h2>Klaviyo · email performance MTD</h2>
     <div class="card">
-      <h2>Unit-economics · per waterkoker (<span id="wf-btw-lbl">ex btw</span>)</h2>
-      <div class="wf" id="wf"></div>
-      <div style="font-size:11px;color:var(--muted);margin-top:13px">Vast marge-model Drive · CAC schaalt mee per periode.</div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:16px">
-      <div class="card"><h2>Signalen</h2><div id="signals"></div></div>
-    </div>
-  </div>
-
-  <!-- META CAMPAIGNS -->
-  <h2 style="margin-top:34px">Meta campagnes · breakdown</h2>
-  <div class="card"><table class="ctable" id="meta-table"></table></div>
-
-  <!-- KLAVIYO -->
-  <h2 style="margin-top:28px">Klaviyo · email performance MTD</h2>
-  <div class="card">
-    <div class="klav-grid" id="klav-grid"></div>
-  </div>
-
-  <!-- ACTION ENGINE -->
-  <div style="margin-top:34px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px">
-      <h2 style="margin:0">Actie-engine · data + research + playbook</h2>
-      <div style="display:flex;gap:10px;font-size:11px;color:var(--muted)">
-        <span><span style="width:9px;height:9px;border-radius:2px;background:#B0703F;display:inline-block;vertical-align:middle;margin-right:4px"></span>Data</span>
-        <span><span style="width:9px;height:9px;border-radius:2px;background:#3A5BD9;display:inline-block;vertical-align:middle;margin-right:4px"></span>Research</span>
-        <span><span style="width:9px;height:9px;border-radius:2px;background:var(--line);display:inline-block;vertical-align:middle;margin-right:4px"></span>Playbook</span>
-      </div>
-    </div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Data-gedreven regels schakelen mee per geselecteerde periode. Research is gebaseerd op Meta Ad Library scan 13-06-2026.</div>
-    <div style="background:#f0f4e8;border:1px solid #c8d4a0;border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:12px">
-      <div style="font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#5E7B5A;margin-bottom:8px">Gedaan 13 jun 2026</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px">
-        <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">✓ Meta Retargeting gepauzeerd (−€7,55/dag)</span>
-        <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">✓ Google budget €75 → €20/dag</span>
-        <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">✓ [waterkoker] negatief zoekwoord Shopping</span>
-        <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">✓ CAPI op Geoptimaliseerd (bewuste keuze)</span>
-        <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">✓ Pinterest ads gepauzeerd</span>
-        <span style="background:#fff;border:1px solid #c8d4a0;border-radius:999px;padding:3px 10px;color:#5E7B5A">✓ Dashboard live op dashboard.elunahome.nl</span>
-      </div>
-    </div>
-    <div class="ae-cols">
-      <div class="ae-col" id="col-nu"><div class="ae-col-head"><span class="ae-badge now">Nu</span>Deze week</div><div id="ae-nu"></div><div class="ae-footer" onclick="aeRestore('col-nu')"></div></div>
-      <div class="ae-col" id="col-bn"><div class="ae-col-head"><span class="ae-badge soon">Binnenkort</span>Deze maand</div><div id="ae-binnenkort"></div><div class="ae-footer" onclick="aeRestore('col-bn')"></div></div>
-      <div class="ae-col" id="col-later"><div class="ae-col-head"><span class="ae-badge later">Later</span>Dit kwartaal</div><div id="ae-later"></div><div class="ae-footer" onclick="aeRestore('col-later')"></div></div>
-    </div>
-  </div>
-
-  <!-- CREATIVE BRIEFS -->
-  <h2 style="margin-top:34px">Creative briefs · klaar voor Higgsfield</h2>
-  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
-    Gebaseerd op Meta Ad Library scan (13-06-2026): geen concurrent adverteert op "zonder plastic", "ochtend ritueel" of "cadeau" hoek in NL.
-    Kokendwatergigant draait "Duurzaam Design" al 4+ maanden &mdash; design-positie bezet maar niet owned door een D2C kettle-merk.
-    Jouw CTR zit op 3,2%; probleem is CVR. Nieuwe hooks moeten de klik omzetten in actie.
-  </div>
-  <div class="brief-grid">
-
-    <div class="brief">
-      <div class="brief-num">Brief 01 · Probleem-bewustzijn</div>
-      <div class="brief-hook">"Weet jij wat er in jouw waterkoker zit?"</div>
-      <div class="brief-row"><span>Opening</span><b>Close-up van plastic onderdelen in een standaard waterkoker (iemand kijkt geschrokken). Cut naar ELÛNA: volledig RVS, geen plastic.</b></div>
-      <div class="brief-row"><span>Hook 3s</span><b>"De meeste waterkokers zijn voor 60% plastic. De jouwe ook?"</b></div>
-      <div class="brief-row"><span>USP</span><b>Volledig RVS · geen plastic smaak · 1.7L · €69,95</b></div>
-      <div class="brief-row"><span>CTA</span><b>"Bestel zonder risico &mdash; 30 dagen retour"</b></div>
-      <div class="brief-row"><span>Formaat</span><b>Vertical 9:16 · 15-20 sec · UGC-stijl · voice-over</b></div>
-      <div class="brief-why">Whitespace: niemand adverteert op dit probleem in NL. Sterkste differentiator van ELÛNA. Verwacht hogere CVR dan design-hooks.</div>
+      <div class="klav-grid" id="klav-grid"></div>
     </div>
 
-    <div class="brief">
-      <div class="brief-num">Brief 02 · Ritueel / lifestyle</div>
-      <div class="brief-hook">"Zo begint elke ochtend."</div>
-      <div class="brief-row"><span>Opening</span><b>Vroege ochtend, zachte bril. Iemand pakt de ELÛNA, zet hem neer op een schone marmeren aanrechtblad. Stoomwolkje.</b></div>
-      <div class="brief-row"><span>Hook 3s</span><b>"Mijn ochtend begon anders zodra ik dit had."</b></div>
-      <div class="brief-row"><span>USP</span><b>Strak design dat blijft staan. Past in jouw keuken.</b></div>
-      <div class="brief-row"><span>CTA</span><b>"Start jouw ritueel &mdash; gratis verzending"</b></div>
-      <div class="brief-row"><span>Formaat</span><b>Vertical 9:16 · 20 sec · ambient muziek · lifestyle B-roll</b></div>
-      <div class="brief-why">Davie Fogarty (The Oodie) leer: verkoop het gevoel, niet het product. Geen concurrent brengt de ochtend-emotie in NL.</div>
-    </div>
+  </div><!-- /tab-email -->
 
-    <div class="brief">
-      <div class="brief-num">Brief 03 · Cadeau / trigger</div>
-      <div class="brief-hook">"Het cadeau dat ze niet weet dat ze wil."</div>
-      <div class="brief-row"><span>Opening</span><b>Cadeau-verpakking op aanrechtblad. Iemand opent het, ziet de ELÛNA. Gezichtsuitdrukking: verrast en blij.</b></div>
-      <div class="brief-row"><span>Hook 3s</span><b>"Zoek je nog een cadeau? Dit staat de rest van haar leven in haar keuken."</b></div>
-      <div class="brief-row"><span>USP</span><b>Gratis verzending · 30 dagen retour · gratis cadeauverpakking</b></div>
-      <div class="brief-row"><span>CTA</span><b>"Bestel vóór [datum] &mdash; morgen in huis"</b></div>
-      <div class="brief-row"><span>Formaat</span><b>Vertical 9:16 · 15 sec · warm kleurenpalet · geen muziek, alleen VO</b></div>
-      <div class="brief-why">Cadeau-intent verhoogt AOV en CVR (minder prijs-gevoelig). Geschikt voor Moederdag, verjaardagen, vaderdag, kerst.</div>
-    </div>
-
-  </div>
-
-  <!-- OPERATOR POV -->
-  <h2 style="margin-top:34px">Operator POV · wat zouden zij zeggen</h2>
-  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
-    Vier lenzen op hetzelfde account. Niet data &mdash; opinie. Concreet, kritisch, uitvoerbaar.
-  </div>
-  <div class="pov-grid">
-
-    <div class="pov">
-      <div class="pov-name">Hormozi-lens</div>
-      <div class="pov-role">Offers, value-stacking, conversion</div>
-      <div class="pov-quote">
-        "Je offer is het probleem, niet je ads. €69,95 voor een single waterkoker zonder garantie, zonder bundle, zonder risk reversal. De klant vraagt zich af: 'waarom zou ik dit nu kopen?' Je hebt geen antwoord. Voeg toe: een levenslange garantie (kost je bijna niets, converteert +30%), een 2-pack optie, en een duidelijke money-back headline boven de fold. Fix het offer voor je één euro extra aan ads uitgeeft."
-      </div>
-      <div class="pov-action">Actie: voeg 'levenslange garantie op RVS' toe aan LP + product. Kost €0, verhoogt CVR direct.</div>
-    </div>
-
-    <div class="pov">
-      <div class="pov-name">Ben Heath-lens</div>
-      <div class="pov-role">Meta Ads, tracking, campagnestructuur</div>
-      <div class="pov-quote">
-        "Je hebt een tracking-probleem, geen ads-probleem. Meta ziet 0,81× terwijl jij 1,24× blended hebt. Dat is een 53% trackinggat. Meta optimaliseert voor conversies die het niet eens ziet. Als je CAPI fix en die match rate van 40% naar 80% gaat, gaat je CPA vanzelf omlaag zonder dat je ook maar één creatief aanraakt. Dit is de aller-eerste stap. Alles daarna pas."
-      </div>
-      <div class="pov-action">Actie: CAPI instellen via Shopify → Events Manager → Maximum Data Sharing. Meting na 7 dagen.</div>
-    </div>
-
-    <div class="pov">
-      <div class="pov-name">DTC Brand Operator-lens</div>
-      <div class="pov-role">Product-led growth, brand, UGC (Davie Fogarty-stijl)</div>
-      <div class="pov-quote">
-        "Stop met het verkopen van een waterkoker. Begin met het verkopen van een ochtend. Niemand wil een RVS cylinder. Ze willen een keuken die er goed uitziet, een ochtend die rustig aanvoelt, een ritueel dat van hen is. The Oodie verkoopt geen deken &mdash; hij verkoopt comfortabele avonden. Jij verkoopt nog steeds specs. '1.7 liter', 'volledig RVS', dat is catalogustaal. Verander de headline: 'Zo begint elke ochtend.' en kijk wat er met CVR gebeurt."
-      </div>
-      <div class="pov-action">Actie: verander LP headline naar ritueel-taal. A/B test Brief 02 vs huidige copy. 7 dagen meten.</div>
-    </div>
-
-    <div class="pov">
-      <div class="pov-name">Dutch DTC Operator-lens</div>
-      <div class="pov-role">Schalen in NL, community-first, lokale kansen</div>
-      <div class="pov-quote">
-        "Je CAC is €52 via paid. Maar je zit in Nederland. Stuur 15 waterkokers naar food- en lifestyle-Instagrammers met 5k–30k volgers in NL. Kost je €1.050 COGS en €0 spend. Als 8 van de 15 posten, bereik je 150k mensen voor €7/duizend impressies &mdash; goedkoper dan Meta. En die content gebruik je daarna als UGC in je ads. Micro-influencers converteren 3–7× beter dan macro. Dat is de eerste echte schaalbeweging voor een NL-merk van jouw formaat."
-      </div>
-      <div class="pov-action">Actie: maak lijst van 20 food/lifestyle NL creators via Instagram. Stuur outreach: gratis waterkoker, geen betaling gevraagd.</div>
-    </div>
-
-  </div>
-
-  <!-- OMZET FORECAST -->
-  <h2 style="margin-top:34px">Omzet-forecast · wanneer schalen we op</h2>
-  <div class="card">
-    <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Breakpoints op blended ROAS. Huidige benchmark: <b id="fc-current"></b> spend per dag (Meta + Google).</div>
-    <div class="fc-row"><span style="color:var(--warn);font-weight:600">Verlieslatend</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:100%;background:#C98A6B"></div></div><span style="text-align:right;font-weight:600;font-size:12px;color:var(--warn)">ROAS &lt; 1,8×</span></div>
-    <div class="fc-row"><span>Break-even</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:67%;background:var(--sage)"></div></div><span style="text-align:right;font-weight:600;font-size:12px">ROAS 1,8×</span></div>
-    <div class="fc-row"><span style="font-weight:600">Schalen (doel)</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:100%;background:var(--good)"></div></div><span style="text-align:right;font-weight:600;font-size:12px;color:var(--good)">ROAS 2,5×+</span></div>
-    <div style="font-size:12px;color:var(--muted);margin-top:13px;border-top:1px solid var(--line);padding-top:12px">
-      Bij ROAS 2,5×: elke €100 spend genereert €250 omzet · €100 marge · ~€10 netto/stuk. CAC nu <b>€<span id="fc-cac"></span>/stuk</b>. Breakeven CAC = €<span id="fc-gross">26,35</span>. Nodig te reduceren: <span id="fc-gap"></span> (via CAPI + LP-fix + betere targeting, niet meer budget).
-    </div>
-  </div>
-
-  <!-- GOOGLE PLACEHOLDER -->
-  <h2 style="margin-top:34px">Google Ads · API-integratie</h2>
-  <div class="g-pending">
-    <div class="g-dot"></div>
-    <div>
-      <strong>Basic Access aanvraag in behandeling</strong>
-      Ingediend 13-06-2026 · MCC 789-710-2801. Verwachte goedkeuring 1–3 werkdagen. Python-client klaar: <code>google-ads/2026-06-13-google-ads-client.py</code> &mdash; zodra goedgekeurd worden Google-cijfers automatisch ingeladen. Google-spend handmatig: €<span id="fc-gspend"></span>/dag.
-    </div>
-  </div>
-
-  <div class="foot" id="foot">ELÛNA v7 · Shopify (live) + Meta (live) + Klaviyo (live) + Google (handmatig, API pending) · blended = omzet ÷ (Meta + Google) · Zacht in geluid, sterk in design.</div>
-</div>
+  <div class="foot" id="foot">EL&#xDB;NA v10 · Shopify + Meta + Klaviyo (live) · Google (handmatig, API pending) · blended = omzet &#xF7; (Meta + Google) · Zacht in geluid, sterk in design.</div>
+</div><!-- /wrap -->
 
 <script>
 const BTW = 1.21;
@@ -457,6 +534,7 @@ const FEES_EX   =  4.23;
 const FIXED_EX  = COGS_EX + LOG_EX + FEES_EX; // 31.15
 let GROSS = LIST_EX - FIXED_EX;  // wordt per render overschreven met werkelijke marge
 let showBTW = false;
+let chartType = localStorage.getItem('eluna-chart-type') || 'bar';
 let P = {}, C = {}, DAILY_MTD = [], DAILY_D7 = [], KLAVIYO = {}, DATA_META = {};
 
 // ── data loading ────────────────────────────────────────────────
@@ -475,8 +553,10 @@ async function loadData(bustCache) {
 
 async function refreshData() {
   const btn = document.getElementById('refresh-btn');
+  const wrap = document.querySelector('.wrap');
   btn.classList.add('loading');
   btn.innerHTML = '<span class="spin">↻</span> Verversen…';
+  wrap.classList.add('refreshing');
   try {
     await loadData(true);
     const active = document.querySelector('#switch button.active');
@@ -484,6 +564,7 @@ async function refreshData() {
   } catch(e) {
     console.error(e);
   }
+  wrap.classList.remove('refreshing');
   btn.classList.remove('loading');
   btn.innerHTML = '↻ Ververs';
 }
@@ -549,9 +630,12 @@ function renderPerfStats(k, grossEx, cac, net){
   const tot=(p.spend||0)+(p.gspend||0), roas=tot>0?p.rev/tot:0;
   const bF=showBTW?1:1/BTW;
   const aov=p.orders>0?p.rev/p.orders:null;
+  const isDay = k==='today'||k==='gisteren';
+  const attrBadge = isDay ? `<div class="attr-badge" style="margin-top:8px"><span class="attr-dot"></span>Meta-attributie loopt 1–3 dgn achter · Shopify-omzet is leidend</div>` : '';
   document.getElementById('perf-stats').innerHTML=`
     <div class="ps-total">${eur0(p.rev*bF)}</div>
     <div class="ps-sub">${p.orders} orders · ${p.units} stuks · AOV ${aov?eur(aov*bF):'—'} <span style="font-size:10px;text-transform:uppercase;letter-spacing:.06em">${showBTW?'incl':'ex'} btw</span></div>
+    ${attrBadge}
     <div class="ps-divider"></div>
     <div class="ps-row"><span class="ps-lbl">Blended ROAS</span><span class="ps-val ${roas>=1.8?'good':'warn'}">${roas>0?xfmt(roas):'—'}</span></div>
     <div class="ps-row"><span class="ps-lbl">CAC / stuk</span><span class="ps-val ${cac&&cac>grossEx?'warn':'good'}">${cac?eur(cac):'—'}</span></div>
@@ -616,6 +700,9 @@ function renderKlaviyo(){
 function renderChart(k){
   const inner = document.getElementById('perf-inner');
   const chartCol = document.getElementById('perf-chart-col');
+  const toggleBtn = document.getElementById('chart-type-toggle');
+  if(toggleBtn) toggleBtn.textContent = chartType === 'bar' ? '▦' : '∿';
+
   if(k==='today'||k==='gisteren'||k==='d30'){
     inner.classList.add('no-chart');
     chartCol.style.display='none';
@@ -625,30 +712,150 @@ function renderChart(k){
   chartCol.style.display='';
   const days = k==='d7' ? DAILY_D7 : DAILY_MTD;
   if(!days||!days.length){inner.classList.add('no-chart');chartCol.style.display='none';return;}
-  const label = k==='d7' ? '7 DAGEN' : 'MTD';
-  document.getElementById('perf-title').textContent = 'Omzetprestatie · ' + label;
-  const max=Math.max(...days.map(d=>d.rev),1);
-  const last=days[days.length-1].d;
-  document.getElementById('chart-bars').innerHTML=days.map(d=>`<div class="chart-bar${d.d===last?' today':''}" style="height:${Math.max(3,Math.round(d.rev/max*100))}%" title="${d.d}: ${eur(d.rev)}"></div>`).join('');
-  document.getElementById('chart-labels').innerHTML=days.map(d=>`<span class="chart-label">${d.d}</span>`).join('');
+  const label = k==='d7' ? 'Omzetprestatie · 7 dagen' : 'Omzetprestatie · MTD';
+  document.getElementById('perf-title').textContent = label;
+  const max = Math.max(...days.map(d=>d.rev), 1);
+  const last = days[days.length-1].d;
+
+  if(chartType === 'bar'){
+    document.getElementById('chart-bars').innerHTML = days.map(d=>`<div class="chart-bar${d.d===last?' today':''}" style="height:${Math.max(3,Math.round(d.rev/max*100))}%" title="${d.d}: ${eur(d.rev)}"></div>`).join('');
+    document.getElementById('chart-labels').innerHTML = days.map(d=>`<span class="chart-label">${d.d}</span>`).join('');
+  } else {
+    // lijn (SVG)
+    const W=300, H=56;
+    const pts = days.map((d,i)=>{
+      const x = days.length>1 ? (i/(days.length-1))*W : W/2;
+      const y = H - Math.max(2, Math.round(d.rev/max*(H-4)));
+      return x+','+y;
+    }).join(' ');
+    const circles = days.map((d,i)=>{
+      const x = days.length>1 ? (i/(days.length-1))*W : W/2;
+      const y = H - Math.max(2, Math.round(d.rev/max*(H-4)));
+      return `<circle cx="${x}" cy="${y}" r="${d.d===last?3.5:2}" fill="${d.d===last?'var(--good)':'var(--sage)'}" title="${d.d}: ${eur(d.rev)}"/>`;
+    }).join('');
+    document.getElementById('chart-bars').innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="var(--sage)" stroke-width="2" stroke-linejoin="round"/>${circles}</svg>`;
+    document.getElementById('chart-labels').innerHTML = days.map(d=>`<span class="chart-label">${d.d}</span>`).join('');
+  }
 }
 
+let metaFilter = 'actief'; // 'alle' | 'actief'
+
 function renderMeta(k){
-  const camps=C[k]||[];
+  const allCamps = C[k] || [];
+  const camps = metaFilter === 'actief' ? allCamps.filter(c => c.spend > 0) : allCamps;
   const tS=camps.reduce((s,c)=>s+c.spend,0),tI=camps.reduce((s,c)=>s+c.imp,0),tCl=camps.reduce((s,c)=>s+c.clicks,0);
-  document.getElementById('meta-table').innerHTML=`
+  const hasInactive = allCamps.some(c => c.spend === 0);
+  const filterBar = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+    <span style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase">Filter:</span>
+    <button onclick="setMetaFilter('actief')" style="border:1px solid var(--line);border-radius:999px;padding:3px 11px;font:inherit;font-size:11px;font-weight:600;cursor:pointer;background:${metaFilter==='actief'?'var(--pist)':'var(--card)'};color:${metaFilter==='actief'?'var(--ink)':'var(--muted)'};transition:.15s">Actief</button>
+    <button onclick="setMetaFilter('alle')" style="border:1px solid var(--line);border-radius:999px;padding:3px 11px;font:inherit;font-size:11px;font-weight:600;cursor:pointer;background:${metaFilter==='alle'?'var(--pist)':'var(--card)'};color:${metaFilter==='alle'?'var(--ink)':'var(--muted)'};transition:.15s">Alle ${allCamps.length > camps.length ? `(${allCamps.length})` : ''}</button>
+    ${hasInactive&&metaFilter==='actief'?`<span style="font-size:11px;color:var(--muted)">${allCamps.length - camps.length} gepauzeerd verborgen</span>`:''}
+  </div>`;
+  const tableEl = document.getElementById('meta-table');
+  const wrapper = tableEl.parentElement;
+  let filterEl = wrapper.querySelector('.meta-filter-bar');
+  if(!filterEl){ filterEl = document.createElement('div'); filterEl.className='meta-filter-bar'; wrapper.insertBefore(filterEl, tableEl); }
+  filterEl.innerHTML = filterBar;
+  tableEl.innerHTML=`
     <thead><tr><th style="text-align:left">Campagne</th><th>Spend</th><th>Impressies</th><th>Clicks</th><th>CTR</th><th>CPM</th><th>CPC</th><th>ROAS</th></tr></thead>
     <tbody>${camps.map(c=>`<tr><td>${c.name}</td><td>${eur(c.spend)}</td><td>${num(c.imp)}</td><td>${num(c.clicks)}</td><td>${pct(c.ctr)}</td><td>${eur(c.cpm)}</td><td>${eur(c.cpc)}</td><td class="${c.roas!=null&&c.roas>=1.8?'good':c.roas!=null?'warn':''}">${xfmt(c.roas)}<span class="badge-ip">in-platform</span></td></tr>`).join('')}
     <tr><td>Totaal Meta</td><td>${eur(tS)}</td><td>${num(tI)}</td><td>${num(tCl)}</td><td>${pct(tI>0?tCl/tI*100:null)}</td><td>${eur(tI>0?tS/tI*1000:0)}</td><td>${eur(tCl>0?tS/tCl:0)}</td><td class="muted">zie blended</td></tr>
     </tbody>`;
 }
 
+function setMetaFilter(f){
+  metaFilter = f;
+  const active = document.querySelector('#switch button.active');
+  renderMeta(active ? active.dataset.k : 'mtd');
+}
+
 function toggleBTW(){
   showBTW = !showBTW;
   const sw = document.getElementById('btw-toggle');
   sw.classList.toggle('active', showBTW);
+  const lbl = document.getElementById('btw-pill-lbl');
+  if(lbl) lbl.textContent = showBTW ? 'Incl. BTW' : 'Ex BTW';
   const active = document.querySelector('#switch button.active');
   render(active ? active.dataset.k : 'mtd');
+}
+
+function toggleChartType(){
+  chartType = chartType === 'bar' ? 'line' : 'bar';
+  localStorage.setItem('eluna-chart-type', chartType);
+  const btn = document.getElementById('chart-type-toggle');
+  if(btn) btn.textContent = chartType === 'bar' ? '▦' : '∿';
+  const active = document.querySelector('#switch button.active');
+  renderChart(active ? active.dataset.k : 'mtd');
+}
+
+function switchTab(tabId){
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'tab-' + tabId));
+}
+
+function renderRichon(k){
+  const p = P[k];
+  const tot = (p.spend||0) + (p.gspend||0);
+  const roas = tot > 0 ? p.rev / tot : 0;
+  const actualSellEx = p.units > 0 ? (p.rev / p.units) / BTW : LIST_EX;
+  const grossEx = actualSellEx - FIXED_EX;
+  const cac = p.units > 0 ? tot / p.units : null;
+  const net = cac != null ? grossEx - cac : null;
+  const STOCK = 40;
+  const days = k==='mtd'?14:k==='d7'?7:k==='d30'?30:1;
+  const dailyUnits = p.units / days;
+  const stockDays = dailyUnits > 0 ? Math.round(STOCK / dailyUnits) : null;
+  const dailyBurn = tot / days;
+
+  const bullets = [];
+
+  // ROAS vs break-even
+  if(roas > 0 && roas < 1.8){
+    bullets.push(`Blended ROAS ${xfmt(roas)} — onder break-even (1,8×). Per €100 spend verlies je ${eur((1.8 - roas) * 100)} aan marge.`);
+  } else if(roas >= 1.8){
+    bullets.push(`Blended ROAS ${xfmt(roas)} — boven break-even. Elke €100 spend genereert ${eur(roas * 100)} omzet netto positief.`);
+  } else {
+    bullets.push(`Geen spend in deze periode — geen ROAS berekening mogelijk.`);
+  }
+
+  // Net per unit
+  if(net != null){
+    if(net < 0){
+      bullets.push(`Netto per stuk: −${eur(Math.abs(net))}. CAC van ${eur(cac)} vreet de brutomarge van ${eur(grossEx)} volledig op.`);
+    } else {
+      bullets.push(`Netto per stuk: +${eur(net)}. Marge ${eur(grossEx)} minus CAC ${eur(cac)} = gezonde unit economics.`);
+    }
+  }
+
+  // Runway & burn
+  bullets.push(`Runway: ±25 dagen bij huidig tempo (€${Math.round(dailyBurn)}/dag spend). Kaslimiet vereist discipline op budget.`);
+
+  // Stock
+  if(stockDays != null && stockDays < 999){
+    const urgency = stockDays < 20 ? 'Herorder nú inplannen.' : 'Voldoende voor ~3 weken.';
+    bullets.push(`Voorraad: 40 stuks · ${dailyUnits.toFixed(1)} stuk/dag · ±${stockDays} verkoopdagen. ${urgency}`);
+  }
+
+  // Scale trigger
+  if(roas < 1.8){
+    bullets.push(`Schaalmoment: wacht op 3 achtereenvolgende dagen ROAS >1,8×. Dan pas budget ophogen — niet eerder.`);
+  } else {
+    bullets.push(`Schaalmoment actief. Test +20% budget, monitor ROAS 48u. Stop direct als het onder 1,8× zakt.`);
+  }
+
+  const bEl = document.getElementById('richon-bullets');
+  const aEl = document.getElementById('richon-action');
+  const fEl = document.getElementById('richon-forward');
+  if(!bEl) return;
+  bEl.innerHTML = bullets.map(b => `<li>${b}</li>`).join('');
+
+  const action = roas < 1.8
+    ? `Primaire taak: ROAS naar 1,8× brengen. Geen budgetverhoging voor dan. Focus op CVR (LP-fix) en CAPI.`
+    : `Budget kan omhoog. Maar stap voor stap — +20% per week, nooit dubbelslag zonder datapunt.`;
+  aEl.textContent = action;
+
+  const revTarget = (1.8 * tot).toFixed(0);
+  fEl.textContent = `Blik vooruit: om break-even te draaien op deze spend moet omzet naar €${Number(revTarget).toLocaleString('nl-NL')} in deze periode. Delta: ${eur(1.8 * tot - p.rev)}.`;
 }
 
 function render(k){
@@ -693,6 +900,12 @@ function render(k){
     <div class="row"><span class="name">− CAC (${p.label.toLowerCase()})</span><div class="bar ${netNeg?'neg':'net'}" style="width:${cacW}%"></div><span class="amt ${netNeg?'warn':''}">${cac?eur(cac):'—'}</span></div>
     <div class="row"><span class="name">= Netto / stuk</span><div class="bar ${netNeg?'neg':'net'}" style="width:${net?Math.max(2,Math.abs(net)/BASE*100):2}%"></div><span class="amt ${netNeg?'warn':'good'}"><b>${net?(net<0?'−':'')+eur(Math.abs(net)):'—'}</b></span></div>`;
   document.getElementById('wf').innerHTML=wfHtml;
+  renderRichon(k);
+  // sync wf2 (marges tab)
+  const wf2 = document.getElementById('wf2');
+  if(wf2) wf2.innerHTML = document.getElementById('wf').innerHTML;
+  const wfLbl2 = document.getElementById('wf-btw-lbl2');
+  if(wfLbl2) wfLbl2.textContent = showBTW ? 'incl btw' : 'ex btw';
 
   // Signalen
   let s='';
@@ -774,6 +987,9 @@ function aeRestore(colId){
 }
 
 document.querySelectorAll('#switch button').forEach(b=>b.addEventListener('click',()=>render(b.dataset.k)));
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>switchTab(btn.dataset.tab));
+});
 loadData().then(()=>render('mtd')).catch(e=>{
   console.error('data.json laden mislukt:',e);
   document.getElementById('updated-lbl').textContent = 'laad fout';
