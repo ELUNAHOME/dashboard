@@ -3,14 +3,20 @@
  * GET /api/data
  *
  * Aggregeert Shopify + Meta Ads + Klaviyo data naar het dashboard JSON-formaat.
- * Vervangt het statische data.json bestand.
  *
- * Vereiste env vars (in Vercel project settings):
- *   SHOPIFY_STORE          99gxqj-x0.myshopify.com
+ * Vereiste env vars (Vercel project settings):
+ *   SHOPIFY_STORE          elunahome.myshopify.com
  *   SHOPIFY_ACCESS_TOKEN   shpat_...
  *   META_ACCESS_TOKEN      EAA...
  *   META_AD_ACCOUNT        924352226288770
  *   KLAVIYO_API_KEY        pk_...
+ *
+ * Optionele env vars — Google Ads handmatig (update via scripts/update-google.sh):
+ *   GOOGLE_SPEND_TODAY / GOOGLE_GROAS_TODAY
+ *   GOOGLE_SPEND_GISTEREN / GOOGLE_GROAS_GISTEREN
+ *   GOOGLE_SPEND_D7 / GOOGLE_GROAS_D7
+ *   GOOGLE_SPEND_MTD / GOOGLE_GROAS_MTD
+ *   GOOGLE_SPEND_D30 / GOOGLE_GROAS_D30
  */
 
 // ── constanten ──────────────────────────────────────────────────────────────
@@ -19,29 +25,28 @@ const SHOPIFY_API  = '2024-01';
 const META_API_VER = 'v19.0';
 const KL_BASE      = 'https://a.klaviyo.com/api';
 
-// Klaviyo metric IDs (niet wijzigen)
-const KL_RECEIVED   = 'R7sRak';
-const KL_OPENED     = 'X7Kyiq';
-const KL_CLICKED    = 'SmuWpA';
-const KL_SUBSCRIBED = 'Xw275a';
-const KL_LIST_ID    = 'TYEjdh';
+// Klaviyo metric IDs
+const KL_RECEIVED     = 'R7sRak';
+const KL_OPENED       = 'X7Kyiq';
+const KL_CLICKED      = 'SmuWpA';
+const KL_SUBSCRIBED   = 'Xw275a';
+const KL_PLACED_ORDER = 'RP7a8m';
+const KL_LIST_ID      = 'TYEjdh';
 
 // ── hulpfuncties ─────────────────────────────────────────────────────────────
 const r2 = n => Math.round(n * 100) / 100;
 
 function amsDate(offsetDays = 0) {
-  // Amsterdam tijd (CEST = UTC+2, CET = UTC+1)
-  // Gebruik Intl om DST correct te bepalen
   const d = new Date();
   d.setDate(d.getDate() - offsetDays);
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Europe/Amsterdam',
     year: 'numeric', month: '2-digit', day: '2-digit'
-  }).format(d); // "YYYY-MM-DD"
+  }).format(d);
 }
 
 function mtdStart() {
-  const d = amsDate(0); // "YYYY-MM-DD"
+  const d = amsDate(0);
   return d.slice(0, 8) + '01';
 }
 
@@ -53,6 +58,20 @@ function dateLabel(start, end) {
   if (start === end) return fmt(start);
   if (start.slice(0,7) === end.slice(0,7)) return `${parseInt(start.split('-')[2])}–${fmt(end)}`;
   return `${fmt(start)}–${fmt(end)}`;
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// ── Google Ads handmatig (env vars) ─────────────────────────────────────────
+function getGoogleManual() {
+  const p = v => (v && !isNaN(v)) ? parseFloat(v) : null;
+  return {
+    today:    { gspend: p(process.env.GOOGLE_SPEND_TODAY),    groas: p(process.env.GOOGLE_GROAS_TODAY) },
+    gisteren: { gspend: p(process.env.GOOGLE_SPEND_GISTEREN), groas: p(process.env.GOOGLE_GROAS_GISTEREN) },
+    d7:       { gspend: p(process.env.GOOGLE_SPEND_D7),       groas: p(process.env.GOOGLE_GROAS_D7) },
+    mtd:      { gspend: p(process.env.GOOGLE_SPEND_MTD),      groas: p(process.env.GOOGLE_GROAS_MTD) },
+    d30:      { gspend: p(process.env.GOOGLE_SPEND_D30),      groas: p(process.env.GOOGLE_GROAS_D30) },
+  };
 }
 
 // ── Shopify ──────────────────────────────────────────────────────────────────
@@ -90,8 +109,6 @@ function aggregateOrders(orders) {
 }
 
 function dailyBreakdown(orders, dateMin, dateMax) {
-  // Bouw array van { d: "1/6", rev: n } voor elke dag in bereik
-  // Gebruik string-gebaseerde datumloop om UTC/timezone problemen te vermijden
   const map = {};
   const addDay = s => {
     const d = new Date(s + 'T12:00:00Z');
@@ -108,11 +125,11 @@ function dailyBreakdown(orders, dateMin, dateMax) {
     cur = addDay(cur);
   }
   for (const o of orders) {
-    const amsDate = new Intl.DateTimeFormat('en-CA', {
+    const ad = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Europe/Amsterdam',
       year: 'numeric', month: '2-digit', day: '2-digit'
     }).format(new Date(o.created_at));
-    const key = toKey(amsDate);
+    const key = toKey(ad);
     if (key in map) map[key] += parseFloat(o.total_price);
   }
   return Object.entries(map).map(([d, rev]) => ({ d, rev: r2(rev) }));
@@ -124,9 +141,7 @@ async function fetchShopify() {
   const d7Start   = amsDate(7);
   const d30Start  = amsDate(30);
   const mtd       = mtdStart();
-  const d7End     = amsDate(1); // t/m gisteren voor 7d
 
-  // Parallelle fetches
   const [todayOrders, yesterdayOrders, d7Orders, mtdOrders, d30Orders] = await Promise.all([
     shopifyOrders(today, today),
     shopifyOrders(yesterday, yesterday),
@@ -145,31 +160,11 @@ async function fetchShopify() {
 
   return {
     P: {
-      today: {
-        label: 'Vandaag', range: dateLabel(today, today),
-        ...todayAgg,
-        spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null
-      },
-      gisteren: {
-        label: 'Gisteren', range: dateLabel(yesterday, yesterday),
-        ...yesterdayAgg,
-        spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null
-      },
-      d7: {
-        label: '7 dagen', range: dateLabel(d7Start, today),
-        ...d7Agg,
-        spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null
-      },
-      mtd: {
-        label: 'Deze maand', range: dateLabel(mtd, today),
-        ...mtdAgg,
-        spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null
-      },
-      d30: {
-        label: '30 dagen', range: dateLabel(d30Start, today),
-        ...d30Agg,
-        spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null
-      }
+      today:    { label: 'Vandaag',      range: dateLabel(today, today),         ...todayAgg,     spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null },
+      gisteren: { label: 'Gisteren',     range: dateLabel(yesterday, yesterday),  ...yesterdayAgg, spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null },
+      d7:       { label: '7 dagen',      range: dateLabel(d7Start, today),        ...d7Agg,        spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null },
+      mtd:      { label: 'Deze maand',   range: dateLabel(mtd, today),            ...mtdAgg,       spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null },
+      d30:      { label: '30 dagen',     range: dateLabel(d30Start, today),       ...d30Agg,       spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null }
     },
     daily_mtd: dailyBreakdown(mtdOrders, mtd, today),
     daily_d7:  dailyBreakdown(d7Orders, d7Start, today),
@@ -189,7 +184,6 @@ async function metaFetch(path, params = {}) {
 }
 
 async function metaCampaignInsights(preset) {
-  // Haal campagnes op met insights voor het opgegeven preset
   const fields = [
     'name', 'status', 'effective_status',
     `insights.date_preset(${preset}){spend,impressions,clicks,ctr,cpm,cpc,purchase_roas}`
@@ -201,7 +195,7 @@ async function metaCampaignInsights(preset) {
       const ins = c.insights?.data?.[0];
       if (!ins) return null;
       const spend = parseFloat(ins.spend || '0');
-      if (spend === 0) return null; // skip inactive
+      if (spend === 0) return null;
       const roas = ins.purchase_roas?.[0]?.value;
       return {
         name: c.name,
@@ -217,8 +211,9 @@ async function metaCampaignInsights(preset) {
     .filter(Boolean);
 }
 
-async function metaTotals(campaigns) {
-  if (!campaigns.length) return { spend: 0, ctr: null, cpc: null, mroas: null };
+// Niet async — geen await nodig (bug fix: was async, werd nooit awaited)
+function metaTotals(campaigns) {
+  if (!campaigns.length) return { spend: null, ctr: null, cpc: null };
   const spend = r2(campaigns.reduce((s, c) => s + c.spend, 0));
   const totalClicks = campaigns.reduce((s, c) => s + c.clicks, 0);
   const totalImp    = campaigns.reduce((s, c) => s + c.imp, 0);
@@ -227,7 +222,7 @@ async function metaTotals(campaigns) {
   return { spend, ctr, cpc };
 }
 
-async function fetchMeta(shopifyP) {
+async function fetchMeta() {
   const presets = ['today', 'yesterday', 'last_7d', 'this_month', 'last_30d'];
   const keys    = ['today', 'gisteren', 'd7', 'mtd', 'd30'];
 
@@ -237,32 +232,23 @@ async function fetchMeta(shopifyP) {
   const metaSpend = {};
   keys.forEach((k, i) => {
     C[k] = results[i];
-    const tot = metaTotals(results[i]);
-    metaSpend[k] = tot;
+    metaSpend[k] = metaTotals(results[i]); // niet async, geen await nodig
   });
 
   return { C, metaSpend };
 }
 
-// ── Klaviyo ───────────────────────────────────────────────────────────────────
-async function klFetch(endpoint, body) {
-  const key = process.env.KLAVIYO_API_KEY;
-  const res = await fetch(`${KL_BASE}${endpoint}`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Klaviyo-API-Key ${key}`,
-      'Content-Type': 'application/json',
-      'revision': '2024-02-15'
-    },
-    body: JSON.stringify(body)
-  });
-  if (!res.ok) throw new Error(`Klaviyo ${res.status}: ${await res.text()}`);
-  return res.json();
+// ── Klaviyo helpers ───────────────────────────────────────────────────────────
+function klHeaders() {
+  return {
+    'Authorization': `Klaviyo-API-Key ${process.env.KLAVIYO_API_KEY}`,
+    'Content-Type': 'application/json',
+    'revision': '2024-02-15'
+  };
 }
 
 async function klCount(metricId, dateStart, dateEnd) {
   const filter = `and(greater-or-equal(datetime,${dateStart}T00:00:00+00:00),less-than(datetime,${dateEnd}T23:59:59+00:00))`;
-
   const body = {
     data: {
       type: 'metric-aggregate',
@@ -275,50 +261,203 @@ async function klCount(metricId, dateStart, dateEnd) {
       }
     }
   };
-  const { data } = await klFetch('/metric-aggregates/', body);
+  const res = await fetch(`${KL_BASE}/metric-aggregates/`, {
+    method: 'POST', headers: klHeaders(), body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error(`Klaviyo ${res.status}: ${await res.text()}`);
+  const { data } = await res.json();
   const val = data?.attributes?.data?.[0]?.measurements?.unique?.[0];
   return typeof val === 'number' ? val : 0;
 }
 
-const sleep = ms => new Promise(r => setTimeout(r, ms));
+function cleanFlowName(name) {
+  return name
+    .replace(/^ELÛNA \| /, '')
+    .replace(/ - A\/B Version - CANVA$/, '')
+    .replace(/ - CANVA$/, '');
+}
+
+function flowTrigger(name, triggerType) {
+  const n = (name || '').toLowerCase();
+  if (n.includes('welcome')) return 'Nieuwe abonnee';
+  if (n.includes('browse')) return 'Product bekeken, niet gekocht';
+  if (n.includes('checkout') || n.includes('abandoned cart')) return 'Checkout gestart, niet afgerond';
+  if (n.includes('review') || n.includes('trustpilot')) return 'Na levering';
+  return triggerType === 'Added to List' ? 'Nieuwe abonnee' : (triggerType || 'Onbekend');
+}
+
+function flowNote(stats, name) {
+  const or = r2((stats.open_rate || 0) * 100);
+  const cr = r2((stats.click_rate || 0) * 100);
+  if (stats.conversions > 0) {
+    return `${stats.conversions} conversie${stats.conversions > 1 ? 's' : ''} · €${(stats.conversion_value || 0).toFixed(2)} omzet in 30 dagen.`;
+  }
+  if (or > 35 && cr < 2) return `Open rate sterk (${or}%). CTR zwak (${cr}%) — CTA of aanbod werkt niet.`;
+  if (or < 25) return `Open rate laag (${or}%) — onderwerp of afzender testen.`;
+  if ((stats.recipients || 0) < 12) return `Weinig triggers (${stats.recipients}) — mogelijk tracking-probleem.`;
+  return `${or}% open · ${cr}% CTR · 0 conversies in 30 dagen.`;
+}
+
+function campaignNote(stats) {
+  if ((stats.conversions || 0) > 0) {
+    return `${stats.conversions} conversie${stats.conversions > 1 ? 's' : ''} · €${(stats.conversion_value || 0).toFixed(2)} omzet.`;
+  }
+  if ((stats.clicks_unique || 0) > 0) {
+    return `${stats.clicks_unique} unieke klikken, 0 conversies — coupon of LP werkte niet.`;
+  }
+  return `${r2((stats.open_rate || 0) * 100)}% open · ${r2((stats.click_rate || 0) * 100)}% CTR · 0 conversies.`;
+}
+
+async function fetchKlaviyoFlows() {
+  const res = await fetch(`${KL_BASE}/flow-values-reports/`, {
+    method: 'POST',
+    headers: { ...klHeaders(), 'Content-Type': 'application/vnd.api+json' },
+    body: JSON.stringify({
+      data: {
+        type: 'flow-values-report',
+        attributes: {
+          timeframe: { key: 'last_30_days' },
+          conversion_metric_id: KL_PLACED_ORDER,
+          filter: 'equals(send_channel,"email")'
+        }
+      }
+    })
+  });
+  if (!res.ok) throw new Error(`Klaviyo flow report ${res.status}: ${await res.text()}`);
+  const { data } = await res.json();
+
+  const aggregation = data?.attributes?.flow_aggregation || [];
+  const results     = data?.attributes?.results || [];
+
+  // Aantal berichten per flow tellen vanuit results
+  const msgCount = {};
+  for (const r of results) {
+    const fid = r.groupings?.flow_id;
+    if (fid) msgCount[fid] = (msgCount[fid] || 0) + 1;
+  }
+
+  return aggregation
+    .filter(f => f.flow_details?.attributes?.status === 'live')
+    .map(f => {
+      const attr = f.flow_details?.attributes || {};
+      const s    = f.statistics || {};
+      return {
+        name:             cleanFlowName(attr.name || ''),
+        trigger:          flowTrigger(attr.name, attr.trigger_type),
+        status:           attr.status,
+        messages:         msgCount[f.flow_id] || 1,
+        d30_recipients:   s.recipients || 0,
+        d30_open_rate:    r2((s.open_rate || 0) * 100),
+        d30_ctr:          r2((s.click_rate || 0) * 100),
+        d30_conversions:  s.conversions || 0,
+        d30_revenue:      r2(s.conversion_value || 0),
+        d30_unsubscribes: s.unsubscribes || 0,
+        note:             flowNote(s, attr.name || '')
+      };
+    });
+}
+
+async function fetchKlaviyoCampaigns() {
+  // Campagnelijst ophalen voor onderwerpregel
+  const listRes = await fetch(
+    `${KL_BASE}/campaigns/?filter=and(equals(messages.channel,'email'),equals(status,'Sent'))` +
+    `&include=campaign-messages&fields[campaign]=id,name,status,send_time` +
+    `&fields[campaign-message]=definition.content.subject&sort=-scheduled_at&page[size]=20`,
+    { headers: klHeaders() }
+  );
+  if (!listRes.ok) throw new Error(`Klaviyo campaign list ${listRes.status}: ${await listRes.text()}`);
+  const listData = await listRes.json();
+
+  // subject per campaign_id
+  const subjects = {};
+  for (const item of (listData.included || [])) {
+    if (item.type === 'campaign-message') {
+      const cid  = item.relationships?.campaign?.data?.id;
+      const subj = item.attributes?.definition?.content?.subject;
+      if (cid && subj) subjects[cid] = subj;
+    }
+  }
+
+  await sleep(300);
+
+  // Campagne rapport (laatste 30 dagen)
+  const reportRes = await fetch(`${KL_BASE}/campaign-values-reports/`, {
+    method: 'POST',
+    headers: { ...klHeaders(), 'Content-Type': 'application/vnd.api+json' },
+    body: JSON.stringify({
+      data: {
+        type: 'campaign-values-report',
+        attributes: {
+          timeframe: { key: 'last_30_days' },
+          conversion_metric_id: KL_PLACED_ORDER,
+          filter: 'equals(send_channel,"email")'
+        }
+      }
+    })
+  });
+  if (!reportRes.ok) throw new Error(`Klaviyo campaign report ${reportRes.status}: ${await reportRes.text()}`);
+  const { data } = await reportRes.json();
+  const results = data?.attributes?.results || [];
+
+  return results.map(r => {
+    const det = r.campaign_details?.attributes || {};
+    const s   = r.statistics || {};
+    const cid = r.groupings?.campaign_id;
+    return {
+      name:        cleanFlowName(det.name || ''),
+      subject:     subjects[cid] || null,
+      status:      (det.status || '').toLowerCase(),
+      send_date:   det.send_time || null,
+      segment:     det.audiences?.included?.[0]?.name || null,
+      recipients:  s.recipients || 0,
+      open_rate:   r2((s.open_rate || 0) * 100),
+      ctr:         r2((s.click_rate || 0) * 100),
+      conversions: s.conversions || 0,
+      revenue:     r2(s.conversion_value || 0),
+      unsubscribes: s.unsubscribes || 0,
+      note:        campaignNote(s)
+    };
+  });
+}
 
 async function fetchKlaviyo(dateStart, dateEnd) {
+  // Stap 1: MTD metrieken (sequentieel — Klaviyo rate limit)
   const received   = await klCount(KL_RECEIVED,   dateStart, dateEnd); await sleep(300);
   const opened     = await klCount(KL_OPENED,     dateStart, dateEnd); await sleep(300);
   const clicked    = await klCount(KL_CLICKED,    dateStart, dateEnd); await sleep(300);
-  const subscribed = await klCount(KL_SUBSCRIBED, dateStart, dateEnd);
+  const subscribed = await klCount(KL_SUBSCRIBED, dateStart, dateEnd); await sleep(300);
 
   const openRate  = received > 0 ? r2((opened  / received) * 100) : 0;
   const clickRate = received > 0 ? r2((clicked / received) * 100) : 0;
 
-  // Flows en campagnes blijven statisch — Klaviyo flow-rapport API vereist
-  // aparte uitbreiding. Waarden uit data.json worden hier doorgegeven als fallback.
+  // Stap 2: Flows + campagnes parallel (aparte rapport-endpoints)
+  const [flows, campaigns] = await Promise.all([
+    fetchKlaviyoFlows().catch(err => { console.error('Klaviyo flows fout:', err.message); return null; }),
+    fetchKlaviyoCampaigns().catch(err => { console.error('Klaviyo campaigns fout:', err.message); return null; })
+  ]);
+
   return {
-    list_id: KL_LIST_ID,
-    mtd_received: received,
-    mtd_opened_unique: opened,
-    mtd_clicked_unique: clicked,
+    list_id:             KL_LIST_ID,
+    mtd_received:        received,
+    mtd_opened_unique:   opened,
+    mtd_clicked_unique:  clicked,
     mtd_new_subscribers: subscribed,
-    open_rate_pct: openRate,
-    click_rate_pct: clickRate,
-    // Flows + campaigns: zie aparte /api/klaviyo-flows route (TODO)
-    flows: null,
-    campaigns: null
+    open_rate_pct:       openRate,
+    click_rate_pct:      clickRate,
+    flows,
+    campaigns
   };
 }
 
 // ── main handler ──────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', 'https://dashboard.elunahome.nl');
   res.setHeader('Access-Control-Allow-Methods', 'GET');
-  // Cache: 5 min fresh, 10 min stale
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
 
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
   if (req.method !== 'GET')     { res.status(405).json({ error: 'Method not allowed' }); return; }
 
-  // Validatie env vars
   const missing = ['SHOPIFY_STORE','SHOPIFY_ACCESS_TOKEN','META_ACCESS_TOKEN','KLAVIYO_API_KEY']
     .filter(k => !process.env[k]);
   if (missing.length) {
@@ -335,35 +474,38 @@ export default async function handler(req, res) {
 
     const { P, daily_mtd, daily_d7, _dates } = shopify;
     const { C, metaSpend } = metaResult;
+    const googleM = getGoogleManual();
 
-    // Verrijk P met Meta spend + blended ROAS
-    // gspend blijft null totdat Google API live is
+    // Verrijk P met Meta + Google spend
     for (const k of ['today','gisteren','d7','mtd','d30']) {
       const meta = metaSpend[k] || {};
+      const goog = googleM[k]  || {};
       P[k].spend  = meta.spend  ?? null;
       P[k].ctr    = meta.ctr    ?? null;
       P[k].cpc    = meta.cpc    ?? null;
-      P[k].gspend = null; // Google Ads handmatig
+      P[k].gspend = goog.gspend ?? null;
+      P[k].groas  = goog.groas  ?? null;
       P[k].mroas  = null; // in-platform ROAS niet betrouwbaar
-      P[k].groas  = null;
     }
 
+    const googleNote = Object.values(googleM).some(v => v.gspend !== null)
+      ? 'handmatig · update via scripts/update-google.sh'
+      : 'handmatig · Google API pending';
+
     const now = new Date();
-    const result = {
+    res.status(200).json({
       updated: now.toISOString(),
       updated_label: now.toLocaleDateString('nl-NL', {
         timeZone: 'Europe/Amsterdam',
         day: 'numeric', month: 'long', year: 'numeric'
       }),
-      google_note: 'handmatig · Google API pending',
+      google_note: googleNote,
       P,
       C,
       daily_mtd,
       daily_d7,
       klaviyo
-    };
-
-    res.status(200).json(result);
+    });
   } catch (err) {
     console.error('[/api/data] error:', err);
     res.status(500).json({ error: err.message });

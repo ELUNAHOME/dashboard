@@ -101,29 +101,29 @@
         "trigger": "Nieuwe abonnee",
         "status": "live",
         "messages": 2,
-        "d30_recipients": 163,
-        "d30_open_rate": 45.4,
-        "d30_ctr": 5.52,
+        "d30_recipients": 164,
+        "d30_open_rate": 46.3,
+        "d30_ctr": 5.49,
         "d30_conversions": 3,
         "d30_revenue": 188.88,
         "d30_unsubscribes": 4,
-        "note": "Email 1 levert €188,88 en 3 conversies. Email 2 (cadeau-herinnering) 0 conversies."
+        "note": "3 conversies · €188,88 omzet in 30 dagen."
       },
       {
         "name": "Browse Abandonment",
         "trigger": "Product bekeken, niet gekocht",
         "status": "live",
         "messages": 1,
-        "d30_recipients": 108,
-        "d30_open_rate": 44.3,
-        "d30_ctr": 0.94,
+        "d30_recipients": 109,
+        "d30_open_rate": 44.86,
+        "d30_ctr": 0.93,
         "d30_conversions": 1,
         "d30_revenue": 62.96,
         "d30_unsubscribes": 2,
-        "note": "Open rate sterk. CTR zwak (0,94%) — CTA of aanbod werkt niet."
+        "note": "Open rate sterk (44.9%). CTR zwak (0.93%) — CTA of aanbod werkt niet."
       },
       {
-        "name": "Abandoned Check Out",
+        "name": "Abandoned Check Out Reminder",
         "trigger": "Checkout gestart, niet afgerond",
         "status": "live",
         "messages": 2,
@@ -133,50 +133,36 @@
         "d30_conversions": 0,
         "d30_revenue": 0,
         "d30_unsubscribes": 0,
-        "note": "Slechts 8 triggers in 30d — mogelijk tracking-probleem of te weinig checkout-starters."
+        "note": "Weinig triggers (8) — mogelijk tracking-probleem."
       },
       {
-        "name": "Product Review",
+        "name": "Product Review - A/B Version",
         "trigger": "Na levering",
         "status": "live",
         "messages": 1,
         "d30_recipients": 17,
-        "d30_open_rate": 29.4,
+        "d30_open_rate": 35.29,
         "d30_ctr": 0.0,
         "d30_conversions": 0,
         "d30_revenue": 0,
         "d30_unsubscribes": 0,
-        "note": "0 clicks op de review-CTA. Onderwerp of knop werkt niet — A/B testen."
+        "note": "35.3% open · 0% CTR · 0 conversies in 30 dagen."
       }
     ],
     "campaigns": [
       {
-        "name": "€25 Korting · Mei 2026",
+        "name": "€25 Discount Couponcode May 2026",
         "subject": "Rust op je aanrecht, nu €25 korting",
         "status": "sent",
-        "send_date": "24 mei 2026",
-        "segment": "Niet-kopers 2026",
-        "recipients": 432,
+        "send_date": "May 24, 2026, 06:30",
+        "segment": "Email List - Niet-kopers - 2026",
+        "recipients": 438,
         "open_rate": 37.96,
         "ctr": 4.17,
         "conversions": 0,
         "revenue": 0,
         "unsubscribes": 8,
         "note": "18 unieke klikken, 0 conversies — coupon of LP werkte niet."
-      },
-      {
-        "name": "Moederdag 2026",
-        "subject": "Voor de moeder die altijd aan iedereen denkt",
-        "status": "sent",
-        "send_date": "5 mei 2026",
-        "segment": "Volledige lijst",
-        "recipients": null,
-        "open_rate": null,
-        "ctr": null,
-        "conversions": null,
-        "revenue": null,
-        "unsubscribes": null,
-        "note": "Data buiten 30d venster — handmatig ophalen indien nodig."
       }
     ]
   }
