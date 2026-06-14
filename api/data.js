@@ -271,13 +271,13 @@ async function klCount(metricId, dateStart, dateEnd) {
   return typeof val === 'number' ? val : 0;
 }
 
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
 async function fetchKlaviyo(dateStart, dateEnd) {
-  const [received, opened, clicked, subscribed] = await Promise.all([
-    klCount(KL_RECEIVED, dateStart, dateEnd),
-    klCount(KL_OPENED, dateStart, dateEnd),
-    klCount(KL_CLICKED, dateStart, dateEnd),
-    klCount(KL_SUBSCRIBED, dateStart, dateEnd)
-  ]);
+  const received   = await klCount(KL_RECEIVED,   dateStart, dateEnd); await sleep(300);
+  const opened     = await klCount(KL_OPENED,     dateStart, dateEnd); await sleep(300);
+  const clicked    = await klCount(KL_CLICKED,    dateStart, dateEnd); await sleep(300);
+  const subscribed = await klCount(KL_SUBSCRIBED, dateStart, dateEnd);
 
   const openRate  = received > 0 ? r2((opened  / received) * 100) : 0;
   const clickRate = received > 0 ? r2((clicked / received) * 100) : 0;
