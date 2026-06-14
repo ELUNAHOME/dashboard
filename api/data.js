@@ -90,20 +90,28 @@ function aggregateOrders(orders) {
 
 function dailyBreakdown(orders, dateMin, dateMax) {
   // Bouw array van { d: "1/6", rev: n } voor elke dag in bereik
+  // Gebruik string-gebaseerde datumloop om UTC/timezone problemen te vermijden
   const map = {};
-  const start = new Date(dateMin + 'T00:00:00+02:00');
-  const end   = new Date(dateMax + 'T23:59:59+02:00');
-  const cur = new Date(start);
-  while (cur <= end) {
-    const key = `${cur.getDate()}/${cur.getMonth() + 1}`;
-    map[key] = 0;
-    cur.setDate(cur.getDate() + 1);
+  const addDay = s => {
+    const d = new Date(s + 'T12:00:00Z');
+    d.setUTCDate(d.getUTCDate() + 1);
+    return d.toISOString().slice(0, 10);
+  };
+  const toKey = s => {
+    const [, m, day] = s.split('-');
+    return `${parseInt(day)}/${parseInt(m)}`;
+  };
+  let cur = dateMin;
+  while (cur <= dateMax) {
+    map[toKey(cur)] = 0;
+    cur = addDay(cur);
   }
   for (const o of orders) {
-    const d = new Date(o.created_at);
-    // Converteer naar Amsterdam tijd
-    const ams = new Date(d.toLocaleString('en-US', { timeZone: 'Europe/Amsterdam' }));
-    const key = `${ams.getDate()}/${ams.getMonth() + 1}`;
+    const amsDate = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Amsterdam',
+      year: 'numeric', month: '2-digit', day: '2-digit'
+    }).format(new Date(o.created_at));
+    const key = toKey(amsDate);
     if (key in map) map[key] += parseFloat(o.total_price);
   }
   return Object.entries(map).map(([d, rev]) => ({ d, rev: r2(rev) }));
