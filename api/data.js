@@ -456,6 +456,16 @@ async function fetchKlaviyo(dateStart, dateEnd) {
   };
 }
 
+// ── Shopify Inventory ────────────────────────────────────────────────────────
+async function fetchInventory() {
+  const LOC = '100691018073';
+  const { inventory_levels = [] } = await shopifyFetch(
+    `/inventory_levels.json?location_ids=${LOC}&limit=250`
+  );
+  const stock = inventory_levels.reduce((s, i) => s + (i.available || 0), 0);
+  return { stock, location_id: LOC };
+}
+
 // ── main handler ──────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', 'https://dashboard.elunahome.nl');
@@ -473,10 +483,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    const [shopify, metaResult, klaviyo] = await Promise.all([
+    const [shopify, metaResult, klaviyo, inventory] = await Promise.all([
       fetchShopify(),
       fetchMeta(),
-      fetchKlaviyo(mtdStart(), amsDate(0))
+      fetchKlaviyo(mtdStart(), amsDate(0)),
+      fetchInventory().catch(() => ({ stock: null, location_id: '100691018073' }))
     ]);
 
     const { P, daily_mtd, daily_d7, _dates } = shopify;
@@ -511,7 +522,8 @@ export default async function handler(req, res) {
       C,
       daily_mtd,
       daily_d7,
-      klaviyo
+      klaviyo,
+      inventory
     });
   } catch (err) {
     console.error('[/api/data] error:', err);

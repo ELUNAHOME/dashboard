@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "ELÛNA Dashboard",
-      "runtimeExecutable": "/usr/bin/python3",
+      "runtimeExecutable": "python3",
       "runtimeArgs": ["/Users/kneauk/Documents/Claude/Projects/ELÛNA/ELÛNA DASHBOARD/serve.py"],
       "port": 4444
     }
