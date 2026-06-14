@@ -163,12 +163,12 @@
 
   .foot{margin-top:34px;font-size:11px;color:var(--muted);text-align:center;letter-spacing:.04em}
 
-  /* refresh button */
-  .refresh-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);
-    color:var(--muted);font-size:11px;font-family:inherit;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
-    border-radius:999px;padding:6px 14px;cursor:pointer;transition:.15s;margin-top:8px}
-  .refresh-btn:hover{border-color:var(--sage);color:var(--ink)}
-  .refresh-btn.loading{opacity:.55;pointer-events:none}
+  /* refresh button — icon only, geen border */
+  .refresh-btn{display:inline-flex;align-items:center;justify-content:center;border:none;background:none;
+    color:var(--muted);font-size:16px;font-family:inherit;width:30px;height:30px;border-radius:50%;
+    cursor:pointer;transition:.15s;padding:0;margin:0}
+  .refresh-btn:hover{background:var(--line);color:var(--ink)}
+  .refresh-btn.loading{opacity:.45;pointer-events:none}
   .refresh-btn .spin{display:inline-block;animation:spin .7s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -283,9 +283,10 @@
       <img src="logo.png" alt="ELÛNA" class="topbar-logo" />
     </div>
     <div class="topbar-right">
-      <div class="topbar-meta">Live · bijgewerkt <b id="updated-lbl">—</b><br><span id="rangelbl"></span></div>
-      <button class="refresh-btn" id="refresh-btn" onclick="refreshData()">↻ Ververs</button>
-      <div class="btw-pill" onclick="toggleBTW()">
+      <span id="rangelbl" style="font-size:11px;color:var(--muted)"></span>
+      <span style="font-size:11px;color:var(--muted)" id="updated-lbl">—</span>
+      <button class="refresh-btn" id="refresh-btn" onclick="refreshData()" title="Ververs data">↻</button>
+      <div class="btw-pill" onclick="toggleBTW()" title="Schakel BTW weergave">
         <span class="btw-pill-lbl" id="btw-pill-lbl">Ex BTW</span>
         <button class="btw-sw" id="btw-toggle" type="button"></button>
       </div>
@@ -301,7 +302,6 @@
       <button data-k="mtd" class="active">Deze maand</button>
       <button data-k="d30">30 dagen</button>
     </div>
-    <div class="tag">Pistache Crème · Waterkoker</div>
   </div>
 
   <!-- OVERVIEW GRID: Performance card + Ad-mix card -->
@@ -547,14 +547,16 @@ async function loadData(bustCache) {
   DAILY_D7 = d.daily_d7 || [];
   KLAVIYO = d.klaviyo || {};
   DATA_META = d;
-  document.getElementById('updated-lbl').textContent = d.updated_label || '—';
+  // Toon alleen dag+maand, geen "Live · bijgewerkt" prefix
+  const lbl = d.updated_label || '—';
+  document.getElementById('updated-lbl').textContent = lbl;
 }
 
 async function refreshData() {
   const btn = document.getElementById('refresh-btn');
   const wrap = document.querySelector('.wrap');
   btn.classList.add('loading');
-  btn.innerHTML = '<span class="spin">↻</span> Verversen…';
+  btn.innerHTML = '<span class="spin">↻</span>';
   wrap.classList.add('refreshing');
   try {
     await loadData(true);
@@ -565,7 +567,7 @@ async function refreshData() {
   }
   wrap.classList.remove('refreshing');
   btn.classList.remove('loading');
-  btn.innerHTML = '↻ Ververs';
+  btn.innerHTML = '↻';
 }
 
 const eur=(n,d=2)=>'€'+Number(n).toLocaleString('nl-NL',{minimumFractionDigits:d,maximumFractionDigits:d});
