@@ -253,8 +253,8 @@ async function klFetch(endpoint, body) {
 
 async function klCount(metricId, dateStart, dateEnd, filterList = false) {
   const filter = filterList
-    ? `and(greater-or-equal(datetime,${dateStart}T00:00:00+00:00),less-or-equal(datetime,${dateEnd}T23:59:59+00:00),equals(list,["${KL_LIST_ID}"]))`
-    : `and(greater-or-equal(datetime,${dateStart}T00:00:00+00:00),less-or-equal(datetime,${dateEnd}T23:59:59+00:00))`;
+    ? `and(greater-or-equal(datetime,${dateStart}T00:00:00+00:00),less-than(datetime,${dateEnd}T23:59:59+00:00),equals(list,["${KL_LIST_ID}"]))`
+    : `and(greater-or-equal(datetime,${dateStart}T00:00:00+00:00),less-than(datetime,${dateEnd}T23:59:59+00:00))`;
 
   const body = {
     data: {
