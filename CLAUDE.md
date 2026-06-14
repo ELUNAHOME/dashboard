@@ -1,45 +1,87 @@
 # ELÛNA Dashboard — CLAUDE.md
 
 ## Wat is dit
-Statisch HTML dashboard voor ELÛNA (Calm Beige waterkoker, €69,95).
-Live op: https://dashboard.elunahome.nl (GitHub Pages, repo: ELUNAHOME/dashboard)
+Vercel serverless dashboard voor ELÛNA (Calm Beige waterkoker, €69,95).
+Live op: https://dashboard.elunahome.nl (Vercel, repo: ELUNAHOME/dashboard)
 
-Data wordt opgeslagen in `data.json`. De HTML laadt dit bestand bij elke pageload
-en bij de "Ververs" knop in de header. Nooit direct data in `index.html` aanpassen.
+De live data komt van `/api/data` (Vercel serverless). Als die faalt → fallback op `data.json`.
+Nooit direct data in `index.html` aanpassen.
 
 ---
 
-## Dagelijkse refresh (de enige taak)
+## Hoe werkt de data
 
-Voer dit uit om `data.json` bij te werken en live te zetten:
+| Bron | Hoe | Status |
+|------|-----|--------|
+| Shopify | Automatisch via Shopify API | Live |
+| Meta Ads | Automatisch via Meta Graph API | Live |
+| Klaviyo metrics | Automatisch via Klaviyo API | Live |
+| Klaviyo flows & campagnes | Automatisch via flow/campaign-values-reports API | Live |
+| Google Ads | Handmatig via `scripts/update-google.sh` | Handmatig |
 
-1. **Shopify** via MCP — `shopify_list_orders`
-   - MTD: `created_at_min` = 1e van de maand, `financial_status: paid`, `limit: 250`
-   - 7d: `created_at_min` = 7 dagen geleden
-   - 30d: `created_at_min` = 30 dagen geleden
-   - Bereken: `rev` = som `total_price`, `orders` = count, `units` = som quantities
+---
 
-2. **Meta Ads** via MCP — `ads_get_ad_entities`
-   - Account ID: `924352226288770`, level: `campaign`
-   - `date_preset`: `this_month`, `last_7d`, `last_30d`
-   - Fields: `spend, impressions, clicks, ctr, cpm, cpc, purchase_roas`
+## Google Ads bijwerken (30 seconden)
 
-3. **Klaviyo** via MCP — `query_metric_aggregates`
-   - Metric IDs (niet wijzigen):
-     - Opened Email: `X7Kyiq`
-     - Received Email: `R7sRak`
-     - Clicked Email: `SmuWpA`
-     - Subscribed to Email: `Xw275a`
-   - List ID: `TYEjdh`
-   - Filter: MTD (1e van de maand → vandaag)
+```bash
+bash scripts/update-google.sh
+```
 
-4. **Google Ads** — HANDMATIG (API pending, aanvraag 13-06-2026)
-   - Klant-ID: `470-420-6454`, login: support@elunahome.nl
-   - Haal op via ads.google.com: kosten, conv.waarde, conversies (periode: MTD)
-   - Als niet beschikbaar: gebruik laatste bekende waarden uit data.json
+Voert interactief in:
+- Google spend MTD / 30d / 7d
+- Google ROAS MTD / 30d
 
-5. **Update `data.json`** met nieuwe cijfers
-6. **Push naar GitHub**: `git add data.json && git commit -m "data refresh [datum]" && git push`
+Vereist: `vercel` CLI geïnstalleerd en ingelogd (`vercel login`).
+
+Handmatige waarden halen op via:
+> ads.google.com > Campagnes > periode: "Deze maand" > rij "Totaal: account"
+> Kolommen: Kosten + Conv.waarde/kosten (Klant-ID: 470-420-6454)
+
+---
+
+## Token check
+
+Controleer META_ACCESS_TOKEN geldigheid:
+```
+https://dashboard.elunahome.nl/api/health
+```
+
+Geeft terug: is_valid, never_expires, days_left, waarschuwing als < 30 dagen.
+
+Als de token bijna verloopt:
+> Meta Business Manager > Systeemgebruikers > Token genereren > vervaldatum: Never
+
+---
+
+## data.json bijwerken (fallback)
+
+`data.json` is de statische fallback. Bijwerken via dagelijkse MCP calls:
+
+1. **Shopify** via `shopify_list_orders` — MTD, 7d, 30d orders
+2. **Meta** via `ads_get_ad_entities` — account 924352226288770, campaign niveau
+3. **Klaviyo** via `get_flow_report` + `get_campaign_report` MCP tools
+   - Placed Order metric ID: `RP7a8m`
+   - Timeframe: `last_30_days`
+4. **Google** handmatig via ads.google.com
+
+Push: `git add data.json && git commit -m "data refresh $(date +%Y-%m-%d)" && git push`
+
+---
+
+## Env vars (Vercel project settings)
+
+| Var | Waarde |
+|-----|--------|
+| SHOPIFY_STORE | elunahome.myshopify.com |
+| SHOPIFY_ACCESS_TOKEN | shpat_... |
+| META_ACCESS_TOKEN | EAA... |
+| META_AD_ACCOUNT | 924352226288770 |
+| KLAVIYO_API_KEY | pk_... |
+| GOOGLE_SPEND_MTD | handmatig (bijv. 503.64) |
+| GOOGLE_GROAS_MTD | handmatig (bijv. 1.42) |
+| GOOGLE_SPEND_D30 | handmatig |
+| GOOGLE_GROAS_D30 | handmatig |
+| GOOGLE_SPEND_D7 | handmatig (optioneel) |
 
 ---
 
@@ -74,14 +116,15 @@ Meta in-platform ROAS (`mroas`) is NIET betrouwbaar — altijd blended gebruiken
 
 ```
 ELÛNA DASHBOARD/
-├── index.html          # Dashboard shell — bevat CSS, HTML, JS logic
-├── data.json           # Alle live cijfers — dit is het enige bestand dat dagelijks wijzigt
-├── logo.png            # ELÛNA logo (1080×1080, source)
-├── favicon.ico         # Browser favicon (16/32/48px)
-├── favicon.png         # PNG favicon (32px)
-├── apple-touch-icon.png # iOS/Android icon (180px, pistache achtergrond)
-├── CNAME               # dashboard.elunahome.nl
-└── REFRESH.md          # Uitgebreide handmatige refresh-instructies
+├── index.html               # Dashboard shell — CSS, HTML, JS logic
+├── data.json                # Statische fallback — bijwerken bij grote data-wijzigingen
+├── api/
+│   ├── data.js              # Vercel serverless — Shopify + Meta + Klaviyo live
+│   └── health.js            # Token check endpoint
+├── scripts/
+│   └── update-google.sh     # Google Ads handmatige update (30 sec)
+├── vercel.json              # Routes: /api/data + /api/health
+└── CNAME                    # dashboard.elunahome.nl
 ```
 
 ---
@@ -89,5 +132,4 @@ ELÛNA DASHBOARD/
 ## Permissions
 
 - Lees altijd, schrijf nooit naar Shopify/Meta/Klaviyo/Google — alleen data ophalen
-- Push uitsluitend naar `main` branch na expliciete bevestiging van de gebruiker
 - Google Ads: alleen lezen via UI of API, nooit campagnes aanpassen
