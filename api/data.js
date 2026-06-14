@@ -251,10 +251,8 @@ async function klFetch(endpoint, body) {
   return res.json();
 }
 
-async function klCount(metricId, dateStart, dateEnd, filterList = false) {
-  const filter = filterList
-    ? `and(greater-or-equal(datetime,${dateStart}T00:00:00+00:00),less-than(datetime,${dateEnd}T23:59:59+00:00),equals(list,["${KL_LIST_ID}"]))`
-    : `and(greater-or-equal(datetime,${dateStart}T00:00:00+00:00),less-than(datetime,${dateEnd}T23:59:59+00:00))`;
+async function klCount(metricId, dateStart, dateEnd) {
+  const filter = `and(greater-or-equal(datetime,${dateStart}T00:00:00+00:00),less-than(datetime,${dateEnd}T23:59:59+00:00))`;
 
   const body = {
     data: {
@@ -278,7 +276,7 @@ async function fetchKlaviyo(dateStart, dateEnd) {
     klCount(KL_RECEIVED, dateStart, dateEnd),
     klCount(KL_OPENED, dateStart, dateEnd),
     klCount(KL_CLICKED, dateStart, dateEnd),
-    klCount(KL_SUBSCRIBED, dateStart, dateEnd, true)
+    klCount(KL_SUBSCRIBED, dateStart, dateEnd)
   ]);
 
   const openRate  = received > 0 ? r2((opened  / received) * 100) : 0;
