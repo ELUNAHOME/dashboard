@@ -142,29 +142,48 @@ async function fetchShopify() {
   const d30Start  = amsDate(30);
   const mtd       = mtdStart();
 
-  const [todayOrders, yesterdayOrders, d7Orders, mtdOrders, d30Orders] = await Promise.all([
+  // Prev-period dates voor delta badges
+  const dayNum = parseInt(today.split('-')[2]);
+  const [yr, mo] = today.split('-').map(Number);
+  const prevMo = mo === 1 ? 12 : mo - 1;
+  const prevYr = mo === 1 ? yr - 1 : yr;
+  const prevMtdS = `${prevYr}-${String(prevMo).padStart(2,'0')}-01`;
+  const prevMtdE = `${prevYr}-${String(prevMo).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+
+  const [
+    todayOrders, yesterdayOrders, d7Orders, mtdOrders, d30Orders,
+    prevGisterenOrders, prevD7Orders, prevMtdOrders, prevD30Orders
+  ] = await Promise.all([
     shopifyOrders(today, today),
     shopifyOrders(yesterday, yesterday),
     shopifyOrders(d7Start, today),
     shopifyOrders(mtd, today),
-    shopifyOrders(d30Start, today)
+    shopifyOrders(d30Start, today),
+    shopifyOrders(amsDate(2), amsDate(2)),
+    shopifyOrders(amsDate(14), amsDate(8)),
+    shopifyOrders(prevMtdS, prevMtdE),
+    shopifyOrders(amsDate(60), amsDate(31))
   ]);
 
-  const todayAgg     = aggregateOrders(todayOrders);
-  const yesterdayAgg = aggregateOrders(yesterdayOrders);
-  const d7Agg        = aggregateOrders(d7Orders);
-  const mtdAgg       = aggregateOrders(mtdOrders);
-  const d30Agg       = aggregateOrders(d30Orders);
+  const todayAgg        = aggregateOrders(todayOrders);
+  const yesterdayAgg    = aggregateOrders(yesterdayOrders);
+  const d7Agg           = aggregateOrders(d7Orders);
+  const mtdAgg          = aggregateOrders(mtdOrders);
+  const d30Agg          = aggregateOrders(d30Orders);
+  const prevGisterenAgg = aggregateOrders(prevGisterenOrders);
+  const prevD7Agg       = aggregateOrders(prevD7Orders);
+  const prevMtdAgg      = aggregateOrders(prevMtdOrders);
+  const prevD30Agg      = aggregateOrders(prevD30Orders);
 
   const mtdDays = parseInt(today.split('-')[2]);
 
   return {
     P: {
-      today:    { label: 'Vandaag',      range: dateLabel(today, today),         ...todayAgg,     spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null },
-      gisteren: { label: 'Gisteren',     range: dateLabel(yesterday, yesterday),  ...yesterdayAgg, spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null },
-      d7:       { label: '7 dagen',      range: dateLabel(d7Start, today),        ...d7Agg,        spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null },
-      mtd:      { label: 'Deze maand',   range: dateLabel(mtd, today),            ...mtdAgg,       spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null },
-      d30:      { label: '30 dagen',     range: dateLabel(d30Start, today),       ...d30Agg,       spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null }
+      today:    { label: 'Vandaag',      range: dateLabel(today, today),         ...todayAgg,     spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null, prev_rev: yesterdayAgg.rev,    prev_orders: yesterdayAgg.orders },
+      gisteren: { label: 'Gisteren',     range: dateLabel(yesterday, yesterday),  ...yesterdayAgg, spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null, prev_rev: prevGisterenAgg.rev, prev_orders: prevGisterenAgg.orders },
+      d7:       { label: '7 dagen',      range: dateLabel(d7Start, today),        ...d7Agg,        spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null, prev_rev: prevD7Agg.rev,       prev_orders: prevD7Agg.orders },
+      mtd:      { label: 'Deze maand',   range: dateLabel(mtd, today),            ...mtdAgg,       spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null, prev_rev: prevMtdAgg.rev,      prev_orders: prevMtdAgg.orders },
+      d30:      { label: '30 dagen',     range: dateLabel(d30Start, today),       ...d30Agg,       spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null, prev_rev: prevD30Agg.rev,      prev_orders: prevD30Agg.orders }
     },
     daily_mtd: dailyBreakdown(mtdOrders, mtd, today),
     daily_d7:  dailyBreakdown(d7Orders, d7Start, today),
