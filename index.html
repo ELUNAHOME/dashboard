@@ -318,6 +318,7 @@
     <div class="topbar-right">
       <span id="rangelbl" style="font-size:11px;color:var(--muted)"></span>
       <span style="font-size:11px;color:var(--muted)" id="updated-lbl">—</span>
+      <span id="data-source-badge" style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--muted)" title="Databron">○ laden</span>
       <button class="refresh-btn" id="refresh-btn" onclick="refreshData()" title="Ververs data">↻</button>
       <div class="btw-pill" onclick="toggleBTW()" title="Schakel BTW weergave">
         <span class="btw-pill-lbl" id="btw-pill-lbl">Ex BTW</span>
@@ -588,6 +589,7 @@ let GROSS = LIST_EX - FIXED_EX;  // wordt per render overschreven met werkelijke
 let showBTW = false;
 let chartType = localStorage.getItem('eluna-chart-type') || 'bar';
 let P = {}, C = {}, DAILY_MTD = [], DAILY_D7 = [], KLAVIYO = {}, DATA_META = {}, INVENTORY = {};
+let DATA_SOURCE = 'fallback'; // 'live' | 'fallback'
 
 // ── data loading ────────────────────────────────────────────────
 // Probeert eerst de live Vercel API; valt terug op statisch data.json.
@@ -608,6 +610,13 @@ async function loadData(bustCache) {
   } catch(_) {
     const res = await fetch('./data.json' + cacheBust);
     d = await res.json();
+  }
+  DATA_SOURCE = usedLiveApi ? 'live' : 'fallback';
+  const srcEl = document.getElementById('data-source-badge');
+  if (srcEl) {
+    srcEl.textContent = usedLiveApi ? '● live' : '○ fallback';
+    srcEl.style.color = usedLiveApi ? 'var(--good)' : 'var(--warn)';
+    srcEl.title = usedLiveApi ? 'Data van live API (Shopify + Meta + Klaviyo)' : 'Statische fallback — live API niet bereikbaar';
   }
 
   // Google fallback: live API heeft nog geen env vars → haal gspend/groas uit data.json
@@ -716,9 +725,21 @@ function renderPerfStats(k, grossEx, cac, net){
   const aov=p.orders>0?p.rev/p.orders:null;
   const isDay = k==='today'||k==='gisteren';
   const attrBadge = isDay ? `<div class="attr-badge" style="margin-top:8px"><span class="attr-dot"></span>Meta-attributie loopt 1–3 dgn achter · Shopify-omzet is leidend</div>` : '';
+
+  // MTD pacing
+  let pacingHtml = '';
+  if(k === 'mtd') {
+    const dayOfMonth = parseInt(new Date().toLocaleDateString('nl-NL', {timeZone:'Europe/Amsterdam', day:'numeric'}));
+    const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate();
+    const dailyAvg = dayOfMonth > 0 ? p.rev / dayOfMonth : 0;
+    const projected = Math.round(dailyAvg * daysInMonth);
+    pacingHtml = `<div style="font-size:11px;color:var(--muted);margin-top:4px">dag ${dayOfMonth}/${daysInMonth} · koers <b style="color:var(--ink)">${eur0(projected*bF)}</b>/jun</div>`;
+  }
+
   document.getElementById('perf-stats').innerHTML=`
     <div class="ps-total">${eur0(p.rev*bF)}</div>
     <div class="ps-sub">${p.orders} orders · ${p.units} stuks · AOV ${aov?eur(aov*bF):'—'} <span style="font-size:10px;text-transform:uppercase;letter-spacing:.06em">${showBTW?'incl':'ex'} btw</span></div>
+    ${pacingHtml}
     ${attrBadge}
     <div class="ps-divider"></div>
     <div class="ps-row"><span class="ps-lbl">Blended ROAS</span><span class="ps-val ${roas>=1.8?'good':'warn'}">${roas>0?xfmt(roas):'—'}</span></div>
