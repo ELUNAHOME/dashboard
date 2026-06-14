@@ -158,6 +158,22 @@
   .gh-url{color:#58a6ff;font-weight:700}
 
   .foot{margin-top:34px;font-size:11px;color:var(--muted);text-align:center;letter-spacing:.04em}
+
+  /* refresh button */
+  .refresh-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);
+    color:var(--muted);font-size:11px;font-family:inherit;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    border-radius:999px;padding:6px 14px;cursor:pointer;transition:.15s;margin-top:8px}
+  .refresh-btn:hover{border-color:var(--sage);color:var(--ink)}
+  .refresh-btn.loading{opacity:.55;pointer-events:none}
+  .refresh-btn .spin{display:inline-block;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* klaviyo */
+  .klav-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:4px 0}
+  @media(max-width:800px){.klav-grid{grid-template-columns:repeat(2,1fr)}}
+  .klav-kpi .klabel{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+  .klav-kpi .kval{font-size:22px;font-weight:700;letter-spacing:-.01em}
+  .klav-kpi .ksub{font-size:11px;color:var(--muted);margin-top:2px}
 </style>
 </head>
 <body>
@@ -167,8 +183,9 @@
     <div class="brand"><img src="logo.png" alt="ELÛNA" /><small>BRAND DASHBOARD · BUILT FOR RITUALS</small></div>
     <div class="meta-h">
       <div class="tag">Pistache Crème · Waterkoker</div>
-      <div style="margin-top:8px">Live · bijgewerkt <b>13 juni 2026</b></div>
+      <div style="margin-top:8px">Live · bijgewerkt <b id="updated-lbl">—</b></div>
       <div id="rangelbl" style="margin-top:2px"></div>
+      <button class="refresh-btn" id="refresh-btn" onclick="refreshData()">↻ Ververs</button>
     </div>
   </header>
   <div class="rule"></div>
@@ -202,6 +219,12 @@
   <!-- META CAMPAIGNS -->
   <h2 style="margin-top:34px">Meta campagnes · breakdown</h2>
   <div class="card"><table class="ctable" id="meta-table"></table></div>
+
+  <!-- KLAVIYO -->
+  <h2 style="margin-top:28px">Klaviyo · email performance MTD</h2>
+  <div class="card">
+    <div class="klav-grid" id="klav-grid"></div>
+  </div>
 
   <!-- ACTION ENGINE -->
   <div style="margin-top:34px">
@@ -343,34 +366,40 @@
     </div>
   </div>
 
-  <!-- GITHUB PAGES -->
-  <h2 style="margin-top:34px">GitHub Pages · dashboard als URL</h2>
-  <div class="gh-box">
-    <div class="gh-step">Stap 1 &mdash; <b>Jij (1 minuut):</b> Ga naar github.com/ELUNAHOME, klik "+ New repository", naam: <b>dashboard</b>, Public, geen README, klik Create.</div>
-    <div class="gh-step">Stap 2 &mdash; <b>Kopieer dit commando in Terminal en druk Enter:</b></div>
-    <code>cd "/Users/kneauk/Documents/Claude/Projects/ELÛNA/ELÛNA DASHBOARD" && git init && git add index.html && git commit -m "ELUNA dashboard v6" && git branch -M main && git remote add origin https://github.com/ELUNAHOME/dashboard.git && git push -u origin main</code>
-    <div class="gh-step">Stap 3 &mdash; <b>Jij (30 sec):</b> Ga naar github.com/ELUNAHOME/dashboard &rarr; Settings &rarr; Pages &rarr; Branch: main &rarr; Save.</div>
-    <div class="gh-step" style="margin-top:10px">Resultaat (na ~1 minuut): <span class="gh-url">https://elunahome.github.io/dashboard</span> &mdash; werkt op telefoon, deelbaar. Kosten: <b>€0</b>.</div>
-  </div>
-
-  <div class="foot">ELÛNA v6 · Shopify (MCP) + Meta (MCP) + Google (handmatig, API pending) · bijgewerkt 13-06-2026 · blended = omzet ÷ (Meta + Google) · Zacht in geluid, sterk in design.</div>
+  <div class="foot" id="foot">ELÛNA v7 · Shopify (live) + Meta (live) + Klaviyo (live) + Google (handmatig, API pending) · blended = omzet ÷ (Meta + Google) · Zacht in geluid, sterk in design.</div>
 </div>
 
 <script>
 const GROSS = 26.35;
-const P = {
-  today:{label:'Vandaag',      range:'13 jun 2026',rev:188.88,orders:3,units:3,spend:32.91,gspend:8.53,mroas:2.34,groas:7.38,ctr:2.18,cpc:0.73},
-  d7:   {label:'7 dagen',      range:'6–12 jun 2026',rev:594.60,orders:9,units:9,spend:320.63,gspend:254.08,mroas:0.50,groas:1.07,ctr:3.24,cpc:0.35},
-  mtd:  {label:'Deze maand',   range:'1–13 jun 2026',rev:1350.12,orders:20,units:21,spend:582.05,gspend:503.64,mroas:0.81,groas:1.42,ctr:3.14,cpc:0.39},
-  d30:  {label:'30 dagen',     range:'14 mei–12 jun 2026',rev:3525.66,orders:53,units:54,spend:1244.87,gspend:1154.94,mroas:1.46,groas:1.77,ctr:2.73,cpc:0.53},
-};
-const C = {
-  today:[{name:'SALES · NEW CUSTOMERS',spend:26.85,imp:1836,clicks:40,ctr:2.18,cpm:14.62,cpc:0.67,roas:2.34},{name:'SALES · RETARGETING',spend:6.06,imp:227,clicks:5,ctr:2.20,cpm:26.70,cpc:1.21,roas:null}],
-  d7:[{name:'SALES · NEW CUSTOMERS',spend:249.85,imp:25569,clicks:856,ctr:3.35,cpm:9.77,cpc:0.29,roas:0.50},{name:'SALES · RETARGETING',spend:70.78,imp:2732,clicks:60,ctr:2.20,cpm:25.91,cpc:1.18,roas:null}],
-  mtd:[{name:'SALES · NEW CUSTOMERS',spend:467.22,imp:42897,clicks:1385,ctr:3.23,cpm:10.89,cpc:0.34,roas:0.81},{name:'SALES · RETARGETING',spend:114.83,imp:4192,clicks:95,ctr:2.27,cpm:27.39,cpc:1.21,roas:null}],
-  d30:[{name:'SALES · NEW CUSTOMERS',spend:936.30,imp:73881,clicks:2093,ctr:2.83,cpm:12.67,cpc:0.45,roas:1.46},{name:'SALES · RETARGETING',spend:226.61,imp:8271,clicks:194,ctr:2.35,cpm:27.40,cpc:1.17,roas:0.86},{name:'SALES · SCALE',spend:81.96,imp:4611,clicks:80,ctr:1.73,cpm:17.77,cpc:1.02,roas:null}],
-};
-const DAILY_MTD=[{d:'1/6',rev:62.96},{d:'2/6',rev:62.96},{d:'3/6',rev:314.80},{d:'4/6',rev:62.96},{d:'5/6',rev:62.96},{d:'6/6',rev:0},{d:'7/6',rev:202.86},{d:'8/6',rev:265.82},{d:'9/6',rev:0},{d:'10/6',rev:0},{d:'11/6',rev:62.96},{d:'12/6',rev:62.96},{d:'13/6',rev:188.88}];
+let P = {}, C = {}, DAILY_MTD = [], KLAVIYO = {}, DATA_META = {};
+
+// ── data loading ────────────────────────────────────────────────
+async function loadData(bustCache) {
+  const url = './data.json' + (bustCache ? '?v=' + Date.now() : '');
+  const res = await fetch(url);
+  const d = await res.json();
+  P = d.P;
+  C = d.C;
+  DAILY_MTD = d.daily_mtd;
+  KLAVIYO = d.klaviyo || {};
+  DATA_META = d;
+  document.getElementById('updated-lbl').textContent = d.updated_label || '—';
+}
+
+async function refreshData() {
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('loading');
+  btn.innerHTML = '<span class="spin">↻</span> Verversen…';
+  try {
+    await loadData(true);
+    const active = document.querySelector('#switch button.active');
+    render(active ? active.dataset.k : 'mtd');
+  } catch(e) {
+    console.error(e);
+  }
+  btn.classList.remove('loading');
+  btn.innerHTML = '↻ Ververs';
+}
 
 const eur=(n,d=2)=>'€'+Number(n).toLocaleString('nl-NL',{minimumFractionDigits:d,maximumFractionDigits:d});
 const eur0=n=>'€'+Math.round(n).toLocaleString('nl-NL');
@@ -426,6 +455,37 @@ function generateActions(k){
   later.push(I('playbook',T('google','Google'),'Google API live → volledig automatisch dashboard','Zodra Basic Access goedgekeurd: dashboard vernieuwt Google-data automatisch.'));
 
   return {nu,bn,later};
+}
+
+function renderKlaviyo(){
+  const k = KLAVIYO;
+  if(!k || !k.mtd_received) {
+    document.getElementById('klav-grid').innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">Klaviyo data wordt geladen…</div>';
+    return;
+  }
+  const fmt = n => n == null ? '—' : Number(n).toLocaleString('nl-NL');
+  const fmtPct = n => n == null ? '—' : Number(n).toLocaleString('nl-NL',{minimumFractionDigits:1,maximumFractionDigits:1}) + '%';
+  document.getElementById('klav-grid').innerHTML = `
+    <div class="klav-kpi">
+      <div class="klabel">Emails verzonden</div>
+      <div class="kval">${fmt(k.mtd_received)}</div>
+      <div class="ksub">MTD jun 2026</div>
+    </div>
+    <div class="klav-kpi">
+      <div class="klabel">Open rate</div>
+      <div class="kval" style="color:var(--good)">${fmtPct(k.open_rate_pct)}</div>
+      <div class="ksub">${fmt(k.mtd_opened_unique)} unieke openers</div>
+    </div>
+    <div class="klav-kpi">
+      <div class="klabel">Click rate</div>
+      <div class="kval">${fmtPct(k.click_rate_pct)}</div>
+      <div class="ksub">${fmt(k.mtd_clicked_unique)} unieke klikkers</div>
+    </div>
+    <div class="klav-kpi">
+      <div class="klabel">Nieuwe abonnees</div>
+      <div class="kval" style="color:var(--good)">+${fmt(k.mtd_new_subscribers)}</div>
+      <div class="ksub">MTD jun 2026</div>
+    </div>`;
 }
 
 function renderChart(k){
@@ -490,6 +550,7 @@ function render(k){
 
   renderChart(k);
   renderMeta(k);
+  renderKlaviyo();
   document.querySelectorAll('#switch button').forEach(b=>b.classList.toggle('active',b.dataset.k===k));
   aeApplyDismissed();
 }
@@ -545,7 +606,10 @@ function aeRestore(colId){
 }
 
 document.querySelectorAll('#switch button').forEach(b=>b.addEventListener('click',()=>render(b.dataset.k)));
-render('mtd');
+loadData().then(()=>render('mtd')).catch(e=>{
+  console.error('data.json laden mislukt:',e);
+  document.getElementById('updated-lbl').textContent = 'laad fout';
+});
 </script>
 </body>
 </html>

@@ -1,0 +1,79 @@
+{
+  "updated": "2026-06-14T09:00:00+02:00",
+  "updated_label": "14 juni 2026",
+  "google_note": "handmatig · Google API pending",
+  "P": {
+    "today": {
+      "label": "Vandaag", "range": "13 jun 2026",
+      "rev": 328.78, "orders": 5, "units": 5,
+      "spend": 47.10, "gspend": 38.74,
+      "mroas": null, "groas": null,
+      "ctr": 3.19, "cpc": 0.34
+    },
+    "d7": {
+      "label": "7 dagen", "range": "7–13 jun 2026",
+      "rev": 923.38, "orders": 14, "units": 14,
+      "spend": 329.73, "gspend": 254.08,
+      "mroas": 0.72, "groas": null,
+      "ctr": 2.85, "cpc": 0.38
+    },
+    "mtd": {
+      "label": "Deze maand", "range": "1–14 jun 2026",
+      "rev": 1490.02, "orders": 22, "units": 23,
+      "spend": 597.83, "gspend": 503.64,
+      "mroas": 0.78, "groas": 1.42,
+      "ctr": 3.19, "cpc": 0.34
+    },
+    "d30": {
+      "label": "30 dagen", "range": "15 mei–13 jun 2026",
+      "rev": 3791.48, "orders": 57, "units": 58,
+      "spend": 1276.64, "gspend": 1154.94,
+      "mroas": 1.42, "groas": 1.77,
+      "ctr": 2.81, "cpc": 0.45
+    }
+  },
+  "C": {
+    "today": [
+      {"name": "SALES · NEW CUSTOMERS", "spend": 40.11, "imp": 3155, "clicks": 100, "ctr": 3.17, "cpm": 12.71, "cpc": 0.40, "roas": null},
+      {"name": "SALES · RETARGETING",   "spend": 6.99,  "imp": 256,  "clicks": 6,   "ctr": 2.34, "cpm": 27.30, "cpc": 1.17, "roas": null}
+    ],
+    "d7": [
+      {"name": "SALES · NEW CUSTOMERS", "spend": 260.85, "imp": 24346, "clicks": 693, "ctr": 2.85, "cpm": 10.71, "cpc": 0.38, "roas": 0.72},
+      {"name": "SALES · RETARGETING",   "spend": 68.88,  "imp": 2720,  "clicks": 64,  "ctr": 2.35, "cpm": 25.32, "cpc": 1.08, "roas": null}
+    ],
+    "mtd": [
+      {"name": "SALES · NEW CUSTOMERS", "spend": 482.86, "imp": 44114, "clicks": 1408, "ctr": 3.19, "cpm": 10.95, "cpc": 0.34, "roas": 0.78},
+      {"name": "SALES · RETARGETING",   "spend": 114.97, "imp": 4205,  "clicks": 97,  "ctr": 2.31, "cpm": 27.34, "cpc": 1.19, "roas": null}
+    ],
+    "d30": [
+      {"name": "SALES · NEW CUSTOMERS", "spend": 961.88, "imp": 75912, "clicks": 2134, "ctr": 2.81, "cpm": 12.67, "cpc": 0.45, "roas": 1.42},
+      {"name": "SALES · RETARGETING",   "spend": 232.80, "imp": 8510,  "clicks": 201,  "ctr": 2.36, "cpm": 27.36, "cpc": 1.16, "roas": 0.84},
+      {"name": "SALES · SCALE",         "spend": 81.96,  "imp": 4611,  "clicks": 80,   "ctr": 1.73, "cpm": 17.77, "cpc": 1.02, "roas": null}
+    ]
+  },
+  "daily_mtd": [
+    {"d": "1/6",  "rev": 62.96},
+    {"d": "2/6",  "rev": 62.96},
+    {"d": "3/6",  "rev": 314.80},
+    {"d": "4/6",  "rev": 62.96},
+    {"d": "5/6",  "rev": 62.96},
+    {"d": "6/6",  "rev": 0},
+    {"d": "7/6",  "rev": 202.86},
+    {"d": "8/6",  "rev": 265.82},
+    {"d": "9/6",  "rev": 0},
+    {"d": "10/6", "rev": 0},
+    {"d": "11/6", "rev": 62.96},
+    {"d": "12/6", "rev": 62.96},
+    {"d": "13/6", "rev": 328.78},
+    {"d": "14/6", "rev": 0}
+  ],
+  "klaviyo": {
+    "list_id": "TYEjdh",
+    "mtd_received": 163,
+    "mtd_opened_unique": 120,
+    "mtd_clicked_unique": 9,
+    "mtd_new_subscribers": 59,
+    "open_rate_pct": 73.6,
+    "click_rate_pct": 5.5
+  }
+}
