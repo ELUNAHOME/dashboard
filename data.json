@@ -94,6 +94,90 @@
     "mtd_clicked_unique": 9,
     "mtd_new_subscribers": 59,
     "open_rate_pct": 73.6,
-    "click_rate_pct": 5.5
+    "click_rate_pct": 5.5,
+    "flows": [
+      {
+        "name": "Welcome Series",
+        "trigger": "Nieuwe abonnee",
+        "status": "live",
+        "messages": 2,
+        "d30_recipients": 163,
+        "d30_open_rate": 45.4,
+        "d30_ctr": 5.52,
+        "d30_conversions": 3,
+        "d30_revenue": 188.88,
+        "d30_unsubscribes": 4,
+        "note": "Email 1 levert €188,88 en 3 conversies. Email 2 (cadeau-herinnering) 0 conversies."
+      },
+      {
+        "name": "Browse Abandonment",
+        "trigger": "Product bekeken, niet gekocht",
+        "status": "live",
+        "messages": 1,
+        "d30_recipients": 108,
+        "d30_open_rate": 44.3,
+        "d30_ctr": 0.94,
+        "d30_conversions": 1,
+        "d30_revenue": 62.96,
+        "d30_unsubscribes": 2,
+        "note": "Open rate sterk. CTR zwak (0,94%) — CTA of aanbod werkt niet."
+      },
+      {
+        "name": "Abandoned Check Out",
+        "trigger": "Checkout gestart, niet afgerond",
+        "status": "live",
+        "messages": 2,
+        "d30_recipients": 8,
+        "d30_open_rate": 62.5,
+        "d30_ctr": 0.0,
+        "d30_conversions": 0,
+        "d30_revenue": 0,
+        "d30_unsubscribes": 0,
+        "note": "Slechts 8 triggers in 30d — mogelijk tracking-probleem of te weinig checkout-starters."
+      },
+      {
+        "name": "Product Review",
+        "trigger": "Na levering",
+        "status": "live",
+        "messages": 1,
+        "d30_recipients": 17,
+        "d30_open_rate": 29.4,
+        "d30_ctr": 0.0,
+        "d30_conversions": 0,
+        "d30_revenue": 0,
+        "d30_unsubscribes": 0,
+        "note": "0 clicks op de review-CTA. Onderwerp of knop werkt niet — A/B testen."
+      }
+    ],
+    "campaigns": [
+      {
+        "name": "€25 Korting · Mei 2026",
+        "subject": "Rust op je aanrecht, nu €25 korting",
+        "status": "sent",
+        "send_date": "24 mei 2026",
+        "segment": "Niet-kopers 2026",
+        "recipients": 432,
+        "open_rate": 37.96,
+        "ctr": 4.17,
+        "conversions": 0,
+        "revenue": 0,
+        "unsubscribes": 8,
+        "note": "18 unieke klikken, 0 conversies — coupon of LP werkte niet."
+      },
+      {
+        "name": "Moederdag 2026",
+        "subject": "Voor de moeder die altijd aan iedereen denkt",
+        "status": "sent",
+        "send_date": "5 mei 2026",
+        "segment": "Volledige lijst",
+        "recipients": null,
+        "open_rate": null,
+        "ctr": null,
+        "conversions": null,
+        "revenue": null,
+        "unsubscribes": null,
+        "note": "Data buiten 30d venster — handmatig ophalen indien nodig."
+      }
+    ]
   }
 }

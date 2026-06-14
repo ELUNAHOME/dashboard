@@ -178,6 +178,25 @@
   .klav-kpi .klabel{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
   .klav-kpi .kval{font-size:22px;font-weight:700;letter-spacing:-.01em}
   .klav-kpi .ksub{font-size:11px;color:var(--muted);margin-top:2px}
+  /* email flows table */
+  .email-section-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:24px 0 12px}
+  .email-section-title:first-child{margin-top:0}
+  .flow-table{width:100%;border-collapse:collapse;font-size:13px}
+  .flow-table th{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);
+    text-align:left;padding:0 10px 8px;border-bottom:1px solid var(--line)}
+  .flow-table th:not(:first-child){text-align:right}
+  .flow-table td{padding:10px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  .flow-table td:not(:first-child){text-align:right;color:var(--ink)}
+  .flow-table tr:last-child td{border-bottom:none}
+  .flow-name{font-weight:600;font-size:13px;color:var(--ink);margin-bottom:2px}
+  .flow-trigger{font-size:11px;color:var(--muted)}
+  .flow-note{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4;font-style:italic}
+  .flow-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    background:var(--pist);color:var(--ink);border-radius:4px;padding:2px 6px;margin-bottom:4px}
+  .flow-badge.warn{background:#FFF3CD;color:#856404}
+  .val-good{color:var(--good)}
+  .val-warn{color:#B85C00}
+  .val-muted{color:var(--muted)}
 
   /* BTW toggle */
   .btw-toggle{border:1px solid var(--line);background:var(--card);color:var(--muted);font-size:11px;
@@ -513,10 +532,27 @@
   <!-- TAB: EMAIL -->
   <div class="tab-pane" id="tab-email">
 
-    <h2>Klaviyo · email performance MTD</h2>
-    <div class="card">
+    <h2>Klaviyo · email performance</h2>
+
+    <!-- KPI topbar -->
+    <div class="card" style="margin-bottom:20px">
       <div class="klav-grid" id="klav-grid"></div>
     </div>
+
+    <!-- Flows -->
+    <div class="card">
+      <div class="email-section-title">Flows · 30 dagen</div>
+      <div id="email-flows"></div>
+    </div>
+
+    <!-- Campaigns -->
+    <div class="card" style="margin-top:20px">
+      <div class="email-section-title">Campagnes · recent</div>
+      <div id="email-campaigns"></div>
+    </div>
+
+    <!-- Analyse -->
+    <div class="card richon-card" style="margin-top:20px" id="email-analyse"></div>
 
   </div><!-- /tab-email -->
 
@@ -667,35 +703,143 @@ function renderAdMix(k){
     <div class="ps-row"><span class="ps-lbl" style="font-size:11px">Google ROAS</span><span class="ps-val" style="font-size:12px">${xfmt(p.groas)}</span></div>`;
 }
 
-function renderKlaviyo(){
+function renderEmail(){
   const k = KLAVIYO;
+  const fmtN = n => n == null ? '—' : Number(n).toLocaleString('nl-NL');
+  const fmtPct = n => n == null ? '—' : Number(n).toLocaleString('nl-NL',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
+  const fmtEur = n => n == null || n === 0 ? '—' : '€'+Number(n).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  // ── KPI bar ──────────────────────────────────────────────────────
   if(!k || !k.mtd_received) {
     document.getElementById('klav-grid').innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">Klaviyo data wordt geladen…</div>';
-    return;
+  } else {
+    document.getElementById('klav-grid').innerHTML = `
+      <div class="klav-kpi">
+        <div class="klabel">Emails verzonden</div>
+        <div class="kval">${fmtN(k.mtd_received)}</div>
+        <div class="ksub">MTD jun 2026</div>
+      </div>
+      <div class="klav-kpi">
+        <div class="klabel">Open rate</div>
+        <div class="kval" style="color:var(--good)">${fmtPct(k.open_rate_pct)}</div>
+        <div class="ksub">${fmtN(k.mtd_opened_unique)} unieke openers</div>
+      </div>
+      <div class="klav-kpi">
+        <div class="klabel">Click rate</div>
+        <div class="kval">${fmtPct(k.click_rate_pct)}</div>
+        <div class="ksub">${fmtN(k.mtd_clicked_unique)} unieke klikkers</div>
+      </div>
+      <div class="klav-kpi">
+        <div class="klabel">Nieuwe abonnees</div>
+        <div class="kval" style="color:var(--good)">+${fmtN(k.mtd_new_subscribers)}</div>
+        <div class="ksub">MTD jun 2026</div>
+      </div>`;
   }
-  const fmt = n => n == null ? '—' : Number(n).toLocaleString('nl-NL');
-  const fmtPct = n => n == null ? '—' : Number(n).toLocaleString('nl-NL',{minimumFractionDigits:1,maximumFractionDigits:1}) + '%';
-  document.getElementById('klav-grid').innerHTML = `
-    <div class="klav-kpi">
-      <div class="klabel">Emails verzonden</div>
-      <div class="kval">${fmt(k.mtd_received)}</div>
-      <div class="ksub">MTD jun 2026</div>
-    </div>
-    <div class="klav-kpi">
-      <div class="klabel">Open rate</div>
-      <div class="kval" style="color:var(--good)">${fmtPct(k.open_rate_pct)}</div>
-      <div class="ksub">${fmt(k.mtd_opened_unique)} unieke openers</div>
-    </div>
-    <div class="klav-kpi">
-      <div class="klabel">Click rate</div>
-      <div class="kval">${fmtPct(k.click_rate_pct)}</div>
-      <div class="ksub">${fmt(k.mtd_clicked_unique)} unieke klikkers</div>
-    </div>
-    <div class="klav-kpi">
-      <div class="klabel">Nieuwe abonnees</div>
-      <div class="kval" style="color:var(--good)">+${fmt(k.mtd_new_subscribers)}</div>
-      <div class="ksub">MTD jun 2026</div>
-    </div>`;
+
+  // ── Flows table ───────────────────────────────────────────────────
+  const flowsEl = document.getElementById('email-flows');
+  const flows = k.flows || [];
+  if(!flows.length){
+    flowsEl.innerHTML = '<div style="color:var(--muted);font-size:13px">Geen flow-data beschikbaar</div>';
+  } else {
+    const rows = flows.map(f => {
+      const rph = f.d30_recipients > 0 && f.d30_revenue > 0
+        ? '€'+(f.d30_revenue/f.d30_recipients).toFixed(2).replace('.',',')
+        : '—';
+      const orClass = f.d30_open_rate >= 40 ? 'val-good' : f.d30_open_rate >= 25 ? '' : 'val-warn';
+      const ctrClass = f.d30_ctr >= 3 ? 'val-good' : f.d30_ctr >= 1 ? '' : 'val-warn';
+      const convClass = f.d30_conversions > 0 ? 'val-good' : 'val-muted';
+      const warnBadge = f.d30_recipients < 15 ? '<span class="flow-badge warn">laag volume</span><br>' : '';
+      return `<tr>
+        <td>
+          ${warnBadge}
+          <div class="flow-name">${f.name}</div>
+          <div class="flow-trigger">${f.trigger} · ${f.messages} email${f.messages>1?'s':''}</div>
+          ${f.note ? `<div class="flow-note">${f.note}</div>` : ''}
+        </td>
+        <td>${fmtN(f.d30_recipients)}</td>
+        <td class="${orClass}">${fmtPct(f.d30_open_rate)}</td>
+        <td class="${ctrClass}">${fmtPct(f.d30_ctr)}</td>
+        <td class="${convClass}">${f.d30_conversions}</td>
+        <td>${fmtEur(f.d30_revenue)}</td>
+        <td>${rph}</td>
+      </tr>`;
+    }).join('');
+    flowsEl.innerHTML = `
+      <table class="flow-table">
+        <thead><tr>
+          <th>Flow</th>
+          <th>Ontvangers</th>
+          <th>Open</th>
+          <th>CTR</th>
+          <th>Conv</th>
+          <th>Omzet</th>
+          <th>€/ontvanger</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  // ── Campaigns table ───────────────────────────────────────────────
+  const campEl = document.getElementById('email-campaigns');
+  const camps = k.campaigns || [];
+  if(!camps.length){
+    campEl.innerHTML = '<div style="color:var(--muted);font-size:13px">Geen campagne-data beschikbaar</div>';
+  } else {
+    const rows = camps.map(c => {
+      const orClass = c.open_rate == null ? '' : c.open_rate >= 35 ? 'val-good' : c.open_rate >= 20 ? '' : 'val-warn';
+      const convClass = c.conversions > 0 ? 'val-good' : c.ctr > 0 ? 'val-warn' : 'val-muted';
+      const dataRow = c.recipients == null
+        ? `<td colspan="5" style="color:var(--muted);font-size:12px">Data buiten 30d venster</td>`
+        : `<td>${fmtN(c.recipients)}</td>
+           <td class="${orClass}">${fmtPct(c.open_rate)}</td>
+           <td>${fmtPct(c.ctr)}</td>
+           <td class="${convClass}">${c.conversions != null ? c.conversions : '—'}</td>
+           <td>${c.unsubscribes != null ? c.unsubscribes : '—'} unsubs</td>`;
+      return `<tr>
+        <td>
+          <div class="flow-name">${c.name}</div>
+          <div class="flow-trigger">${c.send_date} · ${c.segment}</div>
+          ${c.note ? `<div class="flow-note">${c.note}</div>` : ''}
+        </td>
+        ${dataRow}
+      </tr>`;
+    }).join('');
+    campEl.innerHTML = `
+      <table class="flow-table">
+        <thead><tr>
+          <th>Campagne</th>
+          <th>Ontvangers</th>
+          <th>Open</th>
+          <th>CTR</th>
+          <th>Conv</th>
+          <th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  // ── Analyse card ──────────────────────────────────────────────────
+  const totalRevFlows = flows.reduce((s,f)=>s+f.d30_revenue,0);
+  const totalConvFlows = flows.reduce((s,f)=>s+f.d30_conversions,0);
+  const welcome = flows.find(f=>f.name==='Welcome Series');
+  const cart = flows.find(f=>f.name==='Abandoned Check Out');
+  const browse = flows.find(f=>f.name==='Browse Abandonment');
+  const review = flows.find(f=>f.name==='Product Review');
+  const bullets = [];
+  if(welcome) bullets.push(`Welcome Series genereert <strong>${fmtEur(welcome.d30_revenue)}</strong> in 30d — beste flow. Email 2 (cadeau) converteert niet; overweeg hem te verwijderen of te vervangen.`);
+  if(cart && cart.d30_recipients < 15) bullets.push(`Abandoned Checkout heeft maar <strong>${cart.d30_recipients} triggers</strong> in 30d — mogelijk tracking-probleem in Shopify/Klaviyo. Controleer de flow-trigger.`);
+  if(browse && browse.d30_ctr < 1) bullets.push(`Browse Abandonment: open rate ${fmtPct(browse.d30_open_rate)}, maar CTR ${fmtPct(browse.d30_ctr)} — CTA of aanbod werkt niet. Test een kortingsaanbieding.`);
+  if(review && review.d30_ctr === 0) bullets.push(`Product Review flow: 0 clicks op review-CTA — knop of onderwerpregel werkt niet. A/B testen met ander CTA-format.`);
+  const mailCamp = camps.find(c=>c.name&&c.name.includes('25 Korting'));
+  if(mailCamp && mailCamp.conversions === 0 && mailCamp.ctr > 0) bullets.push(`Campagne €25 korting: 18 klikken, 0 conversies — controleer of de couponcode actief was en of de landingspagina werkte.`);
+  bullets.push(`Totale email-omzet flows 30d: <strong>${fmtEur(totalRevFlows)}</strong> (${totalConvFlows} conversies). Email is nog onderbenut — Abandoned Checkout fixen is quick win.`);
+
+  document.getElementById('email-analyse').innerHTML = `
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8FA68A;margin-bottom:12px">Analyse</div>
+    <ul class="richon-bullets" style="margin:0;padding-left:18px">
+      ${bullets.map(b=>`<li style="font-size:13px;color:#E8EADE;margin-bottom:8px;line-height:1.5">${b}</li>`).join('')}
+    </ul>`;
 }
 
 function renderChart(k){
@@ -932,7 +1076,7 @@ function render(k){
 
   renderChart(k);
   renderMeta(k);
-  renderKlaviyo();
+  renderEmail();
   document.querySelectorAll('#switch button').forEach(b=>b.classList.toggle('active',b.dataset.k===k));
   aeApplyDismissed();
 }
