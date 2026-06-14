@@ -6,7 +6,7 @@
  * Vervangt het statische data.json bestand.
  *
  * Vereiste env vars (in Vercel project settings):
- *   SHOPIFY_STORE          elunahome.myshopify.com
+ *   SHOPIFY_STORE          99gxqj-x0.myshopify.com
  *   SHOPIFY_ACCESS_TOKEN   shpat_...
  *   META_ACCESS_TOKEN      EAA...
  *   META_AD_ACCOUNT        924352226288770
