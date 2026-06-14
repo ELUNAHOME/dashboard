@@ -573,10 +573,23 @@ let chartType = localStorage.getItem('eluna-chart-type') || 'bar';
 let P = {}, C = {}, DAILY_MTD = [], DAILY_D7 = [], KLAVIYO = {}, DATA_META = {};
 
 // ── data loading ────────────────────────────────────────────────
+// Probeert eerst de live Vercel API; valt terug op statisch data.json
 async function loadData(bustCache) {
-  const url = './data.json' + (bustCache ? '?v=' + Date.now() : '');
-  const res = await fetch(url);
-  const d = await res.json();
+  const cacheBust = bustCache ? '?v=' + Date.now() : '';
+  let d;
+  try {
+    // Op Vercel: /api/data geeft live data
+    const liveRes = await fetch('/api/data' + cacheBust);
+    if (liveRes.ok) {
+      d = await liveRes.json();
+    } else {
+      throw new Error('api niet beschikbaar');
+    }
+  } catch(_) {
+    // Fallback: statisch data.json (GitHub Pages / lokaal)
+    const res = await fetch('./data.json' + cacheBust);
+    d = await res.json();
+  }
   P = d.P;
   C = d.C;
   DAILY_MTD = d.daily_mtd;

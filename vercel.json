@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    { "source": "/api/data", "destination": "/api/data.js" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "https://dashboard.elunahome.nl" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS" }
+      ]
+    }
+  ]
+}
