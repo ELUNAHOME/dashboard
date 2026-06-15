@@ -540,51 +540,8 @@
     <h2>Meta campagnes · breakdown</h2>
     <div class="card"><table class="ctable" id="meta-table"></table></div>
 
-    <h2 style="margin-top:28px">Creative briefs · klaar voor Higgsfield</h2>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
-      Gebaseerd op Meta Ad Library scan (13-06-2026): geen concurrent adverteert op "zonder plastic", "ochtend ritueel" of "cadeau" hoek in NL.
-    </div>
-    <div class="brief-grid">
-      <div class="brief">
-        <div class="brief-num">Brief 01 · Probleem-bewustzijn</div>
-        <div class="brief-hook">"Weet jij wat er in jouw waterkoker zit?"</div>
-        <div class="brief-row"><span>Opening</span><b>Close-up plastic onderdelen in standaard waterkoker. Cut naar EL&#xDB;NA: volledig RVS.</b></div>
-        <div class="brief-row"><span>Hook 3s</span><b>"De meeste waterkokers zijn voor 60% plastic. De jouwe ook?"</b></div>
-        <div class="brief-row"><span>USP</span><b>Volledig RVS · geen plastic smaak · 1.7L · &#x20AC;69,95</b></div>
-        <div class="brief-row"><span>CTA</span><b>"Bestel zonder risico &#x2014; 30 dagen retour"</b></div>
-        <div class="brief-row"><span>Formaat</span><b>Vertical 9:16 · 15-20 sec · UGC-stijl · voice-over</b></div>
-        <div class="brief-why">Whitespace: niemand adverteert op dit probleem in NL. Sterkste differentiator van EL&#xDB;NA.</div>
-      </div>
-      <div class="brief">
-        <div class="brief-num">Brief 02 · Ritueel / lifestyle</div>
-        <div class="brief-hook">"Zo begint elke ochtend."</div>
-        <div class="brief-row"><span>Opening</span><b>Vroege ochtend. EL&#xDB;NA op marmeren aanrechtblad. Stoomwolkje.</b></div>
-        <div class="brief-row"><span>Hook 3s</span><b>"Mijn ochtend begon anders zodra ik dit had."</b></div>
-        <div class="brief-row"><span>USP</span><b>Strak design dat blijft staan. Past in jouw keuken.</b></div>
-        <div class="brief-row"><span>CTA</span><b>"Start jouw ritueel &#x2014; gratis verzending"</b></div>
-        <div class="brief-row"><span>Formaat</span><b>Vertical 9:16 · 20 sec · ambient muziek · lifestyle B-roll</b></div>
-        <div class="brief-why">Davie Fogarty-principe: verkoop het gevoel, niet het product.</div>
-      </div>
-      <div class="brief">
-        <div class="brief-num">Brief 03 · Cadeau / trigger</div>
-        <div class="brief-hook">"Het cadeau dat ze niet weet dat ze wil."</div>
-        <div class="brief-row"><span>Opening</span><b>Cadeau-verpakking op aanrechtblad. Iemand opent het, ziet EL&#xDB;NA. Verrast en blij.</b></div>
-        <div class="brief-row"><span>Hook 3s</span><b>"Zoek je nog een cadeau? Dit staat de rest van haar leven in haar keuken."</b></div>
-        <div class="brief-row"><span>USP</span><b>Gratis verzending · 30 dagen retour · gratis cadeauverpakking</b></div>
-        <div class="brief-row"><span>CTA</span><b>"Bestel v&#xF3;&#xF3;r [datum] &#x2014; morgen in huis"</b></div>
-        <div class="brief-row"><span>Formaat</span><b>Vertical 9:16 · 15 sec · warm kleurenpalet · VO zonder muziek</b></div>
-        <div class="brief-why">Cadeau-intent verhoogt AOV en CVR &#x2014; minder prijsgevoelig publiek.</div>
-      </div>
-    </div>
-
-    <h2 style="margin-top:28px">Google Ads · API-integratie</h2>
-    <div class="g-pending">
-      <div class="g-dot"></div>
-      <div>
-        <strong>Basic Access aanvraag in behandeling</strong>
-        Ingediend 13-06-2026 &#xB7; MCC 789-710-2801. Verwachte goedkeuring 1&#x2013;3 werkdagen. Python-client klaar zodra goedgekeurd. Google-spend handmatig: &#x20AC;<span id="fc-gspend"></span>/dag.
-      </div>
-    </div>
+    <h2 style="margin-top:28px">Google Ads · breakdown</h2>
+    <div class="card" id="google-camp-card"></div>
 
   </div><!-- /tab-campagnes -->
 
@@ -686,15 +643,23 @@ async function loadData(bustCache) {
     srcEl.title = usedLiveApi ? 'Data van live API (Shopify + Meta + Klaviyo)' : 'Statische fallback — live API niet bereikbaar';
   }
 
-  // Google fallback: live API heeft nog geen env vars → haal gspend/groas uit data.json
-  if (usedLiveApi && Object.values(d.P || {}).every(p => p.gspend === null)) {
+  // Google + Klaviyo flows/campaigns fallback uit data.json als live API null teruggeeft
+  const needsGoogleFb = usedLiveApi && Object.values(d.P || {}).every(p => p.gspend === null);
+  const needsKlavFb   = usedLiveApi && (!d.klaviyo?.flows?.length || !d.klaviyo?.campaigns?.length);
+  if (needsGoogleFb || needsKlavFb) {
     try {
       const fb = await fetch('./data.json');
       if (fb.ok) {
         const fbData = await fb.json();
-        for (const k of Object.keys(d.P)) {
-          if (fbData.P?.[k]?.gspend != null) d.P[k].gspend = fbData.P[k].gspend;
-          if (fbData.P?.[k]?.groas  != null) d.P[k].groas  = fbData.P[k].groas;
+        if (needsGoogleFb) {
+          for (const k of Object.keys(d.P)) {
+            if (fbData.P?.[k]?.gspend != null) d.P[k].gspend = fbData.P[k].gspend;
+            if (fbData.P?.[k]?.groas  != null) d.P[k].groas  = fbData.P[k].groas;
+          }
+        }
+        if (needsKlavFb && d.klaviyo) {
+          if (!d.klaviyo.flows?.length  && fbData.klaviyo?.flows)     d.klaviyo.flows     = fbData.klaviyo.flows;
+          if (!d.klaviyo.campaigns?.length && fbData.klaviyo?.campaigns) d.klaviyo.campaigns = fbData.klaviyo.campaigns;
         }
       }
     } catch(_) {}
@@ -914,6 +879,57 @@ function renderAdMix(k){
     <div class="ps-divider" style="margin-top:16px"></div>
     <div class="ps-row"><span class="ps-lbl" style="font-size:11px">Meta in-platform ROAS</span><span class="ps-val" style="font-size:12px">${xfmt(p.mroas)}</span></div>
     <div class="ps-row"><span class="ps-lbl" style="font-size:11px">Google ROAS</span><span class="ps-val" style="font-size:12px">${xfmt(p.groas)}</span></div>`;
+}
+
+function renderGoogleCamp(k){
+  const el = document.getElementById('google-camp-card');
+  if (!el) return;
+  const p = P[k];
+  const gspend = p?.gspend;
+  const groas  = p?.groas;
+
+  if (gspend == null) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:4px 0">
+      Geen Google-spend beschikbaar voor deze periode.
+      <span style="font-size:11px;display:block;margin-top:4px;color:var(--muted)">Bijwerken via <code>bash scripts/update-google.sh</code></span>
+    </div>`;
+    return;
+  }
+
+  const labelMap = {today:'vandaag', gisteren:'gisteren', d7:'afgelopen 7 dagen', mtd:'deze maand', d30:'afgelopen 30 dagen', custom:'aangepaste periode'};
+  const days = k==='today'||k==='gisteren' ? 1 : k==='d7' ? 7 : k==='d30' ? 30 : k==='mtd' ? (new Date().getDate()) : null;
+  const dailyAvg = days ? gspend / days : null;
+
+  el.innerHTML = `
+    <table class="ctable" style="width:100%">
+      <thead><tr>
+        <th style="text-align:left">Kanaal</th>
+        <th style="text-align:right">Spend</th>
+        ${dailyAvg!=null?`<th style="text-align:right">Gem./dag</th>`:''}
+        <th style="text-align:right">ROAS</th>
+        <th style="text-align:right">Niveau</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><span style="font-weight:600">Google Ads (totaal)</span><div style="font-size:11px;color:var(--muted);margin-top:2px">${labelMap[k]||''}</div></td>
+          <td style="text-align:right;font-weight:600">${eur(gspend)}</td>
+          ${dailyAvg!=null?`<td style="text-align:right;color:var(--muted)">${eur(dailyAvg)}</td>`:''}
+          <td style="text-align:right;font-weight:600;color:${groas>=1.8?'var(--good)':groas>0?'var(--warn)':'var(--muted)'}">${groas?xfmt(groas):'—'}</td>
+          <td style="text-align:right"><span style="font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 7px">Account</span></td>
+        </tr>
+      </tbody>
+      <tfoot><tr style="border-top:2px solid var(--line)">
+        <td style="font-weight:700;padding-top:8px">Totaal Google</td>
+        <td style="text-align:right;font-weight:700;padding-top:8px">${eur(gspend)}</td>
+        ${dailyAvg!=null?`<td style="text-align:right;padding-top:8px;color:var(--muted)">${eur(dailyAvg)}</td>`:''}
+        <td style="text-align:right;font-weight:700;padding-top:8px;color:${groas>=1.8?'var(--good)':groas>0?'var(--warn)':'var(--muted)'}">${groas?xfmt(groas):'—'}</td>
+        <td style="padding-top:8px"></td>
+      </tr></tfoot>
+    </table>
+    <div style="font-size:11px;color:var(--muted);margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">
+      Campagne-breakdown beschikbaar zodra Google Ads API Basic Access is goedgekeurd (aanvraag 13-06-2026 · MCC 789-710-2801).
+      Handmatig bijwerken: <code>bash scripts/update-google.sh</code>
+    </div>`;
 }
 
 function renderEmail(){
@@ -1449,10 +1465,12 @@ function render(k){
   document.getElementById('fc-cac').textContent=mtdCac.toFixed(0);
   document.getElementById('fc-gross').textContent=mtdGrossEx.toFixed(2).replace('.',',');
   document.getElementById('fc-gap').textContent=(mtdCac-mtdGrossEx).toFixed(0)+' ('+Math.round((1-mtdGrossEx/mtdCac)*100)+'% daling nodig)';
-  document.getElementById('fc-gspend').textContent=(P.mtd.gspend/13).toFixed(0);
+  const fcGspend = document.getElementById('fc-gspend');
+  if(fcGspend) fcGspend.textContent = P.mtd.gspend ? (P.mtd.gspend/13).toFixed(0) : '—';
 
   renderChart(k);
   renderMeta(k);
+  renderGoogleCamp(k);
   renderEmail();
   drpUpdate(k);
   aeApplyDismissed();
