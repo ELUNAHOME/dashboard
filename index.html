@@ -240,8 +240,9 @@
   border-radius:50%;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .btw-sw.active{background:var(--sage)}
 .btw-sw.active::after{transform:translateX(16px)}
-/* period bar */
-.period-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:24px}
+/* drp trigger in topbar — smaller, borderless */
+.topbar .drp-trigger{background:none;border-color:transparent;padding:5px 10px;font-size:12px}
+.topbar .drp-trigger:hover{background:var(--bg);border-color:var(--line)}
 /* ── date range picker ── */
 .drp-wrap{position:relative;user-select:none}
 .drp-trigger{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer;transition:.15s;white-space:nowrap}
@@ -362,44 +363,40 @@
   <div class="topbar">
     <div class="topbar-left">
       <img src="logo.png" alt="ELÛNA" class="topbar-logo" />
+      <div style="width:1px;height:20px;background:var(--line);flex-shrink:0"></div>
+      <div class="drp-wrap" id="drp-wrap">
+        <button class="drp-trigger" id="drp-trigger" onclick="drpToggle()">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;opacity:.6"><rect x="1" y="2" width="14" height="13" rx="2.5" stroke="currentColor" stroke-width="1.4"/><line x1="5" y1="1" x2="5" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="11" y1="1" x2="11" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="1" y1="6.5" x2="15" y2="6.5" stroke="currentColor" stroke-width="1.2"/></svg>
+          <span class="drp-trigger-label" id="drp-label">Deze maand</span>
+          <span class="drp-trigger-sep">·</span>
+          <span class="drp-trigger-range" id="drp-range">1–14 jun 2026</span>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="margin-left:2px;opacity:.5"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="drp-panel" id="drp-panel">
+          <div class="drp-presets">
+            <button class="drp-preset" data-k="today">Vandaag</button>
+            <button class="drp-preset" data-k="gisteren">Gisteren</button>
+            <button class="drp-preset" data-k="d7">Afgelopen 7 dagen</button>
+            <button class="drp-preset active" data-k="mtd">Deze maand</button>
+            <button class="drp-preset" data-k="d30">Afgelopen 30 dagen</button>
+            <div style="height:1px;background:var(--line);margin:8px 12px"></div>
+            <button class="drp-preset" id="drp-custom-btn" onclick="drpStartCustom()">Kies datums…</button>
+            <button class="drp-preset" data-k="custom" id="drp-custom-active" style="display:none">Aangepast</button>
+          </div>
+          <div class="drp-cal-wrap">
+            <div id="drp-pick-hint" class="drp-pick-hint" style="display:none"></div>
+            <div class="drp-months" id="drp-cal"></div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="topbar-right">
-      <span id="rangelbl" style="font-size:11px;color:var(--muted)"></span>
       <span style="font-size:11px;color:var(--muted)" id="updated-lbl">—</span>
       <span id="data-source-badge" style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--muted)" title="Databron">○ laden</span>
       <button class="refresh-btn" id="refresh-btn" onclick="refreshData()" title="Ververs data">↻</button>
       <div class="btw-pill" onclick="toggleBTW()" title="Schakel BTW weergave">
         <span class="btw-pill-lbl" id="btw-pill-lbl">Ex BTW</span>
         <button class="btw-sw" id="btw-toggle" type="button"></button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PERIOD BAR -->
-  <div class="period-bar">
-    <div class="drp-wrap" id="drp-wrap">
-      <button class="drp-trigger" id="drp-trigger" onclick="drpToggle()">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;opacity:.6"><rect x="1" y="2" width="14" height="13" rx="2.5" stroke="currentColor" stroke-width="1.4"/><line x1="5" y1="1" x2="5" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="11" y1="1" x2="11" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="1" y1="6.5" x2="15" y2="6.5" stroke="currentColor" stroke-width="1.2"/></svg>
-        <span class="drp-trigger-label" id="drp-label">Deze maand</span>
-        <span class="drp-trigger-sep">·</span>
-        <span class="drp-trigger-range" id="drp-range">1–14 jun 2026</span>
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="margin-left:2px;opacity:.5"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-      <div class="drp-panel" id="drp-panel">
-        <div class="drp-presets">
-          <button class="drp-preset" data-k="today">Vandaag</button>
-          <button class="drp-preset" data-k="gisteren">Gisteren</button>
-          <button class="drp-preset" data-k="d7">Afgelopen 7 dagen</button>
-          <button class="drp-preset active" data-k="mtd">Deze maand</button>
-          <button class="drp-preset" data-k="d30">Afgelopen 30 dagen</button>
-          <div style="height:1px;background:var(--line);margin:8px 12px"></div>
-          <button class="drp-preset" id="drp-custom-btn" onclick="drpStartCustom()">Kies datums…</button>
-          <button class="drp-preset" data-k="custom" id="drp-custom-active" style="display:none">Aangepast</button>
-        </div>
-        <div class="drp-cal-wrap">
-          <div id="drp-pick-hint" class="drp-pick-hint" style="display:none"></div>
-          <div class="drp-months" id="drp-cal"></div>
-        </div>
       </div>
     </div>
   </div>
@@ -1402,7 +1399,7 @@ function render(k){
   const net=cac!=null?grossEx-cac:null;
   const netNeg=net!=null&&net<0;
 
-  document.getElementById('rangelbl').textContent=p.range;
+  // rangelbl removed — DRP trigger now shows range directly in topbar
   document.getElementById('wf-btw-lbl').textContent=showBTW?'incl. btw':'ex btw';
 
   renderPerfStats(k, grossEx, cac, net);
