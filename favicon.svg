@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Solid house silhouette — legible at 16px -->
-  <!-- Roof + walls as one filled path -->
+  <!-- Off-white rounded background -->
+  <rect x="2" y="2" width="96" height="96" rx="20" ry="20" fill="#F0EDE8"/>
+  <!-- Solid house silhouette -->
   <path d="M 8 58 L 50 14 L 92 58 L 82 58 L 82 86 Q 82 91 77 91 L 23 91 Q 18 91 18 86 L 18 58 Z" fill="#1C1C1C"/>
-  <!-- Door arch cutout (white) -->
-  <path d="M 43 91 L 43 73 Q 43 63 50 63 Q 57 63 57 73 L 57 91 Z" fill="white"/>
+  <!-- Door arch cutout (matches background) -->
+  <path d="M 43 91 L 43 73 Q 43 63 50 63 Q 57 63 57 73 L 57 91 Z" fill="#F0EDE8"/>
 </svg>
