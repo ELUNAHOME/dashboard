@@ -539,6 +539,9 @@
     <h2 style="margin-top:28px">Google Ads · breakdown</h2>
     <div class="card" id="google-camp-card"></div>
 
+    <h2 style="margin-top:28px">Blended performance · Meta + Google</h2>
+    <div class="card" id="blended-camp-card"></div>
+
   </div><!-- /tab-campagnes -->
 
   <!-- TAB: MARGES -->
@@ -955,38 +958,71 @@ function renderGoogleCamp(k){
       </tr></tfoot>
     </table>
 
-    <!-- Blended performance block -->
-    <div style="margin-top:18px;padding:14px 16px;background:var(--bg);border-radius:10px;border:1px solid var(--line)">
-      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">
-        Blended performance · Meta + Google
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
-        <div>
-          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:3px">Totaal spend</div>
-          <div style="font-size:20px;font-weight:700;letter-spacing:-.02em;color:var(--ink)">${eur(totSpend)}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:1px">Meta ${Math.round(mspend/totSpend*100)}% · Google ${Math.round(gspend/totSpend*100)}%</div>
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:3px">Blended ROAS</div>
-          <div style="font-size:20px;font-weight:700;letter-spacing:-.02em;color:${bRoasColor}">${bRoas?xfmt(bRoas):'—'}${bRoasDeltaHtml}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:1px">break-even ${beRoas}×</div>
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:3px">CAC / unit</div>
-          <div style="font-size:20px;font-weight:700;letter-spacing:-.02em;color:${cac==null?'var(--muted)':cac<=14.45?'var(--good)':'var(--warn)'}">${cac?eur(cac):'—'}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:1px">doel ≤ €14,45</div>
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:3px">Netto / unit</div>
-          <div style="font-size:20px;font-weight:700;letter-spacing:-.02em;color:${net==null?'var(--muted)':net>=0?'var(--good)':'var(--warn)'}">${net!=null?(net>=0?'+':'')+eur(net):'—'}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:1px">doel €10,89</div>
-        </div>
-      </div>
-    </div>
-
-    <div style="font-size:11px;color:var(--muted);margin-top:10px">
+    <div style="font-size:11px;color:var(--muted);margin-top:12px">
       Campagne-split beschikbaar zodra Google Ads API Basic Access is goedgekeurd (aanvraag 13-06-2026 · MCC 789-710-2801).
       Bijwerken: <code>bash scripts/update-google.sh</code>
+    </div>`;
+}
+
+function renderBlendedCamp(k){
+  const el = document.getElementById('blended-camp-card');
+  if (!el) return;
+  const p = P[k];
+  if (!p) return;
+
+  const mspend   = p.spend  || 0;
+  const gspend   = p.gspend || 0;
+  const rev      = p.rev    || 0;
+  const totSpend = mspend + gspend;
+
+  if (totSpend === 0) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:13px">Geen spend-data beschikbaar voor deze periode.</div>`;
+    return;
+  }
+
+  const bRoas     = totSpend > 0 ? rev / totSpend : null;
+  const cac       = (p.units||0) > 0 ? totSpend / p.units : null;
+  const grossEx   = 26.35;
+  const net       = cac != null ? grossEx - cac : null;
+  const beRoas    = 1.8;
+  const bRoasGood = bRoas != null && bRoas >= beRoas;
+  const bRoasClr  = bRoas  == null ? 'var(--muted)' : bRoasGood ? 'var(--good)' : 'var(--warn)';
+  const cacClr    = cac    == null ? 'var(--muted)' : cac  <= 14.45 ? 'var(--good)' : 'var(--warn)';
+  const netClr    = net    == null ? 'var(--muted)' : net  >= 0     ? 'var(--good)' : 'var(--warn)';
+
+  const bDelta    = bRoas != null ? ((bRoas - beRoas) / beRoas * 100) : null;
+  const bDeltaHtml = bDelta != null
+    ? `<span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;margin-left:6px;background:${bRoasGood?'#EEF4E8':'#FAF0EE'};color:${bRoasClr}">${bDelta>0?'+':''}${bDelta.toFixed(0)}% vs ${beRoas}×</span>`
+    : '';
+
+  const metaPct  = totSpend > 0 ? Math.round(mspend / totSpend * 100) : 0;
+  const googPct  = 100 - metaPct;
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px">
+      <div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Totaal spend</div>
+        <div style="font-size:24px;font-weight:700;letter-spacing:-.025em;color:var(--ink);line-height:1">${eur(totSpend)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Meta ${metaPct}% · Google ${googPct}%</div>
+        <div style="margin-top:8px;height:4px;border-radius:2px;background:var(--line);overflow:hidden">
+          <div style="height:100%;width:${metaPct}%;background:var(--sage);border-radius:2px"></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Blended ROAS</div>
+        <div style="font-size:24px;font-weight:700;letter-spacing:-.025em;color:${bRoasClr};line-height:1">${bRoas ? xfmt(bRoas) : '—'}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">break-even ${beRoas}× ${bDeltaHtml}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">CAC / unit</div>
+        <div style="font-size:24px;font-weight:700;letter-spacing:-.025em;color:${cacClr};line-height:1">${cac ? eur(cac) : '—'}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">doel ≤ €14,45</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Netto / unit</div>
+        <div style="font-size:24px;font-weight:700;letter-spacing:-.025em;color:${netClr};line-height:1">${net != null ? (net >= 0 ? '+' : '') + eur(net) : '—'}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">doel €10,89</div>
+      </div>
     </div>`;
 }
 
@@ -1529,6 +1565,7 @@ function render(k){
   renderChart(k);
   renderMeta(k);
   renderGoogleCamp(k);
+  renderBlendedCamp(k);
   renderEmail();
   drpUpdate(k);
   aeApplyDismissed();
