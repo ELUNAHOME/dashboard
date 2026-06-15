@@ -1159,13 +1159,7 @@ function toggleBTW(){
   render(currentK);
 }
 
-function toggleChartType(){
-  chartType = chartType === 'bar' ? 'line' : 'bar';
-  localStorage.setItem('eluna-chart-type', chartType);
-  const btn = document.getElementById('chart-type-toggle');
-  if(btn) btn.textContent = chartType === 'bar' ? '▦' : '∿';
-  renderChart(currentK);
-}
+// toggleChartType verwijderd — chart is altijd bar + vergelijkingsperiode
 
 function switchTab(tabId){
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
@@ -1354,6 +1348,7 @@ function renderStockBar(k){
 function render(k){
   currentK = k;
   const p=P[k];
+  if (!p) return; // periode nog niet beschikbaar (bijv. custom voor fetch)
   const tot=(p.spend||0)+(p.gspend||0), roas=tot>0?p.rev/tot:0;
   const aov=p.orders>0?p.rev/p.orders:null;
 
@@ -1589,15 +1584,21 @@ function renderDrpCalendar(k) {
 
   const now = new Date();
   const todayY = now.getFullYear(), todayM = now.getMonth(), todayD = now.getDate();
-  const today = new Date(todayY, todayM, todayD);
+  const todayObj = new Date(todayY, todayM, todayD);
 
-  let start, end;
-  if (k === 'today')    { start = end = today; }
-  else if (k === 'gisteren') { start = end = new Date(todayY, todayM, todayD - 1); }
-  else if (k === 'd7')  { end = today; start = new Date(todayY, todayM, todayD - 6); }
-  else if (k === 'mtd') { start = new Date(todayY, todayM, 1); end = today; }
-  else if (k === 'd30') { end = today; start = new Date(todayY, todayM, todayD - 29); }
-  else { start = end = today; }
+  let start, end, pickMode = false;
+  if (k === '_pick') {
+    pickMode = true;
+    start = _drpPickStart ? new Date(_drpPickStart) : null;
+    end   = start;
+  } else if (k === 'today')    { start = end = todayObj; }
+  else if (k === 'gisteren')   { start = end = new Date(todayY, todayM, todayD - 1); }
+  else if (k === 'd7')         { end = todayObj; start = new Date(todayY, todayM, todayD - 6); }
+  else if (k === 'mtd')        { start = new Date(todayY, todayM, 1); end = todayObj; }
+  else if (k === 'd30')        { end = todayObj; start = new Date(todayY, todayM, todayD - 29); }
+  else if (k === 'custom' && _drpCustom) {
+    start = new Date(_drpCustom.start); end = new Date(_drpCustom.end);
+  } else { start = end = todayObj; }
 
   const months = [
     new Date(todayY, todayM - 1, 1),
@@ -1610,23 +1611,33 @@ function renderDrpCalendar(k) {
   calEl.innerHTML = months.map(m => {
     const yr = m.getFullYear(), mo = m.getMonth();
     const firstDay = new Date(yr, mo, 1);
-    const lastDay = new Date(yr, mo + 1, 0).getDate();
-    let dow = firstDay.getDay(); // 0=Sun
-    dow = dow === 0 ? 6 : dow - 1; // convert to Mon=0
+    const lastDay  = new Date(yr, mo + 1, 0).getDate();
+    let dow = firstDay.getDay();
+    dow = dow === 0 ? 6 : dow - 1;
 
     const cells = [];
     for (let i = 0; i < dow; i++) cells.push(`<div class="drp-day other-month"></div>`);
     for (let d = 1; d <= lastDay; d++) {
-      const dt = new Date(yr, mo, d);
+      const dt      = new Date(yr, mo, d);
+      const isFuture = dt > todayObj;
       const isToday = yr===todayY && mo===todayM && d===todayD;
-      const inRange = dt >= start && dt <= end;
-      const isStart = dt.getTime() === start.getTime();
-      const isEnd   = dt.getTime() === end.getTime();
-      let cls = 'drp-day';
-      if (isStart || isEnd) cls += ' range-start';
-      else if (inRange) cls += ' in-range';
+      const dateStr = `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      let cls = 'drp-day' + (isFuture ? ' other-month' : '');
       if (isToday) cls += ' today-marker';
-      cells.push(`<div class="${cls}">${d}</div>`);
+
+      if (pickMode) {
+        if (_drpPickStart && dateStr === _drpPickStart) cls += ' pick-start';
+        const onclick = isFuture ? '' : `onclick="drpPickDay('${dateStr}')"`;
+        cells.push(`<div class="${cls}" ${onclick}>${d}</div>`);
+      } else if (start && end) {
+        const inRange = dt >= start && dt <= end;
+        const isEdge  = dt.getTime()===start.getTime() || dt.getTime()===end.getTime();
+        if (isEdge)        cls += ' range-start';
+        else if (inRange)  cls += ' in-range';
+        cells.push(`<div class="${cls}">${d}</div>`);
+      } else {
+        cells.push(`<div class="${cls}">${d}</div>`);
+      }
     }
 
     return `<div>
@@ -1639,7 +1650,8 @@ function renderDrpCalendar(k) {
   }).join('');
 }
 
-document.querySelectorAll('.drp-preset').forEach(b => b.addEventListener('click', () => {
+document.querySelectorAll('.drp-preset[data-k]').forEach(b => b.addEventListener('click', () => {
+  if (!b.dataset.k || b.dataset.k === 'custom') { render('custom'); drpClose(); return; }
   render(b.dataset.k);
   drpClose();
 }));

@@ -185,8 +185,12 @@ async function fetchShopify() {
       mtd:      { label: 'Deze maand',   range: dateLabel(mtd, today),            ...mtdAgg,       spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null, prev_rev: prevMtdAgg.rev,      prev_orders: prevMtdAgg.orders },
       d30:      { label: '30 dagen',     range: dateLabel(d30Start, today),       ...d30Agg,       spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null, prev_rev: prevD30Agg.rev,      prev_orders: prevD30Agg.orders }
     },
-    daily_mtd: dailyBreakdown(mtdOrders, mtd, today),
-    daily_d7:  dailyBreakdown(d7Orders, d7Start, today),
+    daily_mtd:      dailyBreakdown(mtdOrders,     mtd,        today),
+    daily_d7:       dailyBreakdown(d7Orders,      d7Start,    today),
+    daily_d30:      dailyBreakdown(d30Orders,     d30Start,   today),
+    daily_prev_d7:  dailyBreakdown(prevD7Orders,  amsDate(14), amsDate(8)),
+    daily_prev_mtd: dailyBreakdown(prevMtdOrders, prevMtdS,   prevMtdE),
+    daily_prev_d30: dailyBreakdown(prevD30Orders, amsDate(60), amsDate(31)),
     _dates: { today, yesterday, d7Start, mtd, d30Start, mtdDays }
   };
 }
@@ -494,8 +498,49 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
   if (req.method !== 'GET')     { res.status(405).json({ error: 'Method not allowed' }); return; }
 
-  const missing = ['SHOPIFY_STORE','SHOPIFY_ACCESS_TOKEN','META_ACCESS_TOKEN','KLAVIYO_API_KEY']
-    .filter(k => !process.env[k]);
+  // Shopify is always required
+  const missingShopify = ['SHOPIFY_STORE','SHOPIFY_ACCESS_TOKEN'].filter(k => !process.env[k]);
+  if (missingShopify.length) {
+    res.status(500).json({ error: `Ontbrekende env vars: ${missingShopify.join(', ')}` });
+    return;
+  }
+
+  // Custom date range request (Shopify-only — geen Meta/Klaviyo nodig)
+  const { start, end } = req.query || {};
+  if (start && end && /^\d{4}-\d{2}-\d{2}$/.test(start) && /^\d{4}-\d{2}-\d{2}$/.test(end)) {
+    try {
+      const startMs   = new Date(start + 'T12:00:00Z').getTime();
+      const endMs     = new Date(end   + 'T12:00:00Z').getTime();
+      const rangeDays = Math.max(1, Math.round((endMs - startMs) / 86400000) + 1);
+      const prevEndMs   = startMs - 86400000;
+      const prevStartMs = prevEndMs - (rangeDays - 1) * 86400000;
+      const prevStart = new Date(prevStartMs).toISOString().slice(0, 10);
+      const prevEnd   = new Date(prevEndMs).toISOString().slice(0, 10);
+
+      const [customOrders, prevOrders] = await Promise.all([
+        shopifyOrders(start, end),
+        shopifyOrders(prevStart, prevEnd)
+      ]);
+      const agg     = aggregateOrders(customOrders);
+      const prevAgg = aggregateOrders(prevOrders);
+
+      res.status(200).json({
+        custom: {
+          ...agg, label: 'Aangepast', range: dateLabel(start, end),
+          spend: null, gspend: null, mroas: null, groas: null, ctr: null, cpc: null,
+          prev_rev: prevAgg.rev, prev_orders: prevAgg.orders,
+          prev_range: dateLabel(prevStart, prevEnd)
+        },
+        daily_custom:      dailyBreakdown(customOrders, start, end),
+        daily_prev_custom: dailyBreakdown(prevOrders,   prevStart, prevEnd)
+      });
+    } catch(e) {
+      res.status(500).json({ error: e.message });
+    }
+    return;
+  }
+
+  const missing = ['META_ACCESS_TOKEN','KLAVIYO_API_KEY'].filter(k => !process.env[k]);
   if (missing.length) {
     res.status(500).json({ error: `Ontbrekende env vars: ${missing.join(', ')}` });
     return;
@@ -509,7 +554,7 @@ export default async function handler(req, res) {
       fetchInventory().catch(() => ({ stock: null, location_id: '100691018073' }))
     ]);
 
-    const { P, daily_mtd, daily_d7, _dates } = shopify;
+    const { P, daily_mtd, daily_d7, daily_d30, daily_prev_d7, daily_prev_mtd, daily_prev_d30, _dates } = shopify;
     const { C, metaSpend } = metaResult;
     const googleM = getGoogleManual();
 
@@ -541,6 +586,10 @@ export default async function handler(req, res) {
       C,
       daily_mtd,
       daily_d7,
+      daily_d30,
+      daily_prev_d7,
+      daily_prev_mtd,
+      daily_prev_d30,
       klaviyo,
       inventory
     });
