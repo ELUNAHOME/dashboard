@@ -189,6 +189,31 @@
   .refresh-btn .spin{display:inline-block;animation:spin .7s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
 
+  /* ── loading overlay ──────────────────────────────────────────── */
+  #load-overlay{
+    position:fixed;inset:0;z-index:9999;
+    background:var(--bg);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+    transition:opacity .35s ease, visibility .35s ease;
+  }
+  #load-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
+  .load-logo{
+    width:56px;height:56px;border-radius:14px;background:#F0EDE8;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 12px rgba(43,46,38,.10);
+  }
+  .load-label{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .load-bar-track{width:120px;height:2px;background:var(--line);border-radius:1px;overflow:hidden}
+  .load-bar-fill{
+    height:100%;width:30%;background:var(--sage);border-radius:1px;
+    animation:loadbar 1.4s ease-in-out infinite;
+  }
+  @keyframes loadbar{
+    0%{transform:translateX(-100%);width:40%}
+    50%{width:60%}
+    100%{transform:translateX(300%);width:40%}
+  }
+
   /* klaviyo */
   .klav-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:4px 0}
   @media(max-width:800px){.klav-grid{grid-template-columns:repeat(2,1fr)}}
@@ -357,6 +382,19 @@
 </style>
 </head>
 <body>
+
+<!-- loading overlay -->
+<div id="load-overlay">
+  <div class="load-logo">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="36" height="36">
+      <path d="M 8 58 L 50 14 L 92 58 L 82 58 L 82 86 Q 82 91 77 91 L 23 91 Q 18 91 18 86 L 18 58 Z" fill="#1C1C1C"/>
+      <path d="M 43 91 L 43 73 Q 43 63 50 63 Q 57 63 57 73 L 57 91 Z" fill="#F0EDE8"/>
+    </svg>
+  </div>
+  <div class="load-bar-track"><div class="load-bar-fill"></div></div>
+  <div class="load-label">Laden&hellip;</div>
+</div>
+
 <div class="wrap">
 
   <!-- STICKY TOPBAR -->
@@ -1832,9 +1870,15 @@ document.addEventListener('click', e => {
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click',()=>switchTab(btn.dataset.tab));
 });
-loadData().then(()=>render('mtd')).catch(e=>{
+function hideLoader(){
+  const ol = document.getElementById('load-overlay');
+  if(ol) ol.classList.add('hidden');
+}
+
+loadData().then(()=>{render('mtd'); hideLoader();}).catch(e=>{
   console.error('data.json laden mislukt:',e);
   document.getElementById('updated-lbl').textContent = 'laad fout';
+  hideLoader();
 });
 </script>
 <div id="ch-tip" class="ch-tip"></div>
