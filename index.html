@@ -45,12 +45,20 @@
   .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
   .dot.live{background:var(--good)} .dot.flag{background:var(--warn)} .dot.idle{background:var(--line)}
 
-  .chart-wrap{overflow:hidden}
-  .chart-bars{display:flex;align-items:flex-end;gap:3px;height:56px}
-  .chart-bar{flex:1;border-radius:3px 3px 0 0;background:var(--sage);min-width:0}
-  .chart-bar.today{background:var(--good)}
-  .chart-labels{display:flex;gap:3px;margin-top:5px}
+  .chart-wrap{display:flex;gap:6px;align-items:stretch}
+  .chart-y{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;font-size:9px;color:var(--muted);min-width:30px;padding-bottom:17px}
+  .chart-plot{position:relative;flex:1;display:flex;flex-direction:column}
+  .chart-gline{position:absolute;left:0;right:0;border-top:1px solid var(--line);pointer-events:none;opacity:.45}
+  .chart-days{display:flex;align-items:flex-end;gap:2px;height:72px}
+  .chart-day{display:flex;align-items:flex-end;gap:1px;flex:1;min-width:0}
+  .chart-bar-curr{flex:1;min-height:2px;border-radius:2px 2px 0 0;background:var(--sage);cursor:default;transition:opacity .12s}
+  .chart-bar-curr.today{background:var(--good)}
+  .chart-bar-curr:hover,.chart-bar-prev:hover{opacity:.6}
+  .chart-bar-prev{flex:1;min-height:2px;border-radius:2px 2px 0 0;background:#C2CFC0;cursor:default;transition:opacity .12s}
+  .chart-labels{display:flex;gap:2px;margin-top:4px}
   .chart-label{flex:1;font-size:9px;color:var(--muted);text-align:center;min-width:0;overflow:hidden;white-space:nowrap}
+  .chart-legend{display:flex;align-items:center;gap:12px;font-size:10px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
+  .leg-sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:middle}
 
   .cols{grid-template-columns:1.35fr 1fr;margin-top:26px}
   @media(max-width:880px){.cols{grid-template-columns:1fr}}
@@ -80,8 +88,9 @@
             border-radius:999px;padding:1px 6px;color:var(--muted);margin-left:5px}
 
   /* action engine */
-  .ae-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-  @media(max-width:900px){.ae-cols{grid-template-columns:1fr}}
+  .ae-cols{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media(max-width:1100px){.ae-cols{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:620px){.ae-cols{grid-template-columns:1fr}}
   .ae-col-head{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
                color:var(--muted);margin-bottom:10px}
   .ae-badge{border-radius:999px;padding:2px 8px;font-size:9px;letter-spacing:.1em;margin-right:6px}
@@ -106,6 +115,15 @@
   .ae-tag.pr{background:#FBF0F0;color:#9A3D3D}
   .ae-tag.data-tag{background:#F7EEE6;color:#B0703F}
   .ae-tag.research-tag{background:#E8ECFA;color:#3A5BD9}
+  .ae-prio{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:999px;padding:2px 7px;position:absolute;top:10px;right:34px}
+  .ae-prio-nu{background:#B0703F;color:#fff}
+  .ae-prio-binnenkort{background:var(--sage);color:var(--ink)}
+  .ae-prio-later{background:var(--line);color:var(--muted)}
+  .ae-ch-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;flex-shrink:0}
+  .ae-ch-dot.meta{background:#3A5BD9}
+  .ae-ch-dot.google{background:#1F7A45}
+  .ae-ch-dot.klaviyo{background:#6A3D9A}
+  .ae-ch-dot.strat{background:var(--muted)}
   .ae-impact{font-size:9px;position:absolute;top:12px;right:34px;color:var(--muted);font-weight:700;letter-spacing:.06em}
   .ae-btn-x{position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;
     font-size:13px;color:var(--muted);padding:2px 5px;border-radius:5px;line-height:1;
@@ -243,11 +261,14 @@
 .drp-month-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:10px}
 .drp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
 .drp-dow{font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:center;padding:3px 0}
-.drp-day{font-size:12px;text-align:center;padding:5px 2px;border-radius:6px;color:var(--muted);line-height:1.2}
+.drp-day{font-size:12px;text-align:center;padding:5px 2px;border-radius:6px;color:var(--muted);line-height:1.2;cursor:pointer;transition:.1s}
+.drp-day:not(.other-month):hover{background:var(--pist);color:var(--ink)}
 .drp-day.in-range{background:#EDF2D8;color:var(--ink);font-weight:500}
 .drp-day.range-start,.drp-day.range-end{background:var(--sage);color:var(--ink);font-weight:700}
+.drp-day.pick-start{background:var(--good);color:#fff;font-weight:700}
 .drp-day.today-marker{outline:1.5px solid var(--sage);outline-offset:-1px}
-.drp-day.other-month{opacity:.3}
+.drp-day.other-month{opacity:.3;cursor:default}
+.drp-pick-hint{font-size:11px;color:var(--muted);padding:0 0 10px;font-style:italic}
 /* overview grid */
 .overview-grid{display:grid;grid-template-columns:1.65fr 1fr;gap:16px;margin-bottom:16px}
 @media(max-width:820px){.overview-grid{grid-template-columns:1fr}}
@@ -372,8 +393,12 @@
           <button class="drp-preset" data-k="d7">Afgelopen 7 dagen</button>
           <button class="drp-preset active" data-k="mtd">Deze maand</button>
           <button class="drp-preset" data-k="d30">Afgelopen 30 dagen</button>
+          <div style="height:1px;background:var(--line);margin:8px 12px"></div>
+          <button class="drp-preset" id="drp-custom-btn" onclick="drpStartCustom()">Kies datums…</button>
+          <button class="drp-preset" data-k="custom" id="drp-custom-active" style="display:none">Aangepast</button>
         </div>
         <div class="drp-cal-wrap">
+          <div id="drp-pick-hint" class="drp-pick-hint" style="display:none"></div>
           <div class="drp-months" id="drp-cal"></div>
         </div>
       </div>
@@ -383,15 +408,11 @@
   <!-- OVERVIEW GRID: Performance card + Ad-mix card -->
   <div class="overview-grid">
     <div class="card" id="perf-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="margin-bottom:14px">
         <h2 style="margin:0" id="perf-title">Omzetprestatie</h2>
-        <button class="chart-toggle" id="chart-type-toggle" onclick="toggleChartType()" title="Wissel bar / lijn">&#x25a6;</button>
       </div>
       <div class="perf-inner" id="perf-inner">
-        <div class="perf-chart-col" id="perf-chart-col">
-          <div class="chart-bars" id="chart-bars"></div>
-          <div class="chart-labels" id="chart-labels"></div>
-        </div>
+        <div class="perf-chart-col" id="perf-chart-col"></div>
         <div class="perf-stats-col" id="perf-stats"></div>
       </div>
     </div>
@@ -430,7 +451,7 @@
     <!-- ACTIE-ENGINE -->
     <div style="margin-top:28px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px">
-        <h2 style="margin:0">Actie-engine · data + research + playbook</h2>
+        <h2 style="margin:0">Kanaalplanning</h2>
         <div style="display:flex;gap:10px;font-size:11px;color:var(--muted)">
           <span><span style="width:9px;height:9px;border-radius:2px;background:#B0703F;display:inline-block;vertical-align:middle;margin-right:4px"></span>Data</span>
           <span><span style="width:9px;height:9px;border-radius:2px;background:#3A5BD9;display:inline-block;vertical-align:middle;margin-right:4px"></span>Research</span>
@@ -450,9 +471,10 @@
         </div>
       </div>
       <div class="ae-cols">
-        <div class="ae-col" id="col-nu"><div class="ae-col-head"><span class="ae-badge now">Nu</span>Deze week</div><div id="ae-nu"></div><div class="ae-footer" onclick="aeRestore('col-nu')"></div></div>
-        <div class="ae-col" id="col-bn"><div class="ae-col-head"><span class="ae-badge soon">Binnenkort</span>Deze maand</div><div id="ae-binnenkort"></div><div class="ae-footer" onclick="aeRestore('col-bn')"></div></div>
-        <div class="ae-col" id="col-later"><div class="ae-col-head"><span class="ae-badge later">Later</span>Dit kwartaal</div><div id="ae-later"></div><div class="ae-footer" onclick="aeRestore('col-later')"></div></div>
+        <div class="ae-col" id="col-meta"><div class="ae-col-head"><span class="ae-ch-dot meta"></span>Meta Ads</div><div id="ae-meta"></div><div class="ae-footer" onclick="aeRestore('col-meta')"></div></div>
+        <div class="ae-col" id="col-google"><div class="ae-col-head"><span class="ae-ch-dot google"></span>Google Ads</div><div id="ae-google"></div><div class="ae-footer" onclick="aeRestore('col-google')"></div></div>
+        <div class="ae-col" id="col-klaviyo"><div class="ae-col-head"><span class="ae-ch-dot klaviyo"></span>Klaviyo</div><div id="ae-klaviyo"></div><div class="ae-footer" onclick="aeRestore('col-klaviyo')"></div></div>
+        <div class="ae-col" id="col-strat"><div class="ae-col-head"><span class="ae-ch-dot strat"></span>Strategisch</div><div id="ae-strat"></div><div class="ae-footer" onclick="aeRestore('col-strat')"></div></div>
       </div>
     </div>
 
@@ -629,8 +651,10 @@ const FEES_EX   =  4.23;
 const FIXED_EX  = COGS_EX + LOG_EX + FEES_EX; // 31.15
 let GROSS = LIST_EX - FIXED_EX;  // wordt per render overschreven met werkelijke marge
 let showBTW = false;
-let chartType = localStorage.getItem('eluna-chart-type') || 'bar';
-let P = {}, C = {}, DAILY_MTD = [], DAILY_D7 = [], KLAVIYO = {}, DATA_META = {}, INVENTORY = {};
+let P = {}, C = {}, KLAVIYO = {}, DATA_META = {}, INVENTORY = {};
+let DAILY_MTD = [], DAILY_D7 = [], DAILY_D30 = [];
+let DAILY_PREV_MTD = [], DAILY_PREV_D7 = [], DAILY_PREV_D30 = [];
+let DAILY_CUSTOM = [], DAILY_PREV_CUSTOM = [];
 let DATA_SOURCE = 'fallback'; // 'live' | 'fallback'
 let currentK = 'mtd';
 
@@ -678,8 +702,12 @@ async function loadData(bustCache) {
 
   P = d.P;
   C = d.C;
-  DAILY_MTD = d.daily_mtd;
-  DAILY_D7 = d.daily_d7 || [];
+  DAILY_MTD      = d.daily_mtd      || [];
+  DAILY_D7       = d.daily_d7       || [];
+  DAILY_D30      = d.daily_d30      || [];
+  DAILY_PREV_MTD = d.daily_prev_mtd || [];
+  DAILY_PREV_D7  = d.daily_prev_d7  || [];
+  DAILY_PREV_D30 = d.daily_prev_d30 || [];
   KLAVIYO = d.klaviyo || {};
   INVENTORY = d.inventory || {};
   DATA_META = d;
@@ -711,11 +739,12 @@ const xfmt=n=>n==null?'—':n.toLocaleString('nl-NL',{minimumFractionDigits:2,ma
 const num=n=>Math.round(n).toLocaleString('nl-NL');
 const T=(cls,txt)=>`<span class="ae-tag ${cls}">${txt}</span>`;
 const aeSlug=s=>s.replace(/<[^>]+>/g,'').replace(/&[a-z]+;/g,'').replace(/[^a-z0-9]+/gi,'-').toLowerCase().slice(0,38).replace(/-$/,'');
-const I=(type,tags,title,body,impact='')=>{
+const I=(type,tags,title,body,impact='',prio='')=>{
   const aid=aeSlug(title);
+  const prioKey = prio ? prio.toLowerCase().replace(' ','') : '';
   return `<div class="ae-item ${type}" data-aid="${aid}">
     <button class="ae-btn-x" onclick="aeClick(event,'${aid}')">···</button>
-    ${impact?`<span class="ae-impact">${impact}</span>`:''}
+    ${prio?`<span class="ae-prio ae-prio-${prioKey}">${prio}</span>`:(impact?`<span class="ae-impact">${impact}</span>`:'')}
     <div class="ae-tags">${tags}</div>
     <div class="ae-item-title">${title}</div>
     <div class="ae-item-body">${body}</div>
@@ -729,35 +758,93 @@ function generateActions(k){
   const aov=p.orders>0?p.rev/p.orders:null;
   const retC=camps.find(c=>c.name.includes('RETAR'));
   const trackGap=roas>0&&p.mroas>0?roas/p.mroas:0;
-  const nu=[], bn=[], later=[];
+  const meta=[], google=[], klaviyo=[], strat=[];
 
-  // DATA
-  if(cac!=null&&cac>GROSS) nu.unshift(I('data',T('data-tag','Data')+T('meta','Meta')+T('google','Google'),'Budget bevriezen &mdash; CAC verlieslatend',`CAC ${eur(cac)}/stuk vs brutomarge ${eur(GROSS)}. Geen opschaling. Fix CAPI + LP eerst.`,'HOOG'));
-  else if(cac!=null) nu.unshift(I('data ok',T('data-tag','Data'),'Winstgevend &mdash; voorzichtig opschalen',`Netto +${eur(net)}/stuk. Verhoog Meta €10/dag per week. Monitor blended ROAS.`,'HOOG'));
-  if(trackGap>=1.7&&roas<1.8) nu.push(I('data',T('data-tag','Data')+T('meta','Meta'),'Trackinggat: blended '+xfmt(roas)+' vs Meta '+xfmt(p.mroas),`Meta ziet ${Math.round((1-1/trackGap)*100)}% van je conversies niet. CAPI fix = direct betere optimalisatie.`,'HOOG'));
-  if(retC&&retC.spend>20&&retC.roas===null) nu.push(I('data',T('data-tag','Data')+T('meta','Meta'),`Retargeting €${retC.spend.toFixed(0)} spend, 0 gemeten conversies`,'Pixel check op thank-you pagina. CAPI verhoogt match rate. Actie vandaag.','MIDDEL'));
-  if(p.ctr>2.8&&p.mroas!=null&&p.mroas<0.8) nu.push(I('data',T('data-tag','Data')+T('cro','CRO'),'CTR '+pct(p.ctr)+' sterk &mdash; conversie zwak','Mensen klikken maar kopen niet. Check LP: laadtijd, reviews, headline, risk reversal.','HOOG'));
-  if(p.gspend>50&&p.rev/p.gspend<1.8) nu.push(I('data',T('data-tag','Data')+T('google','Google'),'Google blended ROAS '+xfmt(p.gspend>0?p.rev/p.gspend:null)+' &mdash; niet kostendekkend',`PMax gepauzeerd houden. Exact-negatief [waterkoker] toevoegen in Shopping.`,'HOOG'));
-  if(aov!=null&&aov<72) bn.push(I('data',T('data-tag','Data')+T('product','Product'),'AOV '+eur(aov)+' &mdash; geen upsell','Bijna alle orders single-unit. 2-pack (€119,90) of post-checkout upsell. +20% AOV = CAC daalt €10.','MIDDEL'));
-  if(retC&&retC.cpm>22) bn.push(I('data',T('data-tag','Data')+T('meta','Meta'),'Retargeting CPM '+eur(retC.cpm)+' &mdash; ad fatigue','Verklein audience (90d i.p.v. 180d) + nieuw creatief voor retargeting.','LAAG'));
+  // ── META ──────────────────────────────────────────────────────
+  if(cac!=null&&cac>GROSS)
+    meta.unshift(I('data',T('data-tag','Data'),'Budget bevriezen &mdash; CAC verlieslatend',
+      `CAC ${eur(cac)}/stuk vs brutomarge ${eur(GROSS)}. Geen opschaling. Fix CAPI + LP eerst.`,'','NU'));
+  else if(cac!=null)
+    meta.unshift(I('data ok',T('data-tag','Data'),'Winstgevend &mdash; voorzichtig opschalen',
+      `Netto +${eur(net)}/stuk. Verhoog Meta €10/dag per week. Monitor blended ROAS.`,'','NU'));
+  if(trackGap>=1.7&&roas<1.8)
+    meta.push(I('data',T('data-tag','Data'),'Trackinggat: blended '+xfmt(roas)+' vs Meta '+xfmt(p.mroas),
+      `Meta ziet ${Math.round((1-1/trackGap)*100)}% van je conversies niet. CAPI Maximum Data Sharing activeren.`,'','NU'));
+  if(retC&&retC.spend>20&&retC.roas===null)
+    meta.push(I('data',T('data-tag','Data'),`Retargeting ${eur(retC.spend)} spend &mdash; 0 gemeten conversies`,
+      'Pixel check op thank-you pagina. CAPI verhoogt match rate. Actie vandaag.','','NU'));
+  if(p.ctr>2.8&&p.mroas!=null&&p.mroas<0.8)
+    meta.push(I('data',T('data-tag','Data'),'CTR '+pct(p.ctr)+' sterk &mdash; LP converteert niet',
+      'Mensen klikken maar kopen niet. Check LP: laadtijd, reviews, headline, risk reversal.','','NU'));
+  meta.push(I('research',T('research-tag','Research'),'Ad Library: "zonder plastic" hoek vrij in NL',
+    'Scan 13-06-2026: geen concurrent adverteert op dit onderscheid. Whitespace om direct te claimen.','','NU'));
+  meta.push(I('playbook',T('meta','Meta'),'V7 (8,87×) + V47 (7,12×) naar eigen CBO isoleren',
+    'Budget lekt nu naar V50 (1,87×). Eigen CBO = direct hogere gemiddelde ROAS zonder extra spend.','','NU'));
+  meta.push(I('research',T('research-tag','Research'),'Ad Library: "duurzaam design" concurrent actief 4+ mnd',
+    'Kokendwatergigant bewijst dat de hoek werkt — maar verkoopt kranen. ELÛNA kan design-positie opeisen in kettle-segment.','','BINNENKORT'));
+  if(retC&&retC.cpm>22)
+    meta.push(I('data',T('data-tag','Data'),'Retargeting CPM '+eur(retC.cpm)+' &mdash; ad fatigue',
+      'Verklein audience (90d i.p.v. 180d) + nieuw creatief voor retargeting.','','BINNENKORT'));
 
-  // RESEARCH
-  nu.push(I('research',T('research-tag','Research')+T('meta','Meta'),'Ad Library: "zonder plastic" hoek vrij in NL','Scan 13-06-2026: geen concurrent adverteert op dit onderscheid. Brief 01 test deze whitespace direct. Hoogste kans op CVR-verbetering.','HOOG'));
-  nu.push(I('research',T('research-tag','Research')+T('meta','Meta'),'Ad Library: "duurzaam design" al 4+ maanden actief bij Kokendwatergigant','Zij bewijzen dat deze hoek werkt maar verkopen kokend-water-kranen, geen kettles. ELÛNA kan design-positie opeisen in het kettle-segment.','MIDDEL'));
+  // ── GOOGLE ────────────────────────────────────────────────────
+  if(p.gspend>50&&p.rev/(p.gspend||1)<1.8)
+    google.push(I('data',T('data-tag','Data'),'Google blended ROAS '+xfmt(p.gspend>0?p.rev/p.gspend:null)+' &mdash; niet kostendekkend',
+      'PMax asset groups segmenteren: merk / categorie / concurrent. Exact-negatief [waterkoker] toevoegen in Shopping.','','NU'));
+  google.push(I('playbook',T('google','Google'),'Conversietracking audit &mdash; dubbele attributie',
+    'Shopify → Google Tag: controleer "conversion lag" in Search Terms report. Foute tracking = foute bidstrategie.','','BINNENKORT'));
+  google.push(I('playbook',T('google','Google'),'Merk vs generiek splitsen in Shopping',
+    'Merkzoekopdrachten converteren 5–10× beter. Apart budgetteren en controleren.','','BINNENKORT'));
+  google.push(I('playbook',T('google','Google'),'Google API live &rarr; volledig automatisch dashboard',
+    'Zodra Basic Access goedgekeurd: dashboard vernieuwt Google-data automatisch. Aanvraag pending.','','LATER'));
 
-  // PLAYBOOK
-  nu.push(I('playbook',T('meta','Meta'),'V7 (8,87×) + V47 (7,12×) naar eigen CBO isoleren','Budget lekt nu naar V50 (1,87×). Eigen CBO = direct hogere gemiddelde ROAS zonder extra spend.'));
-  nu.push(I('playbook',T('product','Product'),'Inventaris reorder bij Windspro','40 stuks resterend · ~25 dagen runway · stockout ~8 jul. Lead time 45–65d → bij bestelling vandaag = aankomst 28 jul–17 aug. Bestel NU om gap te minimaliseren.','HOOG'));
-  bn.push(I('playbook',T('product','Product'),'2-pack bundel maken op Shopify','€119,90 i.p.v. 2× €69,95. Als 20% bundel kiest: AOV +€15, CAC/stuk -€10.'));
-  bn.push(I('playbook',T('cro','CRO'),'LP headline: van specs naar ritueel','Wissel "1.7L · volledig RVS" naar "Zo begint elke ochtend." A/B testen. 7 dagen meten.'));
-  bn.push(I('playbook',T('cro','CRO'),'Levenslange garantie op RVS toevoegen','Kost bijna niets (RVS gaat 20+ jaar mee). Noem het expliciet op LP. Expect +15-25% CVR.'));
-  later.push(I('playbook',T('pr','PR/Creator'),'15 micro-influencers NL giften (food/lifestyle, 5k–30k)','€1.050 COGS, €0 spend. 8 van 15 posten = 120k bereik voor €8,75 CPM. Content hergebruiken als UGC in ads.'));
-  later.push(I('playbook',T('organic','Organic'),'Organisch: 1× per week Reels/TikTok (Higgsfield hergebruiken)','Algoritme-boost na 8 weken. Verlaagt paid CPM doordat organisch social proof toevoegt.'));
-  later.push(I('playbook',T('pr','PR'),'Seizoensplan: Sinterklaas + Kerst (start prep sept)','Waterkokers zijn top-cadeau. Q4 is 3–5× hogere ROAS window. Creatieve brief starten in september.'));
-  later.push(I('playbook',T('pr','PR'),'PR: Libelle, Margriet, HLN Lifestyle','Gratis product + persbericht "duurzame waterkoker zonder plastic". 1 placement = €5k–€10k omzet + SEO backlinks.'));
-  later.push(I('playbook',T('google','Google'),'Google API live → volledig automatisch dashboard','Zodra Basic Access goedgekeurd: dashboard vernieuwt Google-data automatisch.'));
+  // ── KLAVIYO ───────────────────────────────────────────────────
+  const flows = KLAVIYO.flows || [];
+  const browse = flows.find(f=>f.name.includes('Browse'));
+  const cart   = flows.find(f=>f.name.includes('Check'));
+  const review = flows.find(f=>f.name.includes('Review'));
+  const welcome= flows.find(f=>f.name.includes('Welcome'));
+  if(cart&&cart.d30_recipients<15)
+    klaviyo.push(I('data',T('email','Email'),'Abandoned Checkout &mdash; slechts '+cart.d30_recipients+' triggers (30d)',
+      'Mogelijk Shopify/Klaviyo tracking-probleem. Controleer flow-trigger en Checkout Events.','','NU'));
+  if(browse&&browse.d30_ctr<1)
+    klaviyo.push(I('data',T('email','Email'),'Browse Abandonment: open rate sterk, CTR '+browse.d30_ctr.toFixed(1)+'%',
+      'Mensen openen maar klikken niet. CTA of aanbod werkt niet. Test kortingsaanbieding in email.','','NU'));
+  if(review&&review.d30_ctr===0)
+    klaviyo.push(I('data',T('email','Email'),'Product Review flow: 0% CTR op review-CTA',
+      'Knop of onderwerprregel werkt niet. A/B testen met ander CTA-format ("Deel jouw ervaring").','','BINNENKORT'));
+  if(welcome)
+    klaviyo.push(I('playbook',T('email','Email'),'Welcome Series email 2 converteert niet',
+      `Email 1 werkt (flow genereert €${welcome.d30_revenue.toFixed(0)} in 30d). Email 2 (cadeau-push) verwijderen of vervangen door social proof.`,'','BINNENKORT'));
+  const failedCamp=(KLAVIYO.campaigns||[]).find(c=>c.conversions===0&&c.ctr>3);
+  if(failedCamp)
+    klaviyo.push(I('data',T('email','Email'),'Campagne "'+failedCamp.name.slice(0,28)+'..." &mdash; 0 conversies',
+      `${failedCamp.recipients} ontvangers, CTR ${failedCamp.ctr.toFixed(1)}% — kliks maar geen aankopen. LP of coupon werkte niet.`,'','BINNENKORT'));
 
-  return {nu,bn,later};
+  // ── STRATEGISCH ───────────────────────────────────────────────
+  const FOUR_STOCK = INVENTORY.stock != null ? INVENTORY.stock : 34;
+  const fourDays = p.units>0 ? Math.round(FOUR_STOCK / (p.units / (k==='today'||k==='gisteren'?1:k==='d7'?7:k==='d30'?30:14))) : null;
+  if(fourDays!=null&&fourDays<30)
+    strat.unshift(I('data',T('product','Product'),'Inventaris: FOUR heeft nog '+FOUR_STOCK+' stuks ('+fourDays+' dgn)',
+      `Lead time Windspro: 45–65 dagen. Bestel nú om stockout te voorkomen. PBL heeft nog ${INVENTORY.pbl_stock||185} stuks buffer.`,'','NU'));
+  if(aov!=null&&aov<72)
+    strat.push(I('data',T('product','Product'),'AOV '+eur(aov)+' &mdash; geen bundle',
+      'Bijna alle orders single-unit. 2-pack €119,90 of post-checkout upsell. +20% AOV = CAC/stuk daalt €10.','','BINNENKORT'));
+  strat.push(I('playbook',T('cro','CRO'),'LP headline: van specs naar ritueel',
+    '"1,7L · volledig RVS" → "Zo begint elke ochtend." A/B testen. 7 dagen meten.','','BINNENKORT'));
+  strat.push(I('playbook',T('cro','CRO'),'Levenslange garantie op RVS toevoegen aan LP',
+    'Kost bijna niets. RVS gaat 20+ jaar mee. Expliciet boven de fold. Verwacht +15–25% CVR.','','BINNENKORT'));
+  strat.push(I('playbook',T('product','Product'),'2-pack bundel op Shopify',
+    '€119,90 i.p.v. 2× €69,95. Als 20% kiest voor bundel: AOV +€15, CAC/stuk −€10.','','BINNENKORT'));
+  strat.push(I('playbook',T('pr','PR/Creator'),'15 micro-influencers NL giften (food/lifestyle, 5k–30k)',
+    '€1.050 COGS, €0 spend. 8 van 15 posten = 120k bereik. Content hergebruiken als UGC in Meta ads.','','LATER'));
+  strat.push(I('playbook',T('organic','Organic'),'Organisch: 1× per week Reels/TikTok (Higgsfield)',
+    'Algoritme-boost na 8 weken. Verlaagt paid CPM doordat organisch social proof toevoegt.','','LATER'));
+  strat.push(I('playbook',T('pr','PR'),'Seizoensplan: Sinterklaas + Kerst &mdash; start prep september',
+    'Waterkokers zijn top-cadeau. Q4 is 3–5× hogere ROAS window. Creatieve brief nu starten.','','LATER'));
+  strat.push(I('playbook',T('pr','PR'),'PR: Libelle, Margriet, HLN Lifestyle',
+    'Gratis product + persbericht "duurzame waterkoker zonder plastic". 1 placement = €5k–€10k omzet + SEO backlinks.','','LATER'));
+
+  return {meta, google, klaviyo, strat};
 }
 
 function renderPerfStats(k, grossEx, cac, net){
@@ -969,44 +1056,68 @@ function renderEmail(){
 }
 
 function renderChart(k){
-  const inner = document.getElementById('perf-inner');
+  const inner   = document.getElementById('perf-inner');
   const chartCol = document.getElementById('perf-chart-col');
-  const toggleBtn = document.getElementById('chart-type-toggle');
-  if(toggleBtn) toggleBtn.textContent = chartType === 'bar' ? '▦' : '∿';
 
-  if(k==='today'||k==='gisteren'||k==='d30'){
+  if(k==='today'||k==='gisteren'){
     inner.classList.add('no-chart');
     chartCol.style.display='none';
     return;
   }
   inner.classList.remove('no-chart');
   chartCol.style.display='';
-  const days = k==='d7' ? DAILY_D7 : DAILY_MTD;
-  if(!days||!days.length){inner.classList.add('no-chart');chartCol.style.display='none';return;}
-  const label = k==='d7' ? 'Omzetprestatie · 7 dagen' : 'Omzetprestatie · MTD';
-  document.getElementById('perf-title').textContent = label;
-  const max = Math.max(...days.map(d=>d.rev), 1);
-  const last = days[days.length-1].d;
 
-  if(chartType === 'bar'){
-    document.getElementById('chart-bars').innerHTML = days.map(d=>`<div class="chart-bar${d.d===last?' today':''}" style="height:${Math.max(3,Math.round(d.rev/max*100))}%" data-tip="${d.d}: ${eur(d.rev)}" onmouseenter="showChTip(event,this)" onmouseleave="hideChTip()"></div>`).join('');
-    document.getElementById('chart-labels').innerHTML = days.map(d=>`<span class="chart-label">${d.d}</span>`).join('');
-  } else {
-    // lijn (SVG)
-    const W=300, H=56;
-    const pts = days.map((d,i)=>{
-      const x = days.length>1 ? (i/(days.length-1))*W : W/2;
-      const y = H - Math.max(2, Math.round(d.rev/max*(H-4)));
-      return x+','+y;
-    }).join(' ');
-    const circles = days.map((d,i)=>{
-      const x = days.length>1 ? (i/(days.length-1))*W : W/2;
-      const y = H - Math.max(2, Math.round(d.rev/max*(H-4)));
-      return `<circle cx="${x}" cy="${y}" r="${d.d===last?3.5:2}" fill="${d.d===last?'var(--good)':'var(--sage)'}" data-tip="${d.d}: ${eur(d.rev)}" onmouseenter="showChTip(event,this)" onmouseleave="hideChTip()" style="cursor:default"/>`;
-    }).join('');
-    document.getElementById('chart-bars').innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="var(--sage)" stroke-width="2" stroke-linejoin="round"/>${circles}</svg>`;
-    document.getElementById('chart-labels').innerHTML = days.map(d=>`<span class="chart-label">${d.d}</span>`).join('');
-  }
+  const days     = k==='d7' ? DAILY_D7 : k==='d30' ? DAILY_D30 : k==='custom' ? DAILY_CUSTOM : DAILY_MTD;
+  const prevDays = k==='d7' ? DAILY_PREV_D7 : k==='d30' ? DAILY_PREV_D30 : k==='custom' ? DAILY_PREV_CUSTOM : DAILY_PREV_MTD;
+
+  if(!days||!days.length){inner.classList.add('no-chart');chartCol.style.display='none';return;}
+
+  const labelMap = {d7:'7 dagen', d30:'30 dagen', mtd:'MTD', custom:'Aangepast'};
+  document.getElementById('perf-title').textContent = 'Omzetprestatie · ' + (labelMap[k]||'');
+
+  const allRevs  = [...days.map(d=>d.rev), ...(prevDays||[]).map(d=>d.rev)];
+  const rawMax   = Math.max(...allRevs, 1);
+  // Afronden op mooie grens
+  const mag      = Math.pow(10, Math.floor(Math.log10(rawMax)));
+  const norm     = rawMax / mag;
+  const niceMax  = (norm<=1.5?1.5:norm<=2?2:norm<=5?5:10) * mag;
+
+  const last = days[days.length-1]?.d;
+  // Voor 30d: toon alleen labels elke 5e dag
+  const labelStep = days.length > 14 ? 5 : 1;
+
+  const barsHtml = days.map((d, i) => {
+    const currPct = Math.max(2, Math.round(d.rev/niceMax*100));
+    const prev    = prevDays?.[i];
+    const prevPct = prev ? Math.max(2, Math.round(prev.rev/niceMax*100)) : 0;
+    const prevBar = prevPct
+      ? `<div class="chart-bar-prev" style="height:${prevPct}%" data-tip="${prev.d}: ${eur(prev.rev)}" onmouseenter="showChTip(event,this)" onmouseleave="hideChTip()"></div>`
+      : `<div style="flex:1"></div>`;
+    return `<div class="chart-day">${prevBar}<div class="chart-bar-curr${d.d===last?' today':''}" style="height:${currPct}%" data-tip="${d.d}: ${eur(d.rev)}" onmouseenter="showChTip(event,this)" onmouseleave="hideChTip()"></div></div>`;
+  }).join('');
+
+  const labelsHtml = days.map((d,i)=>`<span class="chart-label">${(i%labelStep===0||i===days.length-1)?d.d:''}</span>`).join('');
+
+  const hasPrev = prevDays && prevDays.some(d=>d.rev>0);
+
+  chartCol.innerHTML = `
+    <div class="chart-wrap">
+      <div class="chart-y">
+        <div>${eur0(niceMax)}</div>
+        <div>${eur0(niceMax/2)}</div>
+        <div style="opacity:0">x</div>
+      </div>
+      <div class="chart-plot">
+        <div class="chart-gline" style="top:0"></div>
+        <div class="chart-gline" style="top:50%"></div>
+        <div class="chart-days">${barsHtml}</div>
+        <div class="chart-labels">${labelsHtml}</div>
+      </div>
+    </div>
+    <div class="chart-legend">
+      <span><span class="leg-sw" style="background:var(--sage)"></span>Deze periode</span>
+      ${hasPrev?`<span><span class="leg-sw" style="background:#C2CFC0"></span>Vorige periode</span>`:''}
+    </div>`;
 }
 
 let metaFilter = 'actief'; // 'alle' | 'actief'
@@ -1311,10 +1422,11 @@ function render(k){
   if(roas<1.8) s+=`<div class="signal"><span class="dot flag" style="margin-top:6px"></span><span><b>Blended ROAS onder break-even</b>Break-even ~1,8×. Nu ${xfmt(roas)}. CAPI + LP-fix vóór opschalen.</span></div>`;
   document.getElementById('signals').innerHTML=s;
 
-  const {nu,bn,later}=generateActions(k);
-  document.getElementById('ae-nu').innerHTML=nu.join('');
-  document.getElementById('ae-binnenkort').innerHTML=bn.join('');
-  document.getElementById('ae-later').innerHTML=later.join('');
+  const {meta,google,klaviyo,strat}=generateActions(k);
+  document.getElementById('ae-meta').innerHTML=meta.join('');
+  document.getElementById('ae-google').innerHTML=google.join('');
+  document.getElementById('ae-klaviyo').innerHTML=klaviyo.join('');
+  document.getElementById('ae-strat').innerHTML=strat.join('');
 
   // Forecast
   const mtdCac=(P.mtd.spend+P.mtd.gspend)/P.mtd.units;
@@ -1396,6 +1508,9 @@ function hideChTip() {
 
 // ── date range picker ──────────────────────────────────────────
 let _drpOpen = false;
+let _drpPickStart = null; // 'YYYY-MM-DD' of null
+let _drpPicking   = false;
+let _drpCustom    = null; // {start, end}
 
 function drpToggle() {
   _drpOpen = !_drpOpen;
@@ -1404,7 +1519,11 @@ function drpToggle() {
 
 function drpClose() {
   _drpOpen = false;
+  _drpPicking = false;
+  _drpPickStart = null;
   document.getElementById('drp-panel').classList.remove('open');
+  const hint = document.getElementById('drp-pick-hint');
+  if (hint) hint.style.display = 'none';
 }
 
 function drpUpdate(k) {
@@ -1412,8 +1531,56 @@ function drpUpdate(k) {
   if (!p) return;
   document.getElementById('drp-label').textContent = p.label;
   document.getElementById('drp-range').textContent = p.range || '';
-  document.querySelectorAll('.drp-preset').forEach(b => b.classList.toggle('active', b.dataset.k === k));
+  document.querySelectorAll('.drp-preset[data-k]').forEach(b => b.classList.toggle('active', b.dataset.k === k));
+  const customBtn = document.getElementById('drp-custom-active');
+  if (customBtn) customBtn.style.display = k === 'custom' ? '' : 'none';
   renderDrpCalendar(k);
+}
+
+function drpStartCustom() {
+  _drpPicking = true;
+  _drpPickStart = null;
+  const hint = document.getElementById('drp-pick-hint');
+  if (hint) { hint.textContent = 'Klik op een startdatum in de kalender'; hint.style.display = ''; }
+  renderDrpCalendar('_pick');
+}
+
+async function drpPickDay(dateStr) {
+  if (!_drpPicking) return;
+  if (!_drpPickStart) {
+    _drpPickStart = dateStr;
+    const hint = document.getElementById('drp-pick-hint');
+    if (hint) hint.textContent = `Start: ${dateStr} — klik nu op de einddatum`;
+    renderDrpCalendar('_pick');
+  } else {
+    const start = _drpPickStart < dateStr ? _drpPickStart : dateStr;
+    const end   = _drpPickStart < dateStr ? dateStr : _drpPickStart;
+    _drpCustom  = { start, end };
+    _drpPicking = false;
+    _drpPickStart = null;
+    drpClose();
+    await fetchCustomRange(start, end);
+  }
+}
+
+async function fetchCustomRange(start, end) {
+  document.getElementById('drp-label').textContent = 'Laden…';
+  try {
+    const res = await fetch(`/api/data?start=${start}&end=${end}`);
+    if (!res.ok) throw new Error('Custom API fout');
+    const d = await res.json();
+    if (!d.custom) throw new Error('Geen custom data');
+    P.custom          = d.custom;
+    DAILY_CUSTOM      = d.daily_custom      || [];
+    DAILY_PREV_CUSTOM = d.daily_prev_custom || [];
+    const customActiveBtn = document.getElementById('drp-custom-active');
+    if (customActiveBtn) customActiveBtn.style.display = '';
+    render('custom');
+    drpUpdate('custom');
+  } catch(e) {
+    document.getElementById('drp-label').textContent = 'Fout';
+    console.error('fetchCustomRange:', e);
+  }
 }
 
 function renderDrpCalendar(k) {
