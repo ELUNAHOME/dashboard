@@ -1413,47 +1413,49 @@ function renderStockBar(k){
   const pblPct      = pblStock  != null ? Math.round(pblStock/moq*100)  : 0;
 
   const moqHtml = realSold != null ? `
-    <div style="margin-top:8px">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
-        <span style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase">MOQ ${moq} stuks</span>
-        <span style="font-size:10px;color:var(--muted)">${returns} retouren · ${openOrders} open</span>
+    <div style="border-top:1px solid var(--line);margin-top:14px;padding-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+        <span style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase">MOQ ${moq} · Windspro</span>
+        <span style="font-size:10px;color:var(--muted)">${INVENTORY.portal_updated ? 'portaal ' + INVENTORY.portal_updated : ''}</span>
       </div>
       <div style="display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--line);gap:1px">
-        <div style="width:${netSoldPct}%;background:var(--good)" title="${netSold} bij klanten"></div>
-        <div style="width:${givePct}%;background:var(--sage)" title="${giveaways} giveaways"></div>
+        <div style="width:${netSoldPct}%;background:var(--good)" title="${netSold} bij klanten (${realSold}−${returns} retouren)"></div>
+        <div style="width:${givePct}%;background:var(--sage)" title="${giveaways} weggegeven"></div>
         <div style="width:${openPct}%;background:#D4C87A" title="${openOrders} open orders"></div>
         <div style="width:${fourPct}%;background:#B5C9A8" title="${stock} FOUR"></div>
         <div style="width:${pblPct}%;background:#D4DCC4" title="${pblStock} PBL"></div>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:5px;font-size:10px;color:var(--muted)">
-        <span><span style="color:var(--good)">■</span> ${netSold} klanten</span>
-        <span><span style="color:var(--sage)">■</span> ${giveaways} weggegeven</span>
-        <span><span style="color:#B5C9A8">■</span> ${stock} FOUR</span>
-        ${pblStock != null ? `<span><span style="color:#D4DCC4">■</span> ${pblStock} PBL</span>` : ''}
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px 0;margin-top:8px;font-size:10px;color:var(--muted)">
+        <span><span style="color:var(--good)">■</span> <strong style="color:var(--ink)">${netSold}</strong> bij klanten <span>(${realSold}−${returns} ret.)</span></span>
+        <span><span style="color:var(--sage)">■</span> <strong style="color:var(--ink)">${giveaways}</strong> weggegeven</span>
+        <span><span style="color:#D4C87A">■</span> <strong style="color:var(--ink)">${openOrders}</strong> open orders</span>
+        <span><span style="color:#B5C9A8">■</span> <strong style="color:var(--ink)">${stock}</strong> FOUR</span>
+        <span><span style="color:#D4DCC4">■</span> <strong style="color:var(--ink)">${pblStock != null ? pblStock : '—'}</strong> PBL</span>
+        <span>= ${(netSold||0)+(giveaways||0)+openOrders+stock+(pblStock||0)} / ${moq}</span>
       </div>
     </div>` : '';
 
   el.innerHTML = `
-    <div class="stock-tile ${tileCls}" style="grid-column: span 2">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div class="stock-tile ${tileCls}" style="grid-column: span 4">
+      <div class="stock-lbl" style="margin-bottom:12px">Voorraad</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:20px;align-items:start">
         <div>
-          <div class="stock-lbl">Locaties</div>
-          <div style="display:flex;gap:16px;align-items:baseline;margin-top:2px">
-            <div>
-              <div class="stock-val ${stockCls}" style="margin-bottom:0">${stock}</div>
-              <div class="stock-sub">FOUR</div>
-            </div>
-            ${pblStock != null ? `<div style="color:var(--muted)">+</div>
-            <div>
-              <div class="stock-val" style="margin-bottom:0;color:var(--muted)">${pblStock}</div>
-              <div class="stock-sub">PBL</div>
-            </div>
-            <div style="color:var(--line)">·</div>
-            <div>
-              <div class="stock-val" style="margin-bottom:0;font-size:20px">${stock + pblStock}</div>
-              <div class="stock-sub">totaal</div>
-            </div>` : ''}
-          </div>
+          <div style="font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;margin-bottom:2px">FOUR · GoedGepickt</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:6px">Uitgeest</div>
+          <div class="stock-val ${stockCls}" style="font-size:22px;margin-bottom:0">${stock}</div>
+          <div class="stock-sub">stuks</div>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;margin-bottom:2px">PBL · Hoofdmagazijn</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:6px">Buffer</div>
+          <div class="stock-val" style="font-size:22px;margin-bottom:0;color:var(--ink)">${pblStock != null ? pblStock : '—'}</div>
+          <div class="stock-sub">stuks</div>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Totaal</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:6px">&nbsp;</div>
+          <div class="stock-val" style="font-size:22px;margin-bottom:0">${stock + (pblStock||0)}</div>
+          <div class="stock-sub">stuks</div>
         </div>
         <div style="text-align:right">
           <div class="stock-lbl">Runway (FOUR)</div>
@@ -1463,15 +1465,15 @@ function renderStockBar(k){
       </div>
       ${moqHtml}
     </div>
-    <div class="stock-tile">
+    <div class="stock-tile" style="grid-column: span 2">
       <div class="stock-lbl">Stockout FOUR</div>
       <div class="stock-val ${runwayCls}" style="font-size:18px">${stockout || '—'}</div>
       <div class="stock-sub">bestel nu · lead time 45–65d</div>
     </div>
-    <div class="stock-tile">
-      <div class="stock-lbl">Dagelijkse burn</div>
+    <div class="stock-tile" style="grid-column: span 2">
+      <div class="stock-lbl">Ad spend / dag</div>
       <div class="stock-val" style="font-size:18px">${dailySpend > 0 ? eur(dailySpend) : '—'}</div>
-      <div class="stock-sub">ROAS ${blendedRoas ? blendedRoas.toFixed(2).replace('.',',')+'×' : '—'}</div>
+      <div class="stock-sub">ROAS ${blendedRoas ? blendedRoas.toFixed(2).replace('.',',')+'×' : '—'} · gemiddeld over periode</div>
     </div>`;
 }
 
