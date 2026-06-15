@@ -45,16 +45,16 @@
   .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
   .dot.live{background:var(--good)} .dot.flag{background:var(--warn)} .dot.idle{background:var(--line)}
 
-  .chart-wrap{display:flex;gap:6px;align-items:stretch}
-  .chart-y{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;font-size:9px;color:var(--muted);min-width:30px;padding-bottom:17px}
+  .chart-wrap{display:flex;gap:8px;align-items:stretch}
+  .chart-y{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;font-size:9px;color:var(--muted);min-width:34px;padding-bottom:20px}
   .chart-plot{position:relative;flex:1;display:flex;flex-direction:column}
-  .chart-gline{position:absolute;left:0;right:0;border-top:1px solid var(--line);pointer-events:none;opacity:.45}
-  .chart-days{display:flex;align-items:flex-end;gap:2px;height:72px}
-  .chart-day{display:flex;align-items:flex-end;gap:1px;flex:1;min-width:0}
-  .chart-bar-curr{flex:1;min-height:2px;border-radius:2px 2px 0 0;background:var(--sage);cursor:default;transition:opacity .12s}
+  .chart-gline{position:absolute;left:0;right:0;border-top:1px dashed var(--line);pointer-events:none;opacity:.55}
+  .chart-days{display:flex;align-items:flex-end;gap:6px;height:108px}
+  .chart-day{display:flex;align-items:flex-end;gap:3px;flex:1;min-width:0}
+  .chart-bar-curr{flex:1;min-height:3px;border-radius:4px 4px 0 0;background:var(--sage);cursor:default;transition:opacity .15s}
   .chart-bar-curr.today{background:var(--good)}
-  .chart-bar-curr:hover,.chart-bar-prev:hover{opacity:.6}
-  .chart-bar-prev{flex:1;min-height:2px;border-radius:2px 2px 0 0;background:#C2CFC0;cursor:default;transition:opacity .12s}
+  .chart-bar-curr:hover,.chart-bar-prev:hover{opacity:.55}
+  .chart-bar-prev{flex:1;min-height:3px;border-radius:4px 4px 0 0;background:#D4DDD2;cursor:default;transition:opacity .15s}
   .chart-labels{display:flex;gap:2px;margin-top:4px}
   .chart-label{flex:1;font-size:9px;color:var(--muted);text-align:center;min-width:0;overflow:hidden;white-space:nowrap}
   .chart-legend{display:flex;align-items:center;gap:12px;font-size:10px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
@@ -1055,8 +1055,24 @@ function renderEmail(){
     </ul>`;
 }
 
+// Aggregeer daagse data naar weekbuckets (max 7 dagen per bucket)
+function aggWeek(days) {
+  if (!days || days.length <= 7) return days;
+  const result = [];
+  for (let i = 0; i < days.length; i += 7) {
+    const chunk = days.slice(i, i + 7);
+    result.push({
+      d:      chunk[0].d,
+      rev:    Math.round(chunk.reduce((s, d) => s + d.rev, 0) * 100) / 100,
+      orders: chunk.reduce((s, d) => s + (d.orders || 0), 0),
+      _span:  chunk.length
+    });
+  }
+  return result;
+}
+
 function renderChart(k){
-  const inner   = document.getElementById('perf-inner');
+  const inner    = document.getElementById('perf-inner');
   const chartCol = document.getElementById('perf-chart-col');
 
   if(k==='today'||k==='gisteren'){
@@ -1067,37 +1083,41 @@ function renderChart(k){
   inner.classList.remove('no-chart');
   chartCol.style.display='';
 
-  const days     = k==='d7' ? DAILY_D7 : k==='d30' ? DAILY_D30 : k==='custom' ? DAILY_CUSTOM : DAILY_MTD;
-  const prevDays = k==='d7' ? DAILY_PREV_D7 : k==='d30' ? DAILY_PREV_D30 : k==='custom' ? DAILY_PREV_CUSTOM : DAILY_PREV_MTD;
+  const rawDays = k==='d7' ? DAILY_D7 : k==='d30' ? DAILY_D30 : k==='custom' ? DAILY_CUSTOM : DAILY_MTD;
+  const rawPrev = k==='d7' ? DAILY_PREV_D7 : k==='d30' ? DAILY_PREV_D30 : k==='custom' ? DAILY_PREV_CUSTOM : DAILY_PREV_MTD;
 
-  if(!days||!days.length){inner.classList.add('no-chart');chartCol.style.display='none';return;}
+  if(!rawDays||!rawDays.length){inner.classList.add('no-chart');chartCol.style.display='none';return;}
+
+  // D7 = dagelijks; MTD/D30/custom > 7d = wekelijks
+  const useWeekly = rawDays.length > 7;
+  const days     = useWeekly ? aggWeek(rawDays) : rawDays;
+  const prevDays = useWeekly ? aggWeek(rawPrev) : rawPrev;
 
   const labelMap = {d7:'7 dagen', d30:'30 dagen', mtd:'MTD', custom:'Aangepast'};
-  document.getElementById('perf-title').textContent = 'Omzetprestatie · ' + (labelMap[k]||'');
+  const intervalNote = useWeekly ? ' · per week' : ' · per dag';
+  document.getElementById('perf-title').textContent = 'Omzetprestatie · ' + (labelMap[k]||'') + intervalNote;
 
-  const allRevs  = [...days.map(d=>d.rev), ...(prevDays||[]).map(d=>d.rev)];
-  const rawMax   = Math.max(...allRevs, 1);
-  // Afronden op mooie grens
-  const mag      = Math.pow(10, Math.floor(Math.log10(rawMax)));
-  const norm     = rawMax / mag;
-  const niceMax  = (norm<=1.5?1.5:norm<=2?2:norm<=5?5:10) * mag;
+  const allRevs = [...days.map(d=>d.rev), ...(prevDays||[]).map(d=>d.rev)];
+  const rawMax  = Math.max(...allRevs, 1);
+  const mag     = Math.pow(10, Math.floor(Math.log10(rawMax)));
+  const norm    = rawMax / mag;
+  const niceMax = (norm<=1.5?1.5:norm<=2?2:norm<=5?5:10) * mag;
 
   const last = days[days.length-1]?.d;
-  // Voor 30d: toon alleen labels elke 5e dag
-  const labelStep = days.length > 14 ? 5 : 1;
 
   const barsHtml = days.map((d, i) => {
     const currPct = Math.max(2, Math.round(d.rev/niceMax*100));
     const prev    = prevDays?.[i];
     const prevPct = prev ? Math.max(2, Math.round(prev.rev/niceMax*100)) : 0;
+    const prevLbl = prev ? (useWeekly ? `week v/a ${prev.d}: ${eur(prev.rev)}` : `${prev.d}: ${eur(prev.rev)}`) : '';
+    const currLbl = useWeekly ? `week v/a ${d.d}: ${eur(d.rev)}` : `${d.d}: ${eur(d.rev)}`;
     const prevBar = prevPct
-      ? `<div class="chart-bar-prev" style="height:${prevPct}%" data-tip="${prev.d}: ${eur(prev.rev)}" onmouseenter="showChTip(event,this)" onmouseleave="hideChTip()"></div>`
+      ? `<div class="chart-bar-prev" style="height:${prevPct}%" data-tip="${prevLbl}" onmouseenter="showChTip(event,this)" onmouseleave="hideChTip()"></div>`
       : `<div style="flex:1"></div>`;
-    return `<div class="chart-day">${prevBar}<div class="chart-bar-curr${d.d===last?' today':''}" style="height:${currPct}%" data-tip="${d.d}: ${eur(d.rev)}" onmouseenter="showChTip(event,this)" onmouseleave="hideChTip()"></div></div>`;
+    return `<div class="chart-day">${prevBar}<div class="chart-bar-curr${d.d===last?' today':''}" style="height:${currPct}%" data-tip="${currLbl}" onmouseenter="showChTip(event,this)" onmouseleave="hideChTip()"></div></div>`;
   }).join('');
 
-  const labelsHtml = days.map((d,i)=>`<span class="chart-label">${(i%labelStep===0||i===days.length-1)?d.d:''}</span>`).join('');
-
+  const labelsHtml = days.map(d=>`<span class="chart-label">${d.d}</span>`).join('');
   const hasPrev = prevDays && prevDays.some(d=>d.rev>0);
 
   chartCol.innerHTML = `
@@ -1116,7 +1136,7 @@ function renderChart(k){
     </div>
     <div class="chart-legend">
       <span><span class="leg-sw" style="background:var(--sage)"></span>Deze periode</span>
-      ${hasPrev?`<span><span class="leg-sw" style="background:#C2CFC0"></span>Vorige periode</span>`:''}
+      ${hasPrev?`<span><span class="leg-sw" style="background:#D4DDD2"></span>Vorige periode</span>`:''}
     </div>`;
 }
 
