@@ -50,7 +50,7 @@
   .chart-plot{position:relative;flex:1;display:flex;flex-direction:column}
   .chart-gline{position:absolute;left:0;right:0;border-top:1px dashed var(--line);pointer-events:none;opacity:.55}
   .chart-days{display:flex;align-items:flex-end;gap:6px;height:108px}
-  .chart-day{display:flex;align-items:flex-end;gap:3px;flex:1;min-width:0}
+  .chart-day{display:flex;align-items:flex-end;gap:3px;flex:1;min-width:0;height:100%}
   .chart-bar-curr{flex:1;min-height:3px;border-radius:4px 4px 0 0;background:var(--sage);cursor:default;transition:opacity .15s}
   .chart-bar-curr.today{background:var(--good)}
   .chart-bar-curr:hover,.chart-bar-prev:hover{opacity:.55}
@@ -1088,14 +1088,13 @@ function renderChart(k){
 
   if(!rawDays||!rawDays.length){inner.classList.add('no-chart');chartCol.style.display='none';return;}
 
-  // D7 = dagelijks; MTD/D30/custom > 7d = wekelijks
-  const useWeekly = rawDays.length > 7;
+  // D7 = altijd dagelijks; MTD/D30/custom ≥14d = wekelijks
+  const useWeekly = k !== 'd7' && rawDays.length >= 14;
   const days     = useWeekly ? aggWeek(rawDays) : rawDays;
   const prevDays = useWeekly ? aggWeek(rawPrev) : rawPrev;
 
   const labelMap = {d7:'7 dagen', d30:'30 dagen', mtd:'MTD', custom:'Aangepast'};
-  const intervalNote = useWeekly ? ' · per week' : ' · per dag';
-  document.getElementById('perf-title').textContent = 'Omzetprestatie · ' + (labelMap[k]||'') + intervalNote;
+  document.getElementById('perf-title').textContent = 'Omzetprestatie · ' + (labelMap[k]||'');
 
   const allRevs = [...days.map(d=>d.rev), ...(prevDays||[]).map(d=>d.rev)];
   const rawMax  = Math.max(...allRevs, 1);
