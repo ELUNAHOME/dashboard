@@ -1385,9 +1385,10 @@ function renderStockBar(k){
   const openOrders = INVENTORY.open_orders || 0;
   const netSold = realSold != null ? realSold - returns : null; // met klanten
 
-  const p = P[k];
-  const days = k==='today'||k==='gisteren' ? 1 : k==='d7' ? 7 : k==='d30' ? 30 : 14;
-  const dailyUnits = p.units > 0 ? p.units / days : null;
+  // Runway altijd op vaste referentie (D30 → MTD → D7), ongeacht geselecteerde tijdlijn
+  const refP = P.d30 || P.mtd || P.d7 || P[k];
+  const refDays = P.d30 ? 30 : P.mtd ? (new Date().getDate()) : 7;
+  const dailyUnits = refP && refP.units > 0 ? refP.units / refDays : null;
   const runway = dailyUnits ? Math.round(stock / dailyUnits) : null;
 
   const stockout = runway != null ? (() => {
@@ -1400,8 +1401,9 @@ function renderStockBar(k){
   const runwayCls = runway == null ? '' : runway <= 10 ? 'crit' : runway <= 20 ? 'warn' : 'good';
   const tileCls = stock <= 10 ? 'crit' : stock <= 20 ? 'warn' : 'good';
 
-  const dailySpend = ((p.spend||0)+(p.gspend||0)) / days;
-  const blendedRoas = ((p.spend||0)+(p.gspend||0)) > 0 ? p.rev / ((p.spend||0)+(p.gspend||0)) : null;
+  // Dagelijkse burn ook op vaste referentie
+  const dailySpend = ((refP.spend||0)+(refP.gspend||0)) / refDays;
+  const blendedRoas = ((refP.spend||0)+(refP.gspend||0)) > 0 ? refP.rev / ((refP.spend||0)+(refP.gspend||0)) : null;
 
   // MOQ breakdown: netSold + giveaways + openOrders + FOUR + PBL = 500
   const netSoldPct  = netSold   != null ? Math.round(netSold/moq*100)   : 0;
