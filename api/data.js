@@ -62,7 +62,71 @@ function dateLabel(start, end) {
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-// ── Google Ads handmatig (env vars) ─────────────────────────────────────────
+// ── Google Ads API ───────────────────────────────────────────────────────────
+async function getGoogleAccessToken() {
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id:     process.env.GOOGLE_ADS_CLIENT_ID,
+      client_secret: process.env.GOOGLE_ADS_CLIENT_SECRET,
+      refresh_token: process.env.GOOGLE_ADS_REFRESH_TOKEN,
+      grant_type:    'refresh_token'
+    })
+  });
+  if (!res.ok) throw new Error(`Google OAuth ${res.status}: ${await res.text()}`);
+  const { access_token } = await res.json();
+  return access_token;
+}
+
+async function googleAdsQuery(accessToken, duringPeriod) {
+  const customerId = (process.env.GOOGLE_ADS_CUSTOMER_ID || '4704206454').replace(/-/g, '');
+  const res = await fetch(
+    `https://googleads.googleapis.com/v20/customers/${customerId}/googleAds:search`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization':   `Bearer ${accessToken}`,
+        'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN,
+        'Content-Type':    'application/json'
+      },
+      body: JSON.stringify({
+        query: `SELECT metrics.cost_micros, metrics.conversions_value FROM customer WHERE segments.date DURING ${duringPeriod}`
+      })
+    }
+  );
+  if (!res.ok) throw new Error(`Google Ads ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  const m = data?.results?.[0]?.metrics || {};
+  const spend = parseInt(m.costMicros || 0) / 1e6;
+  const conv  = parseFloat(m.conversionsValue || 0);
+  return {
+    gspend: spend > 0 ? r2(spend) : null,
+    groas:  spend > 0 ? r2(conv / spend) : null
+  };
+}
+
+async function fetchGoogleAds() {
+  const hasApiCreds = process.env.GOOGLE_ADS_CLIENT_ID &&
+                      process.env.GOOGLE_ADS_CLIENT_SECRET &&
+                      process.env.GOOGLE_ADS_REFRESH_TOKEN &&
+                      process.env.GOOGLE_ADS_DEVELOPER_TOKEN;
+  if (!hasApiCreds) return { data: getGoogleManual(), source: 'manual' };
+
+  try {
+    const token = await getGoogleAccessToken();
+    const periods = { today: 'TODAY', gisteren: 'YESTERDAY', d7: 'LAST_7_DAYS', mtd: 'THIS_MONTH', d30: 'LAST_30_DAYS' };
+    const entries = await Promise.all(
+      Object.entries(periods).map(([k, p]) => googleAdsQuery(token, p).then(v => [k, v]))
+    );
+    return { data: Object.fromEntries(entries), source: 'api' };
+  } catch(err) {
+    console.error('Google Ads API fout, fallback naar handmatig:', err.message);
+    return { data: getGoogleManual(), source: 'manual' };
+  }
+}
+
+// Handmatige fallback (gebruikt als API creds ontbreken of API faalt)
 function getGoogleManual() {
   const p = v => (v && !isNaN(v)) ? parseFloat(v) : null;
   return {
@@ -547,21 +611,22 @@ export default async function handler(req, res) {
   }
 
   try {
-    const [shopify, metaResult, klaviyo, inventory] = await Promise.all([
+    const [shopify, metaResult, klaviyo, inventory, googleResult] = await Promise.all([
       fetchShopify(),
       fetchMeta(),
       fetchKlaviyo(mtdStart(), amsDate(0)),
-      fetchInventory().catch(() => ({ stock: null, location_id: '100691018073' }))
+      fetchInventory().catch(() => ({ stock: null, location_id: '100691018073' })),
+      fetchGoogleAds()
     ]);
 
     const { P, daily_mtd, daily_d7, daily_d30, daily_prev_d7, daily_prev_mtd, daily_prev_d30, _dates } = shopify;
     const { C, metaSpend } = metaResult;
-    const googleM = getGoogleManual();
+    const googleData = googleResult.data;
 
     // Verrijk P met Meta + Google spend
     for (const k of ['today','gisteren','d7','mtd','d30']) {
       const meta = metaSpend[k] || {};
-      const goog = googleM[k]  || {};
+      const goog = googleData[k] || {};
       P[k].spend  = meta.spend  ?? null;
       P[k].ctr    = meta.ctr    ?? null;
       P[k].cpc    = meta.cpc    ?? null;
@@ -570,9 +635,9 @@ export default async function handler(req, res) {
       P[k].mroas  = null; // in-platform ROAS niet betrouwbaar
     }
 
-    const googleNote = Object.values(googleM).some(v => v.gspend !== null)
-      ? 'handmatig · update via scripts/update-google.sh'
-      : 'handmatig · Google API pending';
+    const googleNote = googleResult.source === 'api'
+      ? 'live · Google Ads API v20'
+      : (Object.values(googleData).some(v => v.gspend !== null) ? 'handmatig · update via update-google.sh' : 'Google API niet geconfigureerd');
 
     const now = new Date();
     res.status(200).json({
