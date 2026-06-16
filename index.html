@@ -203,6 +203,42 @@
     font:inherit;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;letter-spacing:.03em}
   .undo-btn:hover{background:#C7D2A8}
 
+  /* Claude AI chat panel */
+  .ai-fab{position:fixed;bottom:28px;right:24px;background:var(--ink);color:#fff;border:none;border-radius:24px;
+    padding:10px 18px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;z-index:8900;
+    letter-spacing:.03em;box-shadow:0 4px 16px rgba(0,0,0,.22);transition:transform .15s,background .15s}
+  .ai-fab:hover{background:#222;transform:translateY(-1px)}
+  .ai-overlay{position:fixed;inset:0;background:rgba(0,0,0,.22);z-index:8950;opacity:0;pointer-events:none;transition:opacity .25s}
+  .ai-overlay.show{opacity:1;pointer-events:auto}
+  .ai-panel{position:fixed;top:0;right:-440px;width:420px;height:100vh;background:var(--card);
+    border-left:1px solid var(--line);z-index:9000;display:flex;flex-direction:column;
+    transition:right .25s ease;box-shadow:-8px 0 40px rgba(0,0,0,.12)}
+  .ai-panel.open{right:0}
+  @media(max-width:500px){.ai-panel{width:100%;right:-100%}}
+  .ai-panel-head{padding:18px 18px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+  .ai-panel-head h3{font-size:13px;font-weight:700;margin:0;color:var(--ink);letter-spacing:.02em}
+  .ai-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);padding:0;line-height:1;transition:.1s}
+  .ai-close:hover{color:var(--ink)}
+  .ai-quickbtns{padding:12px 14px;display:flex;flex-wrap:wrap;gap:5px;border-bottom:1px solid var(--line);flex-shrink:0}
+  .ai-quick{background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:5px 11px;
+    font:inherit;font-size:11px;font-weight:600;cursor:pointer;color:var(--ink);transition:.12s;letter-spacing:.02em}
+  .ai-quick:hover{background:var(--line)}
+  .ai-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .ai-msg{font-size:13px;line-height:1.6;max-width:100%}
+  .ai-msg.user{background:var(--sage);border-radius:10px 10px 3px 10px;padding:9px 13px;
+    align-self:flex-end;color:var(--ink);font-weight:500;max-width:88%}
+  .ai-msg.bot{background:var(--bg);border:1px solid var(--line);border-radius:3px 10px 10px 10px;
+    padding:10px 13px;color:var(--ink);white-space:pre-wrap;align-self:flex-start}
+  .ai-msg.thinking{color:var(--muted);font-style:italic;font-size:12px;padding:2px 0;align-self:flex-start}
+  .ai-input-wrap{padding:12px 14px;border-top:1px solid var(--line);display:flex;gap:8px;flex-shrink:0}
+  .ai-input{flex:1;border:1px solid var(--line);border-radius:8px;padding:9px 12px;font:inherit;
+    font-size:13px;background:var(--bg);color:var(--ink);outline:none;resize:none;line-height:1.4}
+  .ai-input:focus{border-color:var(--sage)}
+  .ai-send-btn{background:var(--ink);color:#fff;border:none;border-radius:8px;padding:0 15px;
+    font:inherit;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;transition:.12s;letter-spacing:.02em}
+  .ai-send-btn:hover{background:#222}
+  .ai-send-btn:disabled{opacity:.35;cursor:default}
+
   /* refresh button — icon only, geen border */
   .refresh-btn{display:inline-flex;align-items:center;justify-content:center;border:none;background:none;
     color:var(--muted);font-size:16px;font-family:inherit;width:30px;height:30px;border-radius:50%;
@@ -2187,7 +2223,112 @@ loadData().then(()=>{render('mtd'); hideLoader();}).catch(e=>{
   hideLoader();
 });
 initSwipeToDelete();
+
+// ── Claude AI chat panel ──────────────────────────────────────────
+let _aiLoading = false;
+
+function aiGetContext(){
+  const k = currentK;
+  const p = P[k] || {};
+  const camps = (C[k]||[]).map(c=>({name:c.name,spend:c.spend,roas:c.roas,ctr:c.ctr,cpm:c.cpm}));
+  return {
+    periode: k,
+    spend_meta: p.spend,
+    spend_google: p.gspend,
+    revenue: p.rev,
+    units: p.units,
+    orders: p.orders,
+    mroas_inplatform: p.mroas,
+    groas_google: p.groas,
+    blended_roas: (p.spend||0)+(p.gspend||0)>0 ? Math.round(p.rev/((p.spend||0)+(p.gspend||0))*100)/100 : null,
+    campagnes_meta: camps,
+    voorraad_four: INVENTORY.stock,
+    voorraad_pbl: INVENTORY.pbl_stock||185,
+    klaviyo: KLAVIYO,
+    alle_periodes: Object.fromEntries(Object.entries(P).map(([k,v])=>[k,{rev:v.rev,units:v.units,spend:(v.spend||0)+(v.gspend||0)}]))
+  };
+}
+
+function aiOpen(){
+  document.getElementById('ai-panel').classList.add('open');
+  document.getElementById('ai-overlay').classList.add('show');
+  setTimeout(()=>document.getElementById('ai-input').focus(),260);
+}
+function aiClose(){
+  document.getElementById('ai-panel').classList.remove('open');
+  document.getElementById('ai-overlay').classList.remove('show');
+}
+
+function aiAddMsg(role, text){
+  const wrap = document.getElementById('ai-messages');
+  const div = document.createElement('div');
+  div.className = 'ai-msg ' + role;
+  div.textContent = text;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+  return div;
+}
+
+async function aiSend(msg){
+  msg = (msg||'').trim();
+  if(_aiLoading || !msg) return;
+  _aiLoading = true;
+  const input = document.getElementById('ai-input');
+  const btn = document.getElementById('ai-send-btn');
+  input.value = '';
+  input.style.height = '';
+  btn.disabled = true;
+  aiAddMsg('user', msg);
+  const thinking = aiAddMsg('thinking', 'Analyseren...');
+  try {
+    const r = await fetch('/api/claude', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ message: msg, context: aiGetContext() })
+    });
+    const json = await r.json();
+    thinking.remove();
+    aiAddMsg('bot', json.error ? 'Fout: '+json.error : json.text);
+  } catch(e){
+    thinking.remove();
+    aiAddMsg('bot','Verbindingsfout: '+e.message);
+  }
+  _aiLoading = false;
+  btn.disabled = false;
+}
+
+function aiQuick(prompt){ document.getElementById('ai-input').value=prompt; aiSend(prompt); }
 </script>
+
+<!-- AI panel -->
+<div id="ai-overlay" class="ai-overlay" onclick="aiClose()"></div>
+<button class="ai-fab" onclick="aiOpen()">Analyseer</button>
+<div id="ai-panel" class="ai-panel">
+  <div class="ai-panel-head">
+    <div>
+      <h3>Claude · ELÛNA Analyst</h3>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">Analyseert live dashboarddata</div>
+    </div>
+    <button class="ai-close" onclick="aiClose()">×</button>
+  </div>
+  <div class="ai-quickbtns">
+    <button class="ai-quick" onclick="aiQuick('Controleer de tracking-setup. Kijk naar CAPI match rate, fbc-coverage en of er dubbele attributie is in Google Ads. Geef concrete acties.')">Check tracking</button>
+    <button class="ai-quick" onclick="aiQuick('Analyseer de marges over alle periodes. Wanneer kunnen we opschalen en wat moet er eerst verbeteren?')">Analyseer marges</button>
+    <button class="ai-quick" onclick="aiQuick('Welke 3 campagne-aanpassingen in Meta en Google hebben nu de meeste impact op de ROAS?')">Campagne-advies</button>
+    <button class="ai-quick" onclick="aiQuick('Wat is het grootste risico voor het bedrijf op dit moment, kijkend naar voorraad, marges en ad performance?')">Risico-check</button>
+    <button class="ai-quick" onclick="aiQuick('Werkt de conversietracking correct? Kijk naar het verschil tussen Meta in-platform ROAS en blended ROAS, en wat dit zegt over attributie.')">Attributie-check</button>
+  </div>
+  <div id="ai-messages" class="ai-messages">
+    <div class="ai-msg bot">Hallo. Ik heb toegang tot de live dashboarddata van ELÛNA. Kies een snelcheck of stel een vraag.</div>
+  </div>
+  <div class="ai-input-wrap">
+    <textarea id="ai-input" class="ai-input" rows="1" placeholder="Stel een vraag over de data..."
+      oninput="this.style.height='';this.style.height=Math.min(this.scrollHeight,100)+'px'"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiSend(this.value)}"></textarea>
+    <button id="ai-send-btn" class="ai-send-btn" onclick="aiSend(document.getElementById('ai-input').value)">Stuur</button>
+  </div>
+</div>
+
 <div id="ch-tip" class="ch-tip"></div>
 <div id="undo-toast" class="undo-toast">
   Gedaan ✓ <span id="undo-lbl" style="opacity:.7;font-size:12px"></span>
