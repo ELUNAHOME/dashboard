@@ -91,7 +91,8 @@ Push: `git add data.json && git commit -m "data refresh $(date +%Y-%m-%d)" && gi
 blended_roas = rev / (meta_spend + google_spend)
 cac_per_unit = (meta_spend + google_spend) / units
 netto = brutomarge (€26,35) - cac_per_unit
-break_even_roas = ~1.8×
+break_even_roas = ~2.19× (ex BTW: 57,81/26,35) of ~2.66× (incl BTW: 69,95/26,35)
+# Shopify stuurt standaard incl BTW naar Google → gebruik 2.65× als drempel
 ```
 
 Meta in-platform ROAS (`mroas`) is NIET betrouwbaar — altijd blended gebruiken.

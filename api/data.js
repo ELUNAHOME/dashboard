@@ -81,28 +81,63 @@ async function getGoogleAccessToken() {
 
 async function googleAdsQuery(accessToken, duringPeriod) {
   const customerId = (process.env.GOOGLE_ADS_CUSTOMER_ID || '4704206454').replace(/-/g, '');
-  const res = await fetch(
-    `https://googleads.googleapis.com/v20/customers/${customerId}/googleAds:search`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization':   `Bearer ${accessToken}`,
-        'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN,
-        'Content-Type':    'application/json'
-      },
+  const headers = {
+    'Authorization':   `Bearer ${accessToken}`,
+    'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN,
+    'Content-Type':    'application/json'
+  };
+  const url = `https://googleads.googleapis.com/v21/customers/${customerId}/googleAds:search`;
+
+  const [totalsRes, campsRes] = await Promise.all([
+    fetch(url, {
+      method: 'POST', headers,
       body: JSON.stringify({
         query: `SELECT metrics.cost_micros, metrics.conversions_value FROM customer WHERE segments.date DURING ${duringPeriod}`
       })
-    }
-  );
-  if (!res.ok) throw new Error(`Google Ads ${res.status}: ${await res.text()}`);
-  const data = await res.json();
-  const m = data?.results?.[0]?.metrics || {};
+    }),
+    fetch(url, {
+      method: 'POST', headers,
+      body: JSON.stringify({
+        query: `SELECT campaign.name, campaign.advertising_channel_type, metrics.cost_micros, metrics.conversions_value, metrics.impressions, metrics.clicks FROM campaign WHERE segments.date DURING ${duringPeriod} AND campaign.status != 'REMOVED' AND metrics.cost_micros > 0`
+      })
+    })
+  ]);
+
+  if (!totalsRes.ok) throw new Error(`Google Ads ${totalsRes.status}: ${await totalsRes.text()}`);
+  const totalsData = await totalsRes.json();
+  const m = totalsData?.results?.[0]?.metrics || {};
   const spend = parseInt(m.costMicros || 0) / 1e6;
   const conv  = parseFloat(m.conversionsValue || 0);
+
+  let gcamps = [];
+  if (campsRes.ok) {
+    const campsData = await campsRes.json();
+    gcamps = (campsData?.results || []).map(r => {
+      const cSpend  = parseInt(r.metrics?.costMicros || 0) / 1e6;
+      const cConv   = parseFloat(r.metrics?.conversionsValue || 0);
+      const cClicks = parseInt(r.metrics?.clicks || 0);
+      const cImp    = parseInt(r.metrics?.impressions || 0);
+      const chType  = r.campaign?.advertisingChannelType || '';
+      const typeLabel = chType === 'SHOPPING' ? 'Shopping'
+                      : chType === 'PERFORMANCE_MAX' ? 'PMax'
+                      : chType === 'SEARCH' ? 'Search'
+                      : chType;
+      return {
+        name:   r.campaign?.name || 'Onbekend',
+        type:   typeLabel,
+        spend:  r2(cSpend),
+        imp:    cImp,
+        clicks: cClicks,
+        cpc:    cClicks > 0 ? r2(cSpend / cClicks) : null,
+        roas:   cSpend > 0 ? r2(cConv / cSpend) : null
+      };
+    }).filter(c => c.spend > 0);
+  }
+
   return {
     gspend: spend > 0 ? r2(spend) : null,
-    groas:  spend > 0 ? r2(conv / spend) : null
+    groas:  spend > 0 ? r2(conv / spend) : null,
+    gcamps
   };
 }
 
@@ -119,10 +154,12 @@ async function fetchGoogleAds() {
     const entries = await Promise.all(
       Object.entries(periods).map(([k, p]) => googleAdsQuery(token, p).then(v => [k, v]))
     );
-    return { data: Object.fromEntries(entries), source: 'api' };
+    const data = Object.fromEntries(entries);
+    const GC = Object.fromEntries(entries.map(([k, v]) => [k, v.gcamps || []]));
+    return { data, GC, source: 'api' };
   } catch(err) {
     console.error('Google Ads API fout, fallback naar handmatig:', err.message);
-    return { data: getGoogleManual(), source: 'manual' };
+    return { data: getGoogleManual(), GC: {}, source: 'manual' };
   }
 }
 
@@ -622,6 +659,7 @@ export default async function handler(req, res) {
     const { P, daily_mtd, daily_d7, daily_d30, daily_prev_d7, daily_prev_mtd, daily_prev_d30, _dates } = shopify;
     const { C, metaSpend } = metaResult;
     const googleData = googleResult.data;
+    const GC = googleResult.GC || {};
 
     // Verrijk P met Meta + Google spend
     for (const k of ['today','gisteren','d7','mtd','d30']) {
@@ -636,7 +674,7 @@ export default async function handler(req, res) {
     }
 
     const googleNote = googleResult.source === 'api'
-      ? 'live · Google Ads API v20'
+      ? 'live · Google Ads API v21'
       : (Object.values(googleData).some(v => v.gspend !== null) ? 'handmatig · update via update-google.sh' : 'Google API niet geconfigureerd');
 
     const now = new Date();
@@ -649,6 +687,7 @@ export default async function handler(req, res) {
       google_note: googleNote,
       P,
       C,
+      GC,
       daily_mtd,
       daily_d7,
       daily_d30,
