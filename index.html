@@ -519,10 +519,10 @@
         <button class="ae-tab" onclick="aeTab('strat')" data-aetab="strat"><span class="ae-ch-dot strat"></span>Strategisch</button>
       </div>
       <div class="ae-cols">
-        <div class="ae-col active" id="col-meta"><div class="ae-col-head"><span class="ae-ch-dot meta"></span>Meta Ads</div><div id="ae-meta"></div><div class="ae-footer" onclick="aeRestore('col-meta')"></div></div>
-        <div class="ae-col" id="col-google"><div class="ae-col-head"><span class="ae-ch-dot google"></span>Google Ads</div><div id="ae-google"></div><div class="ae-footer" onclick="aeRestore('col-google')"></div></div>
-        <div class="ae-col" id="col-klaviyo"><div class="ae-col-head"><span class="ae-ch-dot klaviyo"></span>Klaviyo</div><div id="ae-klaviyo"></div><div class="ae-footer" onclick="aeRestore('col-klaviyo')"></div></div>
-        <div class="ae-col" id="col-strat"><div class="ae-col-head"><span class="ae-ch-dot strat"></span>Strategisch</div><div id="ae-strat"></div><div class="ae-footer" onclick="aeRestore('col-strat')"></div></div>
+        <div class="ae-col active" id="col-meta"><div class="ae-col-head"><span class="ae-ch-dot meta"></span>Meta Ads</div><div id="ae-meta"></div><div class="ae-footer" onclick="aeRestore()"></div></div>
+        <div class="ae-col" id="col-google"><div class="ae-col-head"><span class="ae-ch-dot google"></span>Google Ads</div><div id="ae-google"></div><div class="ae-footer" onclick="aeRestore()"></div></div>
+        <div class="ae-col" id="col-klaviyo"><div class="ae-col-head"><span class="ae-ch-dot klaviyo"></span>Klaviyo</div><div id="ae-klaviyo"></div><div class="ae-footer" onclick="aeRestore()"></div></div>
+        <div class="ae-col" id="col-strat"><div class="ae-col-head"><span class="ae-ch-dot strat"></span>Strategisch</div><div id="ae-strat"></div><div class="ae-footer" onclick="aeRestore()"></div></div>
       </div>
     </div>
 
@@ -799,6 +799,7 @@ const T=(cls,txt)=>`<span class="ae-tag ${cls}">${txt}</span>`;
 const aeSlug=s=>s.replace(/<[^>]+>/g,'').replace(/&[a-z]+;/g,'').replace(/[^a-z0-9]+/gi,'-').toLowerCase().slice(0,38).replace(/-$/,'');
 const I=(type,tags,title,body,impact='',prio='')=>{
   const aid=aeSlug(title);
+  try{ if(JSON.parse(localStorage.getItem(AE_KEY)||'{}')[aid]) return ''; } catch(e){}
   const prioKey = prio ? prio.toLowerCase().replace(' ','') : '';
   return `<div class="ae-item-wrap" data-waid="${aid}">
     <div class="ae-swipe-bg">Gedaan ✓</div>
@@ -1874,7 +1875,7 @@ function render(k){
   renderEmail();
   renderChannelViews(k);
   drpUpdate(k);
-  aeApplyDismissed();
+  aeUpdateCounts();
 }
 
 // ── dismiss / feedback ──────────────────────────────────────────
@@ -1902,18 +1903,10 @@ function undoDismiss(){
   const d=aeGet();
   delete d[aid];
   aeSet(d);
-  document.querySelectorAll(`[data-waid="${aid}"]`).forEach(wrap=>{
-    wrap.style.display='';
-    wrap.style.opacity='1';
-    wrap.style.maxHeight='';
-    wrap.style.marginBottom='';
-    const item=wrap.querySelector('.ae-item');
-    if(item){item.style.transform='';item.style.opacity='1';}
-  });
-  aeUpdateCounts();
+  _lastDismissed=null;
   const t=document.getElementById('undo-toast');
   if(t)t.classList.remove('show');
-  _lastDismissed=null;
+  render(currentK);
 }
 
 document.addEventListener('keydown',e=>{
@@ -1947,20 +1940,11 @@ function aeDismiss(aid,reason){
   showUndoToast(aid,title);
 }
 
-function aeApplyDismissed(){
-  const d=aeGet();
-  document.querySelectorAll('.ae-item-wrap[data-waid]').forEach(wrap=>{
-    if(d[wrap.dataset.waid]){wrap.style.display='none';}
-  });
-  aeUpdateCounts();
-}
-
 function aeUpdateCounts(){
-  document.querySelectorAll('.ae-col').forEach(col=>{
-    const wraps=[...col.querySelectorAll('.ae-item-wrap')];
-    const h=wraps.filter(w=>w.style.display==='none').length;
-    const f=col.querySelector('.ae-footer');
-    if(f){f.style.display=h>0?'block':'none';f.textContent=`${h} verborgen — toon alles`;}
+  const total=Object.keys(aeGet()).length;
+  document.querySelectorAll('.ae-footer').forEach(f=>{
+    f.style.display=total>0?'block':'none';
+    f.textContent=`${total} gedaan — toon alles`;
   });
 }
 
@@ -1972,15 +1956,9 @@ function aeTab(col){
   const tabEl=document.querySelector('.ae-tab[data-aetab="'+col+'"]');
   if(tabEl)tabEl.classList.add('active');
 }
-function aeRestore(colId){
-  const col=document.getElementById(colId);
-  if(!col)return;
-  const d=aeGet();
-  col.querySelectorAll('.ae-item-wrap[data-waid]').forEach(wrap=>{
-    delete d[wrap.dataset.waid];
-    wrap.style.display='';wrap.style.opacity='1';wrap.style.maxHeight='';wrap.style.marginBottom='';
-  });
-  aeSet(d);aeUpdateCounts();
+function aeRestore(){
+  aeSet({});
+  render(currentK);
 }
 
 function initSwipeToDelete(){
