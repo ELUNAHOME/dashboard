@@ -134,6 +134,12 @@
     opacity:0;transition:opacity .12s;z-index:2;font-family:inherit}
   .ae-item:hover .ae-btn-x{opacity:.6}
   .ae-btn-x:hover{opacity:1!important;background:var(--line)}
+  .ae-btn-check{position:absolute;top:12px;left:12px;width:20px;height:20px;border-radius:50%;
+    border:1.5px solid var(--line);background:none;cursor:pointer;display:flex;align-items:center;
+    justify-content:center;padding:0;transition:.15s;opacity:0;color:var(--muted);flex-shrink:0}
+  .ae-item:hover .ae-btn-check{opacity:1}
+  .ae-btn-check:hover{background:var(--good);border-color:var(--good);color:#fff}
+  .ae-btn-check svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
   .ae-item{touch-action:pan-y}
   .ae-swipe-bg{position:absolute;inset:0;border-radius:12px;background:var(--good);display:flex;align-items:center;justify-content:flex-end;padding-right:20px;font-size:12px;font-weight:700;color:#fff;letter-spacing:.04em;pointer-events:none;opacity:0;transition:opacity .1s}
   .ae-item-wrap{position:relative;margin-bottom:9px;border-radius:12px;overflow:hidden}
@@ -791,7 +797,8 @@ const I=(type,tags,title,body,impact='',prio='')=>{
   const prioKey = prio ? prio.toLowerCase().replace(' ','') : '';
   return `<div class="ae-item-wrap" data-waid="${aid}">
     <div class="ae-swipe-bg">Gedaan ✓</div>
-    <div class="ae-item ${type}" data-aid="${aid}">
+    <div class="ae-item ${type}" data-aid="${aid}" style="padding-left:42px">
+      <button class="ae-btn-check" onclick="aeDismiss('${aid}','gedaan')" title="Markeer als gedaan"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></button>
       <button class="ae-btn-x" onclick="aeClick(event,'${aid}')">···</button>
       ${prio?`<span class="ae-prio ae-prio-${prioKey}">${prio}</span>`:(impact?`<span class="ae-impact">${impact}</span>`:'')}
       <div class="ae-tags">${tags}</div>
