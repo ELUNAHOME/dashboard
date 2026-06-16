@@ -599,12 +599,12 @@
   <!-- TAB: MARGES -->
   <div class="tab-pane" id="tab-marges">
 
+    <div class="card" style="margin-bottom:20px">
+      <h2>Perioden · marge-vergelijking</h2>
+      <div id="marges-perioden"></div>
+    </div>
+
     <div class="grid cols">
-      <div class="card">
-        <h2>Unit-economics · per waterkoker (<span id="wf-btw-lbl2">ex btw</span>)</h2>
-        <div class="wf" id="wf2"></div>
-        <div style="font-size:11px;color:var(--muted);margin-top:13px">Vast marge-model · CAC schaalt mee per periode.</div>
-      </div>
       <div class="card">
         <h2>Omzet-forecast · wanneer schalen</h2>
         <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Breakpoints op blended ROAS. Huidig: <b id="fc-current"></b> spend/dag.</div>
@@ -612,8 +612,13 @@
         <div class="fc-row"><span>Break-even</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:67%;background:var(--sage)"></div></div><span style="text-align:right;font-weight:600;font-size:12px">ROAS 2,65&#xD7;</span></div>
         <div class="fc-row"><span style="font-weight:600">Schalen (doel)</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:100%;background:var(--good)"></div></div><span style="text-align:right;font-weight:600;font-size:12px;color:var(--good)">ROAS 2,5&#xD7;+</span></div>
         <div style="font-size:12px;color:var(--muted);margin-top:13px;border-top:1px solid var(--line);padding-top:12px">
-          CAC nu <b>&#x20AC;<span id="fc-cac"></span>/stuk</b>. Break-even CAC = &#x20AC;<span id="fc-gross">31,15</span>. Gap: <span id="fc-gap"></span>.
+          CAC nu <b>&#x20AC;<span id="fc-cac"></span>/stuk</b>. Break-even CAC = brutomarge/stuk. Gap: <span id="fc-gap"></span>.
         </div>
+      </div>
+      <div class="card">
+        <h2>Unit-economics · model</h2>
+        <div class="wf" id="wf2"></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:13px">Vast marge-model · CAC schaalt mee per periode.</div>
       </div>
     </div>
 
@@ -1397,6 +1402,53 @@ function aggWeek(days) {
   return result;
 }
 
+function renderMargesTable(){
+  const el = document.getElementById('marges-perioden');
+  if(!el) return;
+  const periods = [
+    {k:'today',   lbl:'Vandaag'},
+    {k:'gisteren',lbl:'Gisteren'},
+    {k:'d7',      lbl:'7 dagen'},
+    {k:'d30',     lbl:'30 dagen'},
+    {k:'mtd',     lbl:'Deze maand'},
+  ];
+  let rows = '';
+  periods.forEach(({k, lbl})=>{
+    const p = P[k];
+    if(!p) return;
+    const actualSellEx = p.units>0 ? (p.rev/p.units)/BTW : LIST_EX;
+    const grossEx = actualSellEx - FIXED_EX;
+    const tot = (p.spend||0)+(p.gspend||0);
+    const roas = tot>0 ? p.rev/tot : null;
+    const cac = p.units>0 ? tot/p.units : null;
+    const net = cac!=null ? grossEx-cac : null;
+    const profitable = net!=null && net>0;
+    const netCls = net==null ? '' : net>=0 ? 'good' : 'warn';
+    const roasCls = roas==null ? '' : roas>=2.65 ? 'good' : 'warn';
+    rows += `<tr>
+      <td style="font-weight:600">${lbl}</td>
+      <td>${eur(tot)||'—'}</td>
+      <td style="text-align:center">${p.units||'—'}</td>
+      <td class="${cac&&cac>grossEx?'warn':''}">${cac?eur(cac):'—'}</td>
+      <td>${eur(grossEx)}</td>
+      <td class="${netCls}" style="font-weight:600">${net!=null?(net<0?'−':'')+eur(Math.abs(net)):'—'}</td>
+      <td class="${roasCls}">${roas!=null?xfmt(roas)+'×':'—'}</td>
+    </tr>`;
+  });
+  el.innerHTML = `<table class="ctable" style="width:100%">
+    <thead><tr>
+      <th style="text-align:left">Periode</th>
+      <th>Spend</th>
+      <th style="text-align:center">Units</th>
+      <th>CAC</th>
+      <th>Brutomarge</th>
+      <th>Netto/stuk</th>
+      <th>Blended ROAS</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
 function renderChart(k){
   const inner    = document.getElementById('perf-inner');
   const chartCol = document.getElementById('perf-chart-col');
@@ -1789,8 +1841,7 @@ function render(k){
   // sync wf2 (marges tab)
   const wf2 = document.getElementById('wf2');
   if(wf2) wf2.innerHTML = document.getElementById('wf').innerHTML;
-  const wfLbl2 = document.getElementById('wf-btw-lbl2');
-  if(wfLbl2) wfLbl2.textContent = showBTW ? 'incl btw' : 'ex btw';
+  renderMargesTable();
 
   // Signalen
   let s='';
