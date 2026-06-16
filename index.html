@@ -1647,7 +1647,7 @@ function renderStockBar(k){
   const el = document.getElementById('stock-bar');
   if(!el) return;
   const stock = INVENTORY.stock != null ? INVENTORY.stock : 34;         // FOUR
-  const pblStock = INVENTORY.pbl_stock != null ? INVENTORY.pbl_stock : null; // PBL
+  const pblStock = INVENTORY.pbl_stock != null ? INVENTORY.pbl_stock : 185; // PBL — fallback op MOQ-berekening
   const moq = INVENTORY.moq || 500;
   const realSold = INVENTORY.real_sold || null;
   const giveaways = INVENTORY.giveaways || null;
