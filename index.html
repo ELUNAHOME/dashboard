@@ -101,7 +101,7 @@
   .ae-badge.now{background:#B0703F;color:#fff}
   .ae-badge.soon{background:var(--sage);color:var(--ink)}
   .ae-badge.later{background:var(--line);color:var(--muted)}
-  .ae-item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:9px;font-size:13px;position:relative}
+  .ae-item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px;font-size:13px;position:relative}
   .ae-item.data{border-left:3px solid #B0703F}
   .ae-item.data.ok{border-left-color:var(--good)}
   .ae-item.research{border-left:3px solid #3A5BD9}
@@ -134,6 +134,9 @@
     opacity:0;transition:opacity .12s;z-index:2;font-family:inherit}
   .ae-item:hover .ae-btn-x{opacity:.6}
   .ae-btn-x:hover{opacity:1!important;background:var(--line)}
+  .ae-item{touch-action:pan-y}
+  .ae-swipe-bg{position:absolute;inset:0;border-radius:12px;background:var(--good);display:flex;align-items:center;justify-content:flex-end;padding-right:20px;font-size:12px;font-weight:700;color:#fff;letter-spacing:.04em;pointer-events:none;opacity:0;transition:opacity .1s}
+  .ae-item-wrap{position:relative;margin-bottom:9px;border-radius:12px;overflow:hidden}
   .ae-popup{position:absolute;top:28px;right:6px;background:var(--card);border:1px solid var(--line);
     border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,.13);z-index:50;min-width:170px;overflow:hidden}
   .ae-popup button{display:block;width:100%;padding:9px 14px;text-align:left;background:none;
@@ -796,12 +799,15 @@ const aeSlug=s=>s.replace(/<[^>]+>/g,'').replace(/&[a-z]+;/g,'').replace(/[^a-z0
 const I=(type,tags,title,body,impact='',prio='')=>{
   const aid=aeSlug(title);
   const prioKey = prio ? prio.toLowerCase().replace(' ','') : '';
-  return `<div class="ae-item ${type}" data-aid="${aid}">
-    <button class="ae-btn-x" onclick="aeClick(event,'${aid}')">···</button>
-    ${prio?`<span class="ae-prio ae-prio-${prioKey}">${prio}</span>`:(impact?`<span class="ae-impact">${impact}</span>`:'')}
-    <div class="ae-tags">${tags}</div>
-    <div class="ae-item-title">${title}</div>
-    <div class="ae-item-body">${body}</div>
+  return `<div class="ae-item-wrap" data-waid="${aid}">
+    <div class="ae-swipe-bg">Gedaan ✓</div>
+    <div class="ae-item ${type}" data-aid="${aid}">
+      <button class="ae-btn-x" onclick="aeClick(event,'${aid}')">···</button>
+      ${prio?`<span class="ae-prio ae-prio-${prioKey}">${prio}</span>`:(impact?`<span class="ae-impact">${impact}</span>`:'')}
+      <div class="ae-tags">${tags}</div>
+      <div class="ae-item-title">${title}</div>
+      <div class="ae-item-body">${body}</div>
+    </div>
   </div>`;
 };
 
@@ -1844,24 +1850,30 @@ function aeClick(e,aid){
 function aeDismiss(aid,reason){
   const d=aeGet();d[aid]=reason;aeSet(d);
   if(_aePopup){_aePopup.remove();_aePopup=null;}
-  const el=document.querySelector(`[data-aid="${aid}"]`);
-  if(el){el.style.transition='opacity .25s';el.style.opacity='0';setTimeout(()=>{el.style.display='none';aeUpdateCounts();},270);}
+  document.querySelectorAll(`[data-waid="${aid}"]`).forEach(wrap=>{
+    wrap.style.transition='opacity .25s, max-height .3s ease, margin .3s ease';
+    wrap.style.opacity='0';
+    wrap.style.overflow='hidden';
+    wrap.style.maxHeight=wrap.offsetHeight+'px';
+    setTimeout(()=>{wrap.style.maxHeight='0';wrap.style.marginBottom='0';},50);
+    setTimeout(()=>{wrap.style.display='none';aeUpdateCounts();},320);
+  });
 }
 
 function aeApplyDismissed(){
   const d=aeGet();
-  document.querySelectorAll('.ae-item[data-aid]').forEach(el=>{
-    if(d[el.dataset.aid])el.style.display='none';
+  document.querySelectorAll('.ae-item-wrap[data-waid]').forEach(wrap=>{
+    if(d[wrap.dataset.waid]){wrap.style.display='none';}
   });
   aeUpdateCounts();
 }
 
 function aeUpdateCounts(){
   document.querySelectorAll('.ae-col').forEach(col=>{
-    const n=col.querySelectorAll('.ae-item').length;
-    const h=[...col.querySelectorAll('.ae-item')].filter(el=>el.style.display==='none').length;
+    const wraps=[...col.querySelectorAll('.ae-item-wrap')];
+    const h=wraps.filter(w=>w.style.display==='none').length;
     const f=col.querySelector('.ae-footer');
-    if(f){f.style.display=h>0?'block':'none';f.textContent=h===n?`${h} verborgen — toon alles`:`${h} verborgen — toon alles`;}
+    if(f){f.style.display=h>0?'block':'none';f.textContent=`${h} verborgen — toon alles`;}
   });
 }
 
@@ -1877,8 +1889,52 @@ function aeRestore(colId){
   const col=document.getElementById(colId);
   if(!col)return;
   const d=aeGet();
-  col.querySelectorAll('.ae-item[data-aid]').forEach(el=>{delete d[el.dataset.aid];el.style.display='';el.style.opacity='1';});
+  col.querySelectorAll('.ae-item-wrap[data-waid]').forEach(wrap=>{
+    delete d[wrap.dataset.waid];
+    wrap.style.display='';wrap.style.opacity='1';wrap.style.maxHeight='';wrap.style.marginBottom='';
+  });
   aeSet(d);aeUpdateCounts();
+}
+
+function initSwipeToDelete(){
+  let sx=0,sy=0,el=null,active=false;
+  document.addEventListener('touchstart',e=>{
+    const item=e.target.closest('.ae-item');
+    if(!item)return;
+    sx=e.touches[0].clientX;sy=e.touches[0].clientY;
+    el=item;active=false;
+    el.style.transition='none';
+    const bg=el.closest('.ae-item-wrap')?.querySelector('.ae-swipe-bg');
+    if(bg)bg.style.transition='none';
+  },{passive:true});
+  document.addEventListener('touchmove',e=>{
+    if(!el)return;
+    const dx=e.touches[0].clientX-sx;
+    const dy=e.touches[0].clientY-sy;
+    if(!active&&Math.abs(dy)>Math.abs(dx)){el=null;return;}
+    if(dx>0)return;
+    active=true;
+    const pull=Math.min(Math.abs(dx),200);
+    el.style.transform=`translateX(-${pull}px)`;
+    const bg=el.closest('.ae-item-wrap')?.querySelector('.ae-swipe-bg');
+    if(bg)bg.style.opacity=Math.min(pull/70,1)+'';
+  },{passive:true});
+  document.addEventListener('touchend',e=>{
+    if(!el)return;
+    const dx=sx-e.changedTouches[0].clientX;
+    const item=el;
+    el.style.transition='transform .22s ease';
+    const bg=item.closest('.ae-item-wrap')?.querySelector('.ae-swipe-bg');
+    if(active&&dx>80){
+      item.style.transform='translateX(-110%)';
+      const aid=item.dataset.aid;
+      setTimeout(()=>{if(aid)aeDismiss(aid,'gedaan');},200);
+    } else {
+      item.style.transform='';
+      if(bg){bg.style.transition='opacity .2s';bg.style.opacity='0';}
+    }
+    el=null;active=false;
+  },{passive:true});
 }
 
 // ── chart tooltip ──────────────────────────────────────────────
@@ -2065,6 +2121,7 @@ loadData().then(()=>{render('mtd'); hideLoader();}).catch(e=>{
   document.getElementById('updated-lbl').textContent = 'laad fout';
   hideLoader();
 });
+initSwipeToDelete();
 </script>
 <div id="ch-tip" class="ch-tip"></div>
 </body>
