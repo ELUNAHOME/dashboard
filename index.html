@@ -470,6 +470,10 @@
     <button class="tab-btn" data-tab="campagnes">Campagnes</button>
     <button class="tab-btn" data-tab="marges">Marges</button>
     <button class="tab-btn" data-tab="email">Email</button>
+    <span style="width:1px;background:var(--line);margin:8px 4px;flex-shrink:0"></span>
+    <button class="tab-btn" data-tab="ch-meta" style="gap:6px;display:inline-flex;align-items:center"><span style="width:7px;height:7px;border-radius:50%;background:#3A5BD9;flex-shrink:0"></span>Meta Ads</button>
+    <button class="tab-btn" data-tab="ch-google" style="gap:6px;display:inline-flex;align-items:center"><span style="width:7px;height:7px;border-radius:50%;background:var(--good);flex-shrink:0"></span>Google Ads</button>
+    <button class="tab-btn" data-tab="ch-klaviyo" style="gap:6px;display:inline-flex;align-items:center"><span style="width:7px;height:7px;border-radius:50%;background:#6A3D9A;flex-shrink:0"></span>Klaviyo</button>
   </div>
 
   <!-- TAB: OVERZICHT -->
@@ -642,6 +646,43 @@
     <div class="card richon-card" style="margin-top:20px" id="email-analyse"></div>
 
   </div><!-- /tab-email -->
+
+  <!-- TAB: META ADS -->
+  <div class="tab-pane" id="tab-ch-meta">
+    <div class="card" style="margin-bottom:20px" id="ch-meta-perf"></div>
+    <h2>Campagnes · breakdown</h2>
+    <div class="card" style="margin-bottom:20px">
+      <table class="ctable" id="ch-meta-table"></table>
+    </div>
+    <h2>Acties · Meta</h2>
+    <div id="ch-meta-actions"></div>
+  </div><!-- /tab-ch-meta -->
+
+  <!-- TAB: GOOGLE ADS -->
+  <div class="tab-pane" id="tab-ch-google">
+    <div class="card" style="margin-bottom:20px" id="ch-google-perf"></div>
+    <h2>Campagnes · breakdown</h2>
+    <div class="card" style="margin-bottom:20px" id="ch-google-camps"></div>
+    <h2>Acties · Google</h2>
+    <div id="ch-google-actions"></div>
+  </div><!-- /tab-ch-google -->
+
+  <!-- TAB: KLAVIYO -->
+  <div class="tab-pane" id="tab-ch-klaviyo">
+    <div class="card" style="margin-bottom:20px">
+      <div class="klav-grid" id="ch-klav-perf"></div>
+    </div>
+    <div class="card" style="margin-bottom:20px">
+      <div class="email-section-title">Flows · 30 dagen</div>
+      <div id="ch-klav-flows"></div>
+    </div>
+    <div class="card" style="margin-bottom:20px">
+      <div class="email-section-title">Campagnes · recent</div>
+      <div id="ch-klav-camps"></div>
+    </div>
+    <h2>Acties · Klaviyo</h2>
+    <div id="ch-klav-actions"></div>
+  </div><!-- /tab-ch-klaviyo -->
 
 </div><!-- /wrap -->
 
@@ -1077,6 +1118,125 @@ function renderBlendedCamp(k){
         <div style="font-size:11px;color:var(--muted);margin-top:4px">doel €10,89</div>
       </div>
     </div>`;
+}
+
+function renderChannelViews(k){
+  const p = P[k];
+  if(!p) return;
+  const {meta, google, klaviyo} = generateActions(k);
+
+  // ── META ────────────────────────────────────────────────────────
+  const chMetaPerf = document.getElementById('ch-meta-perf');
+  if(chMetaPerf){
+    const mspend = p.spend || 0;
+    const camps = (C[k]||[]).filter(c=>c.spend>0);
+    const tI = camps.reduce((s,c)=>s+c.imp,0);
+    const tCl = camps.reduce((s,c)=>s+c.clicks,0);
+    const avgCpm = tI>0 ? mspend/tI*1000 : null;
+    const avgCtr = tI>0 ? tCl/tI*100 : null;
+    const avgCpc = tCl>0 ? mspend/tCl : null;
+    const tot = mspend + (p.gspend||0);
+    const bRoas = tot>0 ? p.rev/tot : null;
+    const days = k==='today'||k==='gisteren'?1:k==='d7'?7:k==='d30'?30:k==='mtd'?(new Date().getDate()):null;
+    const dailyMeta = days ? mspend/days : null;
+    chMetaPerf.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:20px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Spend</div>
+          <div style="font-size:26px;font-weight:700;color:var(--ink);line-height:1">${eur(mspend)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">${dailyMeta?eur(dailyMeta)+'/dag':''} · ${camps.length} campagnes</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">CPM</div>
+          <div style="font-size:26px;font-weight:700;color:var(--ink);line-height:1">${avgCpm!=null?eur(avgCpm):'—'}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">${num(tI)} impressies</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">CTR</div>
+          <div style="font-size:26px;font-weight:700;color:var(--ink);line-height:1">${avgCtr!=null?pct(avgCtr):'—'}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">${num(tCl)} klikken</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">CPC</div>
+          <div style="font-size:26px;font-weight:700;color:var(--ink);line-height:1">${avgCpc!=null?eur(avgCpc):'—'}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">gemiddeld</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Blended ROAS</div>
+          <div style="font-size:26px;font-weight:700;line-height:1;color:${bRoas!=null&&bRoas>=2.65?'var(--good)':'var(--warn)'}">${bRoas!=null?xfmt(bRoas):'—'}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">break-even 2,65×</div>
+        </div>
+      </div>`;
+  }
+  const chMetaTable = document.getElementById('ch-meta-table');
+  if(chMetaTable){
+    const camps = (C[k]||[]).filter(c=>c.spend>0);
+    const tS=camps.reduce((s,c)=>s+c.spend,0),tI=camps.reduce((s,c)=>s+c.imp,0),tCl=camps.reduce((s,c)=>s+c.clicks,0);
+    chMetaTable.innerHTML=`
+      <thead><tr><th style="text-align:left">Campagne</th><th>Spend</th><th>Impressies</th><th>Clicks</th><th>CTR</th><th>CPM</th><th>CPC</th><th>ROAS</th></tr></thead>
+      <tbody>${camps.map(c=>`<tr><td>${c.name}</td><td>${eur(c.spend)}</td><td>${num(c.imp)}</td><td>${num(c.clicks)}</td><td>${pct(c.ctr)}</td><td>${eur(c.cpm)}</td><td>${eur(c.cpc)}</td><td class="${c.roas!=null&&c.roas>=2.65?'good':c.roas!=null?'warn':''}">${xfmt(c.roas)}<span class="badge-ip">in-platform</span></td></tr>`).join('')}
+      <tr><td>Totaal Meta</td><td>${eur(tS)}</td><td>${num(tI)}</td><td>${num(tCl)}</td><td>${pct(tI>0?tCl/tI*100:null)}</td><td>${eur(tI>0?tS/tI*1000:0)}</td><td>${eur(tCl>0?tS/tCl:0)}</td><td class="muted">zie blended</td></tr>
+      </tbody>`;
+  }
+  const chMetaActions = document.getElementById('ch-meta-actions');
+  if(chMetaActions) chMetaActions.innerHTML = meta.join('');
+
+  // ── GOOGLE ──────────────────────────────────────────────────────
+  const chGooglePerf = document.getElementById('ch-google-perf');
+  if(chGooglePerf){
+    const gspend = p.gspend;
+    if(gspend == null){
+      chGooglePerf.innerHTML = `<div style="color:var(--muted);font-size:13px">Geen Google-spend beschikbaar voor deze periode. Stel env vars in via Vercel.</div>`;
+    } else {
+      const days = k==='today'||k==='gisteren'?1:k==='d7'?7:k==='d30'?30:k==='mtd'?(new Date().getDate()):null;
+      const dailyG = days ? gspend/days : null;
+      const gRoas = p.groas;
+      const tot = (p.spend||0)+gspend;
+      const bRoas = tot>0 ? p.rev/tot : null;
+      const gc = GC[k]||[];
+      chGooglePerf.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px">
+          <div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Spend</div>
+            <div style="font-size:26px;font-weight:700;color:var(--ink);line-height:1">${eur(gspend)}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">${dailyG?eur(dailyG)+'/dag':'—'}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Google ROAS</div>
+            <div style="font-size:26px;font-weight:700;line-height:1;color:${gRoas!=null&&gRoas>=2.65?'var(--good)':'var(--warn)'}">${gRoas!=null?xfmt(gRoas):'—'}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">break-even 2,65×</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Blended ROAS</div>
+            <div style="font-size:26px;font-weight:700;line-height:1;color:${bRoas!=null&&bRoas>=2.65?'var(--good)':'var(--warn)'}">${bRoas!=null?xfmt(bRoas):'—'}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">Meta + Google</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Campagnes</div>
+            <div style="font-size:26px;font-weight:700;color:var(--ink);line-height:1">${gc.length||'—'}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">actief met spend</div>
+          </div>
+        </div>`;
+    }
+  }
+  const chGoogleCamps = document.getElementById('ch-google-camps');
+  const srcGoogleCard = document.getElementById('google-camp-card');
+  if(chGoogleCamps && srcGoogleCard) chGoogleCamps.innerHTML = srcGoogleCard.innerHTML;
+  const chGoogleActions = document.getElementById('ch-google-actions');
+  if(chGoogleActions) chGoogleActions.innerHTML = google.join('');
+
+  // ── KLAVIYO ─────────────────────────────────────────────────────
+  const chKlavPerf = document.getElementById('ch-klav-perf');
+  const srcKlavGrid = document.getElementById('klav-grid');
+  if(chKlavPerf && srcKlavGrid) chKlavPerf.innerHTML = srcKlavGrid.innerHTML;
+  const chKlavFlows = document.getElementById('ch-klav-flows');
+  const srcFlows = document.getElementById('email-flows');
+  if(chKlavFlows && srcFlows) chKlavFlows.innerHTML = srcFlows.innerHTML;
+  const chKlavCamps = document.getElementById('ch-klav-camps');
+  const srcEmailCamps = document.getElementById('email-campaigns');
+  if(chKlavCamps && srcEmailCamps) chKlavCamps.innerHTML = srcEmailCamps.innerHTML;
+  const chKlavActions = document.getElementById('ch-klav-actions');
+  if(chKlavActions) chKlavActions.innerHTML = klaviyo.join('');
 }
 
 function renderEmail(){
@@ -1658,6 +1818,7 @@ function render(k){
   renderGoogleCamp(k);
   renderBlendedCamp(k);
   renderEmail();
+  renderChannelViews(k);
   drpUpdate(k);
   aeApplyDismissed();
 }
