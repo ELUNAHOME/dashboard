@@ -187,6 +187,15 @@
   .gh-url{color:#58a6ff;font-weight:700}
 
   .foot{margin-top:34px;font-size:11px;color:var(--muted);text-align:center;letter-spacing:.04em}
+  /* undo toast */
+  .undo-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);
+    background:var(--ink);color:#fff;font-size:13px;border-radius:10px;padding:11px 18px;
+    display:flex;align-items:center;gap:14px;z-index:9999;
+    box-shadow:0 4px 20px rgba(0,0,0,.22);transition:transform .25s ease,opacity .25s ease;opacity:0;pointer-events:none;white-space:nowrap}
+  .undo-toast.show{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
+  .undo-btn{background:#AEB893;color:var(--ink);border:none;border-radius:6px;padding:4px 11px;
+    font:inherit;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;letter-spacing:.03em}
+  .undo-btn:hover{background:#C7D2A8}
 
   /* refresh button — icon only, geen border */
   .refresh-btn{display:inline-flex;align-items:center;justify-content:center;border:none;background:none;
@@ -1834,6 +1843,43 @@ const AE_KEY='eluna_ae_v1';
 const aeGet=()=>JSON.parse(localStorage.getItem(AE_KEY)||'{}');
 const aeSet=d=>localStorage.setItem(AE_KEY,JSON.stringify(d));
 let _aePopup=null;
+let _lastDismissed=null;
+let _undoTimer=null;
+
+function showUndoToast(aid,title){
+  _lastDismissed={aid,title};
+  clearTimeout(_undoTimer);
+  const t=document.getElementById('undo-toast');
+  const lbl=document.getElementById('undo-lbl');
+  if(!t)return;
+  lbl.textContent=`"${title.replace(/<[^>]+>/g,'').slice(0,38)}"`;
+  t.classList.add('show');
+  _undoTimer=setTimeout(()=>{t.classList.remove('show');},5000);
+}
+
+function undoDismiss(){
+  if(!_lastDismissed)return;
+  const {aid}=_lastDismissed;
+  const d=aeGet();
+  delete d[aid];
+  aeSet(d);
+  document.querySelectorAll(`[data-waid="${aid}"]`).forEach(wrap=>{
+    wrap.style.display='';
+    wrap.style.opacity='1';
+    wrap.style.maxHeight='';
+    wrap.style.marginBottom='';
+    const item=wrap.querySelector('.ae-item');
+    if(item){item.style.transform='';item.style.opacity='1';}
+  });
+  aeUpdateCounts();
+  const t=document.getElementById('undo-toast');
+  if(t)t.classList.remove('show');
+  _lastDismissed=null;
+}
+
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='z'&&_lastDismissed){e.preventDefault();undoDismiss();}
+});
 
 function aeClick(e,aid){
   e.stopPropagation();
@@ -1850,6 +1896,7 @@ function aeClick(e,aid){
 function aeDismiss(aid,reason){
   const d=aeGet();d[aid]=reason;aeSet(d);
   if(_aePopup){_aePopup.remove();_aePopup=null;}
+  const title=document.querySelector(`[data-waid="${aid}"] .ae-item-title`)?.textContent||aid;
   document.querySelectorAll(`[data-waid="${aid}"]`).forEach(wrap=>{
     wrap.style.transition='opacity .25s, max-height .3s ease, margin .3s ease';
     wrap.style.opacity='0';
@@ -1858,6 +1905,7 @@ function aeDismiss(aid,reason){
     setTimeout(()=>{wrap.style.maxHeight='0';wrap.style.marginBottom='0';},50);
     setTimeout(()=>{wrap.style.display='none';aeUpdateCounts();},320);
   });
+  showUndoToast(aid,title);
 }
 
 function aeApplyDismissed(){
@@ -2124,5 +2172,9 @@ loadData().then(()=>{render('mtd'); hideLoader();}).catch(e=>{
 initSwipeToDelete();
 </script>
 <div id="ch-tip" class="ch-tip"></div>
+<div id="undo-toast" class="undo-toast">
+  Gedaan ✓ <span id="undo-lbl" style="opacity:.7;font-size:12px"></span>
+  <button class="undo-btn" onclick="undoDismiss()">Ongedaan maken</button>
+</div>
 </body>
 </html>
