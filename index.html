@@ -204,18 +204,31 @@
   .undo-btn:hover{background:#C7D2A8}
 
   /* Claude AI chat panel */
+  @keyframes railPulse{0%,100%{box-shadow:-4px 0 24px rgba(43,46,38,.18)}50%{box-shadow:-4px 0 28px rgba(199,210,168,.18)}}
+  @keyframes waveIn{from{stroke-dashoffset:60}to{stroke-dashoffset:0}}
+  @keyframes cardEntrance{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes barFill{from{width:0!important}to{}}
+  @keyframes numFade{0%{opacity:0;transform:translateY(4px)}100%{opacity:1;transform:none}}
+  @keyframes scanLine{0%{background-position:0 -100%}100%{background-position:0 200%}}
+  .card{animation:cardEntrance .35s ease backwards}
+  .card:nth-child(1){animation-delay:.02s}.card:nth-child(2){animation-delay:.07s}.card:nth-child(3){animation-delay:.12s}.card:nth-child(4){animation-delay:.17s}
+  .perf-metric-big,.mktg-metric-val{animation:numFade .4s ease backwards;animation-delay:.2s}
+  .admix-bar-fill,.mktg-pot-bar-fill{animation:barFill .6s cubic-bezier(.22,.68,0,1.2) backwards;animation-delay:.3s}
   .ai-rail{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:8900;
     display:flex;flex-direction:column;align-items:center;gap:2px;
     background:var(--ink);border-radius:14px 0 0 14px;padding:10px 6px;
-    box-shadow:-4px 0 24px rgba(43,46,38,.18)}
+    box-shadow:-4px 0 24px rgba(43,46,38,.18);
+    animation:railPulse 4s ease-in-out infinite}
   .ai-rail-btn{width:34px;height:34px;background:none;border:none;cursor:pointer;
     border-radius:8px;display:flex;align-items:center;justify-content:center;
-    color:rgba(255,255,255,.55);transition:.15s;padding:0}
-  .ai-rail-btn:hover{background:rgba(255,255,255,.1);color:#fff}
-  .ai-rail-btn.active{color:#C7D2A8}
-  .ai-rail-divider{width:20px;height:1px;background:rgba(255,255,255,.12);margin:4px 0}
-  .ai-rail-label{font-size:9px;letter-spacing:.12em;text-transform:uppercase;
-    color:rgba(255,255,255,.3);font-weight:700;writing-mode:vertical-rl;
+    color:rgba(255,255,255,.5);transition:.2s;padding:0}
+  .ai-rail-btn:hover{background:rgba(255,255,255,.08);color:#fff}
+  .ai-rail-btn:hover .ai-wave{stroke:rgba(199,210,168,.9);filter:drop-shadow(0 0 5px rgba(199,210,168,.5))}
+  .ai-rail-btn.active .ai-wave{stroke:#C7D2A8;filter:drop-shadow(0 0 4px rgba(199,210,168,.4))}
+  .ai-wave{stroke:rgba(255,255,255,.5);stroke-dasharray:60;stroke-dashoffset:60;transition:stroke .2s,filter .2s;animation:waveIn .8s ease .1s forwards}
+  .ai-rail-divider{width:20px;height:1px;background:rgba(255,255,255,.1);margin:5px 0}
+  .ai-rail-label{font-size:8px;letter-spacing:.14em;text-transform:uppercase;
+    color:rgba(255,255,255,.25);font-weight:700;writing-mode:vertical-rl;
     text-orientation:mixed;transform:rotate(180deg);margin-top:4px;line-height:1}
   .ai-overlay{position:fixed;inset:0;background:rgba(0,0,0,.22);z-index:8950;opacity:0;pointer-events:none;transition:opacity .25s}
   .ai-overlay.show{opacity:1;pointer-events:auto}
@@ -497,8 +510,6 @@
         <button class="drp-trigger" id="drp-trigger" onclick="drpToggle()">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;opacity:.6"><rect x="1" y="2" width="14" height="13" rx="2.5" stroke="currentColor" stroke-width="1.4"/><line x1="5" y1="1" x2="5" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="11" y1="1" x2="11" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="1" y1="6.5" x2="15" y2="6.5" stroke="currentColor" stroke-width="1.2"/></svg>
           <span class="drp-trigger-label" id="drp-label">Deze maand</span>
-          <span class="drp-trigger-sep">·</span>
-          <span class="drp-trigger-range" id="drp-range">1–14 jun 2026</span>
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="margin-left:2px;opacity:.5"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
         <div class="drp-panel" id="drp-panel">
@@ -520,8 +531,6 @@
       </div>
     </div>
     <div class="topbar-right">
-      <span style="font-size:11px;color:var(--muted)" id="updated-lbl">—</span>
-      <span id="data-source-badge" style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--muted)" title="Databron">○ laden</span>
       <button class="refresh-btn" id="refresh-btn" onclick="refreshData()" title="Ververs data">↻</button>
       <div class="btw-pill" onclick="toggleBTW()" title="Schakel BTW weergave">
         <span class="btw-pill-lbl" id="btw-pill-lbl">Ex BTW</span>
@@ -876,7 +885,8 @@ async function loadData(bustCache) {
   INVENTORY = d.inventory || {};
   DATA_META = d;
   const lbl = d.updated_label || '—';
-  document.getElementById('updated-lbl').textContent = lbl;
+  const ulbl = document.getElementById('updated-lbl');
+  if (ulbl) ulbl.textContent = lbl;
 }
 
 async function refreshData() {
@@ -2404,7 +2414,8 @@ function drpUpdate(k) {
   const p = P[k];
   if (!p) return;
   document.getElementById('drp-label').textContent = p.label;
-  document.getElementById('drp-range').textContent = p.range || '';
+  const drpRange = document.getElementById('drp-range');
+  if (drpRange) drpRange.textContent = p.range || '';
   document.querySelectorAll('.drp-preset[data-k]').forEach(b => b.classList.toggle('active', b.dataset.k === k));
   const customBtn = document.getElementById('drp-custom-active');
   if (customBtn) customBtn.style.display = k === 'custom' ? '' : 'none';
@@ -2549,7 +2560,7 @@ function hideLoader(){
 
 loadData().then(()=>{render('mtd'); hideLoader();}).catch(e=>{
   console.error('data.json laden mislukt:',e);
-  document.getElementById('updated-lbl').textContent = 'laad fout';
+  const uel = document.getElementById('updated-lbl'); if(uel) uel.textContent = 'laad fout';
   hideLoader();
 });
 initSwipeToDelete();
@@ -2640,12 +2651,12 @@ function aiQuick(prompt){ document.getElementById('ai-input').value=prompt; aiSe
 <div id="ai-overlay" class="ai-overlay" onclick="aiClose()"></div>
 <div class="ai-rail" id="ai-rail">
   <button class="ai-rail-btn" id="ai-rail-btn" onclick="aiToggle()" title="Claude Analyst">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+    <svg width="20" height="12" viewBox="0 0 24 14" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <polyline class="ai-wave" points="1,7 4,7 6,1 8,13 10.5,4 13,10 15,7 23,7" stroke-width="1.6"/>
     </svg>
   </button>
   <div class="ai-rail-divider"></div>
-  <div class="ai-rail-label">Analyst</div>
+  <div class="ai-rail-label">AI</div>
 </div>
 <div id="ai-panel" class="ai-panel">
   <div class="ai-panel-head">
