@@ -16,6 +16,11 @@
   body{margin:0;background:var(--bg);color:var(--ink);
     font-family:"Inter","Helvetica Neue",-apple-system,system-ui,sans-serif;
     -webkit-font-smoothing:antialiased;line-height:1.45;font-variant-numeric:tabular-nums}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:radial-gradient(circle,rgba(43,46,38,.055) 1px,transparent 1px);
+    background-size:22px 22px;
+    animation:gridDrift 28s linear infinite}
+  @keyframes gridDrift{from{background-position:0 0}to{background-position:22px 22px}}
   .wrap{max-width:1180px;margin:0 auto;padding:40px 28px 64px;transition:opacity .18s ease}
   .wrap.refreshing{opacity:.5;pointer-events:none}
 
@@ -35,7 +40,14 @@
   .grid{display:grid;gap:16px}
   .kpis{grid-template-columns:repeat(4,1fr)}
   @media(max-width:880px){.kpis{grid-template-columns:repeat(2,1fr)}}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .card::after{content:'';position:absolute;top:0;left:-70%;width:50%;height:100%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+    animation:cardScan 8s ease-in-out infinite;pointer-events:none}
+  @keyframes cardScan{0%,100%{left:-70%}40%,60%{left:130%}}
+  .card:nth-child(2)::after{animation-delay:2s}
+  .card:nth-child(3)::after{animation-delay:4s}
+  .card:nth-child(4)::after{animation-delay:6s}
 
   .kpi .label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px}
   .kpi .val{font-size:29px;font-weight:600;margin:8px 0 2px;letter-spacing:-.01em}
@@ -262,6 +274,10 @@
   .ai-send-btn:disabled{opacity:.35;cursor:default}
 
   /* refresh button — icon only, geen border */
+  @keyframes warnBorderPulse{0%,100%{border-color:var(--line)}50%{border-color:var(--warn);box-shadow:0 0 0 2px rgba(176,112,63,.12)}}
+  .card.roas-warn{animation:warnBorderPulse 3s ease-in-out infinite}
+  @keyframes refreshIdle{0%,79%{transform:rotate(0deg)}80%{transform:rotate(360deg)}100%{transform:rotate(360deg)}}
+  #refresh-btn:not(.loading){animation:refreshIdle 9s ease-in-out infinite}
   .refresh-btn{display:inline-flex;align-items:center;justify-content:center;border:none;background:none;
     color:var(--muted);font-size:16px;font-family:inherit;width:30px;height:30px;border-radius:50%;
     cursor:pointer;transition:.15s;padding:0;margin:0}
@@ -406,7 +422,10 @@
 .admix-lbl span:last-child{font-size:12px;color:var(--ink);font-weight:700;letter-spacing:0;text-transform:none}
 .admix-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0}
 .admix-bar-track{background:var(--line);border-radius:4px;height:6px;overflow:hidden}
-.admix-bar-fill{height:100%;border-radius:4px}
+.admix-bar-fill{height:100%;border-radius:4px;position:relative;overflow:hidden}
+.admix-bar-fill::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;
+  background:rgba(255,255,255,.38);animation:barShine 3.5s ease-in-out infinite;pointer-events:none}
+@keyframes barShine{0%,100%{left:-60%}50%{left:160%}}
 
 /* ── tabs ── */
 .tab-nav{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:28px}
@@ -519,6 +538,7 @@
             <button class="drp-preset" data-k="d7">Afgelopen 7 dagen</button>
             <button class="drp-preset active" data-k="mtd">Deze maand</button>
             <button class="drp-preset" data-k="d30">Afgelopen 30 dagen</button>
+            <button class="drp-preset" id="drp-max-btn" onclick="drpSelectMax()">↔ Maximaal</button>
             <div style="height:1px;background:var(--line);margin:8px 12px"></div>
             <button class="drp-preset" id="drp-custom-btn" onclick="drpStartCustom()">Kies datums…</button>
             <button class="drp-preset" data-k="custom" id="drp-custom-active" style="display:none">Aangepast</button>
@@ -2186,8 +2206,9 @@ function render(k){
   renderAdMix(k);
   renderStockBar(k);
 
-  // Kleur perf-card border-left op ROAS-status
+  // ROAS-puls animatie op perf-card
   const perfCard = document.getElementById('perf-card');
+  if(perfCard) perfCard.classList.toggle('roas-warn', tot > 0 && roas < 2.65);
   if (perfCard) {
     if (tot > 0) {
       perfCard.style.borderLeft = `3px solid ${roas >= 2.65 ? 'var(--good)' : 'var(--warn)'}`;
@@ -2421,6 +2442,18 @@ function drpUpdate(k) {
   const customBtn = document.getElementById('drp-custom-active');
   if (customBtn) customBtn.style.display = k === 'custom' ? '' : 'none';
   renderDrpCalendar(k);
+}
+
+async function drpSelectMax() {
+  drpClose();
+  const now = new Date();
+  const end = now.toISOString().slice(0,10);
+  const start = '2025-10-01'; // ELÛNA launch window
+  document.querySelectorAll('.drp-preset[data-k]').forEach(b=>b.classList.remove('active'));
+  document.getElementById('drp-max-btn')?.classList.add('active');
+  document.getElementById('drp-label').textContent = 'Maximaal';
+  await fetchCustomRange(start, end);
+  document.getElementById('drp-label').textContent = 'Maximaal';
 }
 
 function drpStartCustom() {
