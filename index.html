@@ -394,6 +394,29 @@
 .tab-pane{display:none}
 .tab-pane.active{display:block}
 
+/* ── marketing tab ── */
+.mktg-metric-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px}
+.mktg-metric-val{font-size:26px;font-weight:700;letter-spacing:-.025em;line-height:1.1}
+.mktg-metric-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.mktg-grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:24px}
+@media(max-width:900px){.mktg-grid5{grid-template-columns:repeat(3,1fr)}}
+.mktg-ch-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+.mktg-ch-table th{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:right;padding:0 10px 10px;white-space:nowrap}
+.mktg-ch-table th:first-child{text-align:left}
+.mktg-ch-table td{padding:10px 10px;border-top:1px solid var(--line);text-align:right;white-space:nowrap;vertical-align:middle}
+.mktg-ch-table td:first-child{text-align:left;font-weight:500}
+.mktg-ch-table tr.total td{border-top:1px solid var(--sage);font-weight:700}
+.mktg-ch-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600}
+.mktg-ch-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.mktg-mix-bar{height:20px;border-radius:6px;overflow:hidden;display:flex;margin-bottom:12px}
+.mktg-mix-seg{height:100%;transition:.3s}
+.mktg-mix-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted)}
+.mktg-mix-leg{display:flex;align-items:center;gap:5px}
+.mktg-pot-row{display:grid;grid-template-columns:120px 1fr 80px 90px;gap:14px;align-items:center;font-size:13px;margin-bottom:10px}
+.mktg-pot-bar-track{background:var(--line);border-radius:4px;height:10px;overflow:hidden}
+.mktg-pot-bar-fill{height:100%;border-radius:4px;transition:.4s}
+.mktg-sparkline{display:block;width:100%;overflow:visible}
+
 /* ── chart type toggle ── */
 .chart-toggle{background:none;border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:13px;cursor:pointer;color:var(--muted);transition:.15s;line-height:1}
 .chart-toggle:hover{border-color:var(--sage);color:var(--ink)}
@@ -522,6 +545,7 @@
   <div class="tab-nav" id="tab-nav">
     <button class="tab-btn active" data-tab="overzicht">Overzicht</button>
     <button class="tab-btn" data-tab="marges">Marges</button>
+    <button class="tab-btn" data-tab="marketing">Marketing</button>
     <span style="width:1px;background:var(--line);margin:8px 6px;flex-shrink:0"></span>
     <button class="tab-btn" data-tab="ch-meta" title="Meta Ads" style="display:inline-flex;align-items:center;padding:10px 14px"><svg width="22" height="14" viewBox="0 0 44 24" style="flex-shrink:0;display:block"><path d="M22 12C20.5 7.5 18 4.5 14.5 4.5C10.5 4.5 8 7.5 8 12C8 16.5 10.5 19.5 14.5 19.5C18 19.5 20.5 16.5 22 12Z" fill="#0082FB"/><path d="M22 12C23.5 7.5 26 4.5 29.5 4.5C33.5 4.5 36 7.5 36 12C36 16.5 33.5 19.5 29.5 19.5C26 19.5 23.5 16.5 22 12Z" fill="#0082FB"/></svg></button>
     <button class="tab-btn" data-tab="ch-google" title="Google Ads" style="display:inline-flex;align-items:center;padding:10px 14px"><svg width="18" height="18" viewBox="0 0 24 24" style="flex-shrink:0;display:block"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></button>
@@ -659,6 +683,43 @@
     </div>
 
   </div><!-- /tab-marges -->
+
+  <!-- TAB: MARKETING -->
+  <div class="tab-pane" id="tab-marketing">
+
+    <!-- Samenvatting: 5 KPIs -->
+    <div class="card" id="mktg-summary"></div>
+
+    <!-- Trend + Mix -->
+    <div class="grid" style="grid-template-columns:1.6fr 1fr;gap:16px;margin-top:16px">
+      <div class="card">
+        <h2 style="margin-bottom:10px">Omzettrend · <span id="mktg-chart-lbl"></span></h2>
+        <div id="mktg-chart" style="padding-top:4px"></div>
+        <div class="chart-legend" style="margin-top:10px">
+          <span><span class="leg-sw" style="background:var(--good)"></span>Omzet</span>
+          <span id="mktg-chart-prev-leg" style="display:none"><span class="leg-sw" style="background:#D4DDD2"></span>Vorige periode</span>
+        </div>
+      </div>
+      <div class="card">
+        <h2 style="margin-bottom:14px">Kanaal-bijdrage · omzet</h2>
+        <div id="mktg-mix"></div>
+      </div>
+    </div>
+
+    <!-- Kanaal breakdown tabel -->
+    <div class="card" style="margin-top:16px">
+      <h2>Kanaal-performance · <span id="mktg-ch-lbl"></span></h2>
+      <div id="mktg-ch-table"></div>
+    </div>
+
+    <!-- Maximum potentieel -->
+    <div class="card" style="margin-top:16px">
+      <h2>Maximum potentieel · bij huidig budget</h2>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Wat levert dezelfde dagelijkse ad-spend op bij hogere ROAS? Omzet = spend/dag &times; ROAS &times; dagen.</div>
+      <div id="mktg-potential"></div>
+    </div>
+
+  </div><!-- /tab-marketing -->
 
   <!-- TAB: EMAIL -->
   <div class="tab-pane" id="tab-email">
@@ -1817,6 +1878,261 @@ function renderStockBar(k){
     </div>`;
 }
 
+function renderMarketing(k){
+  const p = P[k];
+  if(!p) return;
+
+  const mspend    = p.spend  || 0;
+  const gspend    = p.gspend || 0;
+  const totSpend  = mspend + gspend;
+  const rev       = p.rev    || 0;
+  const orders    = p.orders || 0;
+  const bRoas     = totSpend > 0 ? rev / totSpend : null;
+  const aov       = orders > 0 ? rev / orders : null;
+  const bF        = showBTW ? 1 : 1/BTW;
+  const beRoas    = 2.65;
+
+  // Klaviyo email omzet (flows 30d, altijd beschikbaar)
+  const emailRev  = (KLAVIYO.flows || []).reduce((s, f) => s + (f.d30_revenue || 0), 0);
+  // Kanaal-attributie proportioneel aan spend (defensiefste methode)
+  const metaAttr  = totSpend > 0 ? (mspend / totSpend) * rev : 0;
+  const googAttr  = totSpend > 0 ? (gspend / totSpend) * rev : 0;
+  const orgAttr   = Math.max(0, rev - metaAttr - googAttr - emailRev);
+
+  // Campaign aggregates
+  const metaCamps = (C[k]  || []).filter(c => c.spend > 0);
+  const googCamps = (GC[k] || []).filter(c => c.spend > 0);
+  const metaImp   = metaCamps.reduce((s, c) => s + (c.imp    || 0), 0);
+  const metaClk   = metaCamps.reduce((s, c) => s + (c.clicks || 0), 0);
+  const googImp   = googCamps.reduce((s, c) => s + (c.imp    || 0), 0);
+  const googClk   = googCamps.reduce((s, c) => s + (c.clicks || 0), 0);
+
+  const fmt0 = n => n == null ? '—' : Math.round(n).toLocaleString('nl-NL');
+  const fmtPct = n => n == null ? '—' : n.toFixed(1).replace('.',',') + '%';
+
+  // ── SUMMARY BAR ────────────────────────────────────────────────
+  const summEl = document.getElementById('mktg-summary');
+  if(summEl){
+    const bRoasClr = bRoas == null ? 'var(--muted)' : bRoas >= beRoas ? 'var(--good)' : 'var(--warn)';
+    const mkM = (lbl, val, sub, clr='var(--ink)') =>
+      `<div>
+        <div class="mktg-metric-lbl">${lbl}</div>
+        <div class="mktg-metric-val" style="color:${clr}">${val}</div>
+        <div class="mktg-metric-sub">${sub}</div>
+      </div>`;
+    summEl.innerHTML = `<div class="mktg-grid5">
+      ${mkM('Omzet', rev > 0 ? eur(rev * bF) : '—', p.label)}
+      ${mkM('Bestellingen', orders || '—', (p.units||0) + ' stuks')}
+      ${mkM('Gem. orderwaarde', aov ? eur(aov * bF) : '—', 'per bestelling')}
+      ${mkM('Blended ROAS', bRoas ? xfmt(bRoas) : '—', 'break-even 2,65×', bRoasClr)}
+      ${mkM('Ad-spend', totSpend > 0 ? eur(totSpend) : '—', 'Meta + Google')}
+    </div>`;
+  }
+
+  // ── TREND CHART (SVG line) ─────────────────────────────────────
+  const chartEl = document.getElementById('mktg-chart');
+  const lblEl   = document.getElementById('mktg-chart-lbl');
+  if(chartEl){
+    const rawD = k==='d7' ? DAILY_D7 : k==='d30' ? DAILY_D30 : k==='custom' ? DAILY_CUSTOM : DAILY_MTD;
+    const rawP = k==='d7' ? DAILY_PREV_D7 : k==='d30' ? DAILY_PREV_D30 : k==='custom' ? DAILY_PREV_CUSTOM : DAILY_PREV_MTD;
+    const useW = k !== 'd7' && rawD && rawD.length >= 14;
+    const days = rawD ? (useW ? aggWeek(rawD) : rawD) : [];
+    const prev = rawP ? (useW ? aggWeek(rawP) : rawP) : [];
+    if(lblEl) lblEl.textContent = {d7:'7 dagen',d30:'30 dagen',mtd:'MTD',custom:'Aangepast'}[k] || '';
+    const prevLegEl = document.getElementById('mktg-chart-prev-leg');
+    if(prevLegEl) prevLegEl.style.display = (prev && prev.some(d=>d.rev>0)) ? '' : 'none';
+
+    if(k === 'today' || k === 'gisteren' || !days.length){
+      chartEl.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:24px 0;text-align:center">Dagpuls beschikbaar in Overzicht</div>`;
+    } else {
+      const allRevs = [...days.map(d=>d.rev), ...(prev||[]).map(d=>d.rev)];
+      const maxR    = Math.max(...allRevs, 1);
+      const W=600, H=90, pL=42, pR=12, pT=8, pB=22;
+      const pw=W-pL-pR, ph=H-pT-pB;
+      const n = days.length;
+      const xS = i => pL + (n>1 ? i/(n-1)*pw : pw/2);
+      const yS = v => pT + ph - Math.min(1, v/maxR)*ph;
+      const pts = days.map((d,i) => [xS(i), yS(d.rev)]);
+      const line  = pts.map((p,i)=>(i===0?`M${p[0]},${p[1]}`:`L${p[0]},${p[1]}`)).join(' ');
+      const area  = `${line} L${pts[n-1][0]},${pT+ph} L${pts[0][0]},${pT+ph} Z`;
+      const prevPts = prev && prev.length===n ? prev.map((d,i)=>[xS(i), yS(d.rev)]) : [];
+      const prevLine= prevPts.length ? prevPts.map((p,i)=>(i===0?`M${p[0]},${p[1]}`:`L${p[0]},${p[1]}`)).join(' ') : '';
+      const grid = [0,0.5,1].map(f=>{
+        const y=yS(maxR*f), lv=eur0(maxR*f);
+        return `<line x1="${pL}" y1="${y}" x2="${W-pR}" y2="${y}" stroke="var(--line)" stroke-dasharray="3,3" stroke-width="1"/>
+                <text x="${pL-4}" y="${y+4}" text-anchor="end" font-size="9" fill="var(--muted)" font-family="Inter,sans-serif">${lv}</text>`;
+      }).join('');
+      const labelStep = n <= 10 ? 1 : Math.ceil(n/7);
+      const xLabels = days.map((d,i)=>{
+        if(i % labelStep !== 0 && i !== n-1) return '';
+        return `<text x="${xS(i)}" y="${H}" text-anchor="middle" font-size="9" fill="var(--muted)" font-family="Inter,sans-serif">${d.d}</text>`;
+      }).join('');
+      chartEl.innerHTML = `<svg class="mktg-sparkline" viewBox="0 0 ${W} ${H}" style="height:${H}px">
+        <defs>
+          <linearGradient id="mktg-g" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--sage)" stop-opacity="0.28"/>
+            <stop offset="100%" stop-color="var(--sage)" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        ${grid}
+        ${prevLine ? `<path d="${prevLine.replace('M','M').replace(/L/g,'L')}" fill="none" stroke="#D4DDD2" stroke-width="1.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>` : ''}
+        <path d="${area}" fill="url(#mktg-g)"/>
+        <path d="${line}" fill="none" stroke="var(--good)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+        <circle cx="${pts[n-1][0]}" cy="${pts[n-1][1]}" r="3.5" fill="var(--good)"/>
+        ${xLabels}
+      </svg>`;
+    }
+  }
+
+  // ── KANAAL MIX ─────────────────────────────────────────────────
+  const mixEl = document.getElementById('mktg-mix');
+  if(mixEl && rev > 0){
+    const segs = [
+      { lbl:'Meta Ads',   val:metaAttr,  clr:'#4285F4' },
+      { lbl:'Google Ads', val:googAttr,  clr:'#34A853' },
+      { lbl:'Email',      val:emailRev,  clr:'#AEB893' },
+      { lbl:'Organisch',  val:orgAttr,   clr:'var(--line)' },
+    ].filter(s => s.val > 0);
+    const tot = segs.reduce((s,x)=>s+x.val,0) || 1;
+    const barSegs = segs.map(s=>`<div class="mktg-mix-seg" style="width:${(s.val/tot*100).toFixed(1)}%;background:${s.clr}" title="${s.lbl}: ${eur(s.val*bF)}"></div>`).join('');
+    const legend  = segs.map(s=>`
+      <div class="mktg-mix-leg">
+        <div class="mktg-ch-dot" style="background:${s.clr}"></div>
+        <span style="color:var(--ink);font-weight:600">${s.lbl}</span>
+        <span>${eur(s.val*bF)} · ${(s.val/tot*100).toFixed(0)}%</span>
+      </div>`).join('');
+    mixEl.innerHTML = `
+      <div class="mktg-mix-bar">${barSegs}</div>
+      <div class="mktg-mix-legend">${legend}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:14px;line-height:1.6">
+        Attrib. methode: spend-proportioneel (Meta/Google) + Klaviyo flow-omzet (30d). Organisch = restwaarde.
+      </div>`;
+  } else if(mixEl) {
+    mixEl.innerHTML = `<div style="color:var(--muted);font-size:13px">Geen data beschikbaar</div>`;
+  }
+
+  // ── KANAAL TABEL ───────────────────────────────────────────────
+  const chLblEl = document.getElementById('mktg-ch-lbl');
+  if(chLblEl) chLblEl.textContent = p.label;
+  const chEl = document.getElementById('mktg-ch-table');
+  if(chEl){
+    const chRow = (dot, name, spend, imp, clicks, attrRev, roas, pct, extraCols) => {
+      const cpc = spend > 0 && clicks > 0 ? eur(spend/clicks) : '—';
+      const cpm = spend > 0 && imp > 0    ? eur(spend/imp*1000) : '—';
+      return `<tr>
+        <td><span class="mktg-ch-badge"><span class="mktg-ch-dot" style="background:${dot}"></span>${name}</span></td>
+        <td>${spend > 0 ? eur(spend) : '—'}</td>
+        <td>${imp > 0 ? fmt0(imp) : '—'}</td>
+        <td>${clicks > 0 ? fmt0(clicks) : '—'}</td>
+        <td>${cpm}</td>
+        <td>${cpc}</td>
+        <td style="font-weight:600">${attrRev > 0 ? eur(attrRev * bF) : '—'}</td>
+        <td>${roas ? xfmt(roas) : '—'}</td>
+        <td>${pct > 0 ? `<span style="font-weight:600">${pct.toFixed(0)}%</span>` : '—'}</td>
+      </tr>`;
+    };
+    const totRev = rev > 0 ? rev : 1;
+    const metaRoasEff = mspend > 0 ? metaAttr/mspend : null;
+    const googRoasEff = gspend > 0 ? googAttr/gspend : null;
+    const emailRoasEff= null; // spend niet van toepassing
+    const klav = KLAVIYO;
+    const klSends = klav.mtd_received || null;
+    const klOpen  = klav.open_rate_pct || null;
+    const klClick = klav.click_rate_pct || null;
+
+    chEl.innerHTML = `
+      <table class="mktg-ch-table">
+        <thead><tr>
+          <th>Kanaal</th>
+          <th>Spend</th>
+          <th>Impressies</th>
+          <th>Clicks</th>
+          <th>CPM</th>
+          <th>CPC</th>
+          <th>Omzet (attr.)</th>
+          <th>ROAS (attr.)</th>
+          <th>Aandeel</th>
+        </tr></thead>
+        <tbody>
+          ${chRow('#4285F4','Meta Ads', mspend, metaImp, metaClk, metaAttr, metaRoasEff, metaAttr/totRev*100)}
+          ${chRow('#34A853','Google Ads', gspend, googImp, googClk, googAttr, googRoasEff, googAttr/totRev*100)}
+          <tr>
+            <td><span class="mktg-ch-badge"><span class="mktg-ch-dot" style="background:#AEB893"></span>Email (Klaviyo)</span></td>
+            <td style="color:var(--muted)">—</td>
+            <td>${klSends ? fmt0(klSends) + ' <span style="color:var(--muted);font-size:10px">vznd</span>' : '—'}</td>
+            <td>${klOpen ? fmtPct(klOpen) + ' <span style="color:var(--muted);font-size:10px">open</span>' : '—'}</td>
+            <td style="color:var(--muted)">—</td>
+            <td>${klClick ? fmtPct(klClick) + ' <span style="color:var(--muted);font-size:10px">CTR</span>' : '—'}</td>
+            <td style="font-weight:600">${emailRev > 0 ? eur(emailRev * bF) : '—'}</td>
+            <td style="color:var(--muted)">—</td>
+            <td>${emailRev > 0 ? `<span style="font-weight:600">${(emailRev/totRev*100).toFixed(0)}%</span>` : '—'}</td>
+          </tr>
+          <tr>
+            <td><span class="mktg-ch-badge"><span class="mktg-ch-dot" style="background:var(--line)"></span>Organisch / Direct</span></td>
+            <td style="color:var(--muted)">—</td>
+            <td style="color:var(--muted)">—</td>
+            <td style="color:var(--muted)">—</td>
+            <td style="color:var(--muted)">—</td>
+            <td style="color:var(--muted)">—</td>
+            <td style="font-weight:600">${orgAttr > 0 ? eur(orgAttr * bF) : '—'}</td>
+            <td style="color:var(--muted)">—</td>
+            <td>${orgAttr > 0 ? `<span style="font-weight:600">${(orgAttr/totRev*100).toFixed(0)}%</span>` : '—'}</td>
+          </tr>
+          <tr class="total">
+            <td>Totaal</td>
+            <td>${totSpend > 0 ? eur(totSpend) : '—'}</td>
+            <td></td><td></td><td></td><td></td>
+            <td>${eur(rev * bF)}</td>
+            <td>${bRoas ? xfmt(bRoas) : '—'}</td>
+            <td>100%</td>
+          </tr>
+        </tbody>
+      </table>`;
+  }
+
+  // ── MAXIMUM POTENTIEEL ─────────────────────────────────────────
+  const potEl = document.getElementById('mktg-potential');
+  if(potEl && totSpend > 0){
+    const days_n = k==='today'||k==='gisteren'?1:k==='d7'?7:k==='d30'?30:k==='mtd'?(new Date().getDate()):30;
+    const spendPd  = totSpend / days_n;
+    const scenarios = [
+      { lbl:'Huidig',           roas: bRoas || 0,  clr:'var(--warn)',  note:'nu' },
+      { lbl:'Break-even',       roas: beRoas,       clr:'var(--sage)',  note:'2,65×' },
+      { lbl:'Doel',             roas: 3.5,          clr:'var(--good)',  note:'3,5×' },
+      { lbl:'Schalen (3× BE)',  roas: 4.0,          clr:'#3A6E47',      note:'4,0×' },
+    ];
+    const maxRev = Math.max(...scenarios.map(s => s.roas * totSpend), 1);
+    const rows = scenarios.map(s => {
+      const projRev   = s.roas * totSpend;
+      const projUnits = Math.round(projRev / (69.95));
+      const projNetto = s.roas > 0 ? (26.35 - totSpend / Math.max(projUnits, 1)) : null;
+      const pct       = projRev / maxRev * 100;
+      const isNow     = s.note === 'nu';
+      return `<div class="mktg-pot-row">
+        <div style="font-weight:${isNow?'400':'600'};color:${isNow?'var(--muted)':'var(--ink)'}">${s.lbl}</div>
+        <div>
+          <div class="mktg-pot-bar-track">
+            <div class="mktg-pot-bar-fill" style="width:${pct.toFixed(0)}%;background:${s.clr}"></div>
+          </div>
+        </div>
+        <div style="text-align:right;font-weight:600;color:${s.clr}">${eur(projRev * bF)}</div>
+        <div style="text-align:right;color:var(--muted);font-size:12px">${projUnits} st. · ${projNetto != null && projNetto >= 0 ? '+' : ''}${projNetto != null ? eur(projNetto) : '—'}/st</div>
+      </div>`;
+    }).join('');
+    const gap = bRoas ? (beRoas - bRoas) * totSpend : null;
+    const gapUnits = gap ? Math.round(gap / 69.95) : null;
+    potEl.innerHTML = `
+      ${rows}
+      <div style="border-top:1px solid var(--line);margin-top:14px;padding-top:14px;font-size:12px;color:var(--muted);line-height:1.7">
+        Spend/dag: <b>${eur(spendPd)}</b> &nbsp;·&nbsp; Dagen in periode: <b>${days_n}</b>
+        ${gap != null && gap > 0 ? ` &nbsp;·&nbsp; Gap tot break-even: <b style="color:var(--warn)">+${eur(gap * bF)} omzet (${gapUnits} stuks)</b>` : ''}
+        ${bRoas != null && bRoas >= beRoas ? ` &nbsp;·&nbsp; <b style="color:var(--good)">Boven break-even. Schalen mogelijk.</b>` : ''}
+      </div>`;
+  } else if(potEl) {
+    potEl.innerHTML = `<div style="color:var(--muted);font-size:13px">Voeg spend-data toe om potentieel te berekenen.</div>`;
+  }
+}
+
 function render(k){
   currentK = k;
   const p=P[k];
@@ -1910,6 +2226,7 @@ function render(k){
   renderBlendedCamp(k);
   renderEmail();
   renderChannelViews(k);
+  renderMarketing(k);
   drpUpdate(k);
   aeUpdateCounts();
 }
