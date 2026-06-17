@@ -274,10 +274,55 @@
   .ai-send-btn:disabled{opacity:.35;cursor:default}
 
   /* refresh button — icon only, geen border */
-  @keyframes warnBorderPulse{0%,100%{border-color:var(--line)}50%{border-color:var(--warn);box-shadow:0 0 0 2px rgba(176,112,63,.12)}}
+  @keyframes warnBorderPulse{0%,100%{border-color:var(--line)}50%{border-color:var(--warn);box-shadow:0 0 0 3px rgba(176,112,63,.1)}}
   .card.roas-warn{animation:warnBorderPulse 3s ease-in-out infinite}
   @keyframes refreshIdle{0%,79%{transform:rotate(0deg)}80%{transform:rotate(360deg)}100%{transform:rotate(360deg)}}
   #refresh-btn:not(.loading){animation:refreshIdle 9s ease-in-out infinite}
+
+  /* ── page scan on load ── */
+  @keyframes scanDown{0%{top:0;opacity:.55}85%{opacity:.35}100%{top:100vh;opacity:0}}
+  .page-scan{position:fixed;left:0;right:0;height:2px;z-index:99999;pointer-events:none;
+    background:linear-gradient(90deg,transparent 0%,rgba(174,184,147,.9) 30%,rgba(199,210,168,1) 50%,rgba(174,184,147,.9) 70%,transparent 100%);
+    animation:scanDown 2.2s cubic-bezier(.4,.0,.6,1) .4s forwards}
+
+  /* ── topbar animated accent line ── */
+  .topbar{position:sticky;overflow:visible}
+  .topbar::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent 0%,var(--sage) 20%,var(--pist) 50%,var(--sage) 80%,transparent 100%);
+    background-size:300% 100%;animation:topAccent 5s ease-in-out infinite}
+  @keyframes topAccent{0%{background-position:0% 0}50%{background-position:100% 0}100%{background-position:0% 0}}
+
+  /* ── warn value glitch ── */
+  @keyframes glitch{
+    0%,88%,100%{transform:none;filter:none}
+    89%{transform:translateX(2px) skewX(-1deg);filter:brightness(1.15)}
+    91%{transform:translateX(-2px) skewX(1deg)}
+    93%{transform:translateX(1px)}
+    95%{transform:none}}
+  .ps-val.warn{animation:glitch 7s ease-in-out infinite}
+
+  /* ── number counter ── */
+  .ps-total{font-feature-settings:'tnum'}
+  @keyframes numReveal{from{opacity:0;letter-spacing:.04em}to{opacity:1;letter-spacing:-.03em}}
+  .ps-total.counting{animation:numReveal .5s ease forwards}
+
+  /* ── stockout urgency pulse ── */
+  @keyframes stockUrgent{0%,100%{opacity:1;transform:none}50%{opacity:.6;transform:scale(.98)}}
+  .stock-urgency{animation:stockUrgent 1.6s ease-in-out infinite}
+
+  /* ── AI waveform breathing ── */
+  @keyframes wavePulse{0%,100%{stroke-width:1.6;opacity:.5}50%{stroke-width:2.2;opacity:.85}}
+  .ai-wave{animation:waveIn .8s ease .1s forwards,wavePulse 3s ease-in-out 1s infinite}
+
+  /* ── data-refresh flash on cards ── */
+  @keyframes dataFlash{0%{background:var(--card)}20%{background:rgba(199,210,168,.22)}100%{background:var(--card)}}
+  .card.data-fresh{animation:dataFlash .7s ease forwards}
+
+  /* ── period btn hover glow ── */
+  .drp-preset:hover{background:rgba(199,210,168,.18);color:var(--ink);transition:.12s}
+
+  /* ── topbar needs relative for ::after ── */
+  .topbar{position:sticky;top:0;z-index:100}
   .refresh-btn{display:inline-flex;align-items:center;justify-content:center;border:none;background:none;
     color:var(--muted);font-size:16px;font-family:inherit;width:30px;height:30px;border-radius:50%;
     cursor:pointer;transition:.15s;padding:0;margin:0}
@@ -918,6 +963,9 @@ async function refreshData() {
   try {
     await loadData(true);
     render(currentK);
+    injectScanLine();
+    flashCards();
+    markStockUrgency();
   } catch(e) {
     console.error(e);
   }
@@ -2448,7 +2496,7 @@ async function drpSelectMax() {
   drpClose();
   const now = new Date();
   const end = now.toISOString().slice(0,10);
-  const start = '2025-10-01'; // ELÛNA launch window
+  const start = '2026-04-01'; // ELÛNA launch window
   document.querySelectorAll('.drp-preset[data-k]').forEach(b=>b.classList.remove('active'));
   document.getElementById('drp-max-btn')?.classList.add('active');
   document.getElementById('drp-label').textContent = 'Maximaal';
@@ -2592,7 +2640,62 @@ function hideLoader(){
   if(ol) ol.classList.add('hidden');
 }
 
-loadData().then(()=>{render('mtd'); hideLoader();}).catch(e=>{
+// ── futuristic fx ──────────────────────────────────────────────────
+function injectScanLine(){
+  const el=document.createElement('div');
+  el.className='page-scan';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 3000);
+}
+
+function animateCounter(el, endVal, duration=700){
+  if(!el||isNaN(endVal)) return;
+  const start=performance.now();
+  const fmt=v=>'€'+Math.round(v).toLocaleString('nl-NL');
+  el.classList.add('counting');
+  function tick(now){
+    const p=Math.min((now-start)/duration,1);
+    const ease=1-Math.pow(1-p,3);
+    el.textContent=fmt(endVal*ease);
+    if(p<1) requestAnimationFrame(tick);
+    else el.textContent=fmt(endVal);
+  }
+  requestAnimationFrame(tick);
+}
+
+function flashCards(){
+  document.querySelectorAll('.card').forEach((c,i)=>{
+    setTimeout(()=>{
+      c.classList.remove('data-fresh');
+      void c.offsetWidth; // reflow
+      c.classList.add('data-fresh');
+    }, i*60);
+  });
+}
+
+function markStockUrgency(){
+  document.querySelectorAll('.stock-date,.stock-runway-num').forEach(el=>{
+    const txt=el.textContent||'';
+    const days=parseInt(txt);
+    if(days>0&&days<20) el.classList.add('stock-urgency');
+    else el.classList.remove('stock-urgency');
+  });
+}
+// ───────────────────────────────────────────────────────────────────
+
+loadData().then(()=>{
+  render('mtd');
+  hideLoader();
+  injectScanLine();
+  setTimeout(()=>{
+    const tot=document.querySelector('.ps-total');
+    if(tot){
+      const raw=parseFloat(tot.textContent.replace(/[€.]/g,'').replace(',','.'));
+      if(!isNaN(raw)) animateCounter(tot, raw);
+    }
+    markStockUrgency();
+  }, 80);
+}).catch(e=>{
   console.error('data.json laden mislukt:',e);
   const uel = document.getElementById('updated-lbl'); if(uel) uel.textContent = 'laad fout';
   hideLoader();
