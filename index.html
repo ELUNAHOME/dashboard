@@ -2496,7 +2496,7 @@ async function drpSelectMax() {
   drpClose();
   const now = new Date();
   const end = now.toISOString().slice(0,10);
-  const start = '2026-04-01'; // ELÛNA launch window
+  const start = '2025-04-01'; // ELÛNA max history
   document.querySelectorAll('.drp-preset[data-k]').forEach(b=>b.classList.remove('active'));
   document.getElementById('drp-max-btn')?.classList.add('active');
   document.getElementById('drp-label').textContent = 'Maximaal';
