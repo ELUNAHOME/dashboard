@@ -2236,10 +2236,11 @@ function render(k){
   // Forecast
   const mtdCac=(P.mtd.spend+P.mtd.gspend)/P.mtd.units;
   const mtdGrossEx=P.mtd.units>0?(P.mtd.rev/P.mtd.units)/BTW-FIXED_EX:LIST_EX-FIXED_EX;
-  document.getElementById('fc-current').textContent=eur((P.mtd.spend+P.mtd.gspend)/13);
-  document.getElementById('fc-cac').textContent=mtdCac.toFixed(0);
-  document.getElementById('fc-gross').textContent=mtdGrossEx.toFixed(2).replace('.',',');
-  document.getElementById('fc-gap').textContent=(mtdCac-mtdGrossEx).toFixed(0)+' ('+Math.round((1-mtdGrossEx/mtdCac)*100)+'% daling nodig)';
+  const _s=id=>document.getElementById(id);
+  if(_s('fc-current'))_s('fc-current').textContent=eur((P.mtd.spend+P.mtd.gspend)/13);
+  if(_s('fc-cac'))_s('fc-cac').textContent=isFinite(mtdCac)?mtdCac.toFixed(0):'—';
+  if(_s('fc-gross'))_s('fc-gross').textContent=mtdGrossEx.toFixed(2).replace('.',',');
+  if(_s('fc-gap')&&isFinite(mtdCac))_s('fc-gap').textContent=(mtdCac-mtdGrossEx).toFixed(0)+' ('+Math.round((1-mtdGrossEx/mtdCac)*100)+'% daling nodig)';
   const fcGspend = document.getElementById('fc-gspend');
   if(fcGspend) fcGspend.textContent = P.mtd.gspend ? (P.mtd.gspend/13).toFixed(0) : '—';
 
