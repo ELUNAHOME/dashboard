@@ -548,6 +548,20 @@
 .stock-val.good{color:var(--good)}
 .stock-sub{font-size:11px;color:var(--muted)}
 
+/* ── meta adset kill/scale ── */
+.meta-adset-table{display:flex;flex-direction:column;gap:10px}
+.meta-adset-row{display:grid;grid-template-columns:1fr 56px 1fr 90px;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.meta-adset-row:last-child{border-bottom:none}
+.meta-adset-name{font-size:12px;font-weight:500;color:var(--ink);line-height:1.3}
+.meta-adset-roas{font-size:15px;font-weight:700;text-align:center}
+.meta-adset-bar-wrap{display:flex;flex-direction:column;gap:0}
+.meta-adset-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:1.5px solid;border-radius:999px;padding:3px 10px;text-align:center}
+.badge-kill{background:rgba(200,112,90,.1)}
+.badge-reduce{background:rgba(176,112,63,.1)}
+.badge-watch{background:rgba(133,137,122,.08)}
+.badge-scale{background:rgba(94,123,90,.12)}
+.badge-paused{background:var(--line);color:var(--muted)!important;border-color:var(--line)!important}
+
 /* ── groei tab ── */
 .groei-month-bar-track{height:10px;border-radius:5px;background:var(--line);overflow:hidden;margin-top:5px}
 .groei-month-bar-fill{height:100%;border-radius:5px;animation:barFill .7s cubic-bezier(.22,.68,0,1.2) backwards}
@@ -851,6 +865,7 @@
     <div class="card" style="margin-bottom:20px">
       <table class="ctable" id="ch-meta-table"></table>
     </div>
+    <div class="card" style="margin-bottom:20px" id="ch-meta-adsets"></div>
     <h2>Acties · Meta</h2>
     <div id="ch-meta-actions"></div>
   </div><!-- /tab-ch-meta -->
@@ -995,7 +1010,6 @@ async function refreshData() {
   try {
     await loadData(true);
     render(currentK);
-    injectScanLine();
     flashCards();
     markStockUrgency();
   } catch(e) {
@@ -2256,11 +2270,78 @@ function renderMarketing(k){
   }
 }
 
+// Shopify historische maanden (MCP: 2025-12 t/m 2026-05)
+const GROEI_HIST = [
+  {ym:'2025-12', label:'Dec', rev:470.01,  orders:9,  days:13, note:'launch'},
+  {ym:'2026-01', label:'Jan', rev:2512.31, orders:48, days:31},
+  {ym:'2026-02', label:'Feb', rev:1585.68, orders:26, days:28},
+  {ym:'2026-03', label:'Mar', rev:1931.18, orders:30, days:31},
+  {ym:'2026-04', label:'Apr', rev:2525.34, orders:39, days:30},
+  {ym:'2026-05', label:'Mei', rev:3077.95, orders:46, days:31},
+];
+
+// Meta adsets snapshot — bijwerken via MCP ads_get_ad_entities (this_month)
+const META_ADSETS = [
+  {name:'NEW CUST · Pack #5 (V41–V50)', spend:313.96, roas:1.23, purchases:6, ctr:1.93, cpm:13.52, reach:12439, status:'ACTIVE'},
+  {name:'NEW CUST · Pack #2 (V11–V20) Creators', spend:275.97, roas:0.23, purchases:1, ctr:3.61, cpm:9.22, reach:19544, status:'ACTIVE'},
+  {name:'NEW CUST · Pack #6 (V51–V60)', spend:71.93, roas:0, purchases:0, ctr:1.53, cpm:15.48, reach:2544, status:'ACTIVE'},
+  {name:'RETARGETING · Add to Cart 90d', spend:78.82, roas:null, purchases:0, ctr:2.52, cpm:29.18, reach:1893, status:'PAUSED'},
+  {name:'RETARGETING · Website Visitors 30d', spend:30.04, roas:null, purchases:0, ctr:1.89, cpm:23.67, reach:931, status:'PAUSED'},
+];
+const META_ADSETS_DATE = 'jun 2026 MTD';
+
+function renderMetaKillScale(){
+  const el = document.getElementById('ch-meta-adsets');
+  if(!el) return;
+  const BE = 2.65;
+  const rows = META_ADSETS.map(a=>{
+    let action, acls, aclr;
+    if(a.status==='PAUSED'){
+      action='GEPAUZEERD'; acls='badge-paused'; aclr='var(--muted)';
+    } else if(a.roas===null||a.roas===0){
+      if(a.spend>50){action='KILL'; acls='badge-kill'; aclr='#C8705A';}
+      else {action='WATCH'; acls='badge-watch'; aclr='var(--warn)';}
+    } else if(a.roas<1.0){
+      action='KILL'; acls='badge-kill'; aclr='#C8705A';
+    } else if(a.roas<BE){
+      action='REDUCEER'; acls='badge-reduce'; aclr='var(--warn)';
+    } else {
+      action='SCHAAL OP'; acls='badge-scale'; aclr='var(--good)';
+    }
+    const roasTxt = a.roas!=null&&a.roas>0 ? a.roas.toFixed(2)+'×' : a.purchases===0?'0 sales':'—';
+    const roasClr = a.roas!=null&&a.roas>=BE?'var(--good)':a.roas>0?'var(--warn)':'#C8705A';
+    const barW = a.roas!=null&&a.roas>0 ? Math.min(100,(a.roas/BE)*100).toFixed(0) : 0;
+    const barClr = a.roas>=BE?'var(--good)':a.roas>0?'var(--warn)':'var(--line)';
+    return `<div class="meta-adset-row">
+      <div class="meta-adset-name">${a.name}</div>
+      <div class="meta-adset-roas" style="color:${a.roas>0?roasClr:'var(--muted)'}">${roasTxt}</div>
+      <div class="meta-adset-bar-wrap">
+        <div style="height:6px;background:var(--line);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${barW}%;background:${barClr};border-radius:3px;transition:width .4s"></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${eur(a.spend,0)} spend · ${a.purchases} aankopen · CTR ${a.ctr.toFixed(1)}%</div>
+      </div>
+      <div><span class="meta-adset-badge ${acls}" style="color:${aclr};border-color:${aclr}">${action}</span></div>
+    </div>`;
+  }).join('');
+
+  const totalSpend = META_ADSETS.reduce((s,a)=>s+a.spend,0);
+  const totalPurch = META_ADSETS.reduce((s,a)=>s+a.purchases,0);
+  const blendedRoas = totalSpend>0 ? META_ADSETS.reduce((s,a)=>s+(a.roas||0)*a.spend,0)/totalSpend : 0;
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h2 style="margin:0">Ad-set advies · ${META_ADSETS_DATE}</h2>
+      <span style="font-size:11px;color:var(--muted)">Break-even: ${BE}× · blended: ${blendedRoas.toFixed(2)}×</span>
+    </div>
+    <div class="meta-adset-table">${rows}</div>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)">
+      Totaal spend MTD: <b>${eur(totalSpend,0)}</b> · ${totalPurch} aankopen · gem. CPP ${totalPurch>0?eur(totalSpend/totalPurch,0):'—'}
+    </div>
+  `;
+}
+
 function renderGroei(){
-  const HIST = {
-    apr: {rev:2525.34, orders:39, days:30, label:'April'},
-    mei: {rev:3077.95, orders:46, days:31, label:'Mei'},
-  };
   const p = P.mtd || {};
   const revMtd   = p.rev    || 0;
   const ordMtd   = p.orders || 0;
@@ -2268,12 +2349,16 @@ function renderGroei(){
   const today    = new Date();
   const dayOfMon = today.getDate();
   const daysInMon = 30; // juni
-  const dailyMei  = HIST.mei.rev / HIST.mei.days;
-  const dailyApr  = HIST.apr.rev / HIST.apr.days;
+  const lastHist  = GROEI_HIST[GROEI_HIST.length-1]; // mei
+  const dailyMei  = lastHist.rev / lastHist.days;
   const dailyCurr = dayOfMon > 0 ? revMtd / dayOfMon : 0;
   const projRev   = dailyCurr * daysInMon;
   const growthPct = dailyMei > 0 ? (dailyCurr - dailyMei) / dailyMei * 100 : 0;
-  const NEW_CUST_MTD = 30; // Shopify MCP: 30 nieuwe klanten 1–19 jun
+  const NEW_CUST_MTD = 30;
+
+  // Totaal alle tijden
+  const allTimeRev = GROEI_HIST.reduce((s,m)=>s+m.rev,0) + revMtd;
+  const allTimeOrd = GROEI_HIST.reduce((s,m)=>s+m.orders,0) + ordMtd;
 
   // KPI cards
   const kpisEl = document.getElementById('groei-kpis');
@@ -2291,48 +2376,47 @@ function renderGroei(){
         <div class="sub">daggemiddelde vs mei (${eur(dailyMei,0)}/dag)</div>
       </div>
       <div class="card kpi">
-        <div class="label">Gem. orderwaarde</div>
-        <div class="val">${aovMtd>0?eur(aovMtd):'—'}</div>
-        <div class="sub">mei ${eur(HIST.mei.rev/HIST.mei.orders)} &nbsp;·&nbsp; apr ${eur(HIST.apr.rev/HIST.apr.orders)}</div>
+        <div class="label">Omzet · alle tijden</div>
+        <div class="val" id="groei-alltime-val">${eur(allTimeRev,0)}</div>
+        <div class="sub">${allTimeOrd} orders · launch dec 2025</div>
       </div>
       <div class="card kpi">
-        <div class="label">Nieuwe klanten MTD</div>
-        <div class="val">${NEW_CUST_MTD}</div>
-        <div class="sub">${(NEW_CUST_MTD/dayOfMon).toFixed(1)}/dag &nbsp;·&nbsp; prognose ${Math.round(NEW_CUST_MTD/dayOfMon*daysInMon)}/mnd</div>
+        <div class="label">Terugkerende klanten</div>
+        <div class="val">1,1%</div>
+        <div class="sub">Shopify Analytics · 365d · ruimte voor verbetering</div>
       </div>
     `;
-    // count-up animatie op prognose
+    // count-up op prognose
     const pv = document.getElementById('groei-proj-val');
-    if(pv && projRev > 0){
-      const st = performance.now();
-      const dur = 800;
-      (function tick(now){
-        const prog = Math.min((now-st)/dur,1);
-        const ease = 1-Math.pow(1-prog,3);
-        pv.textContent = eur(projRev*ease,0);
-        if(prog<1) requestAnimationFrame(tick);
-        else pv.textContent = eur(projRev,0);
-      })(performance.now());
+    if(pv && projRev>0){
+      const st=performance.now(),dur=800;
+      (function tick(now){const p2=Math.min((now-st)/dur,1),e=1-Math.pow(1-p2,3);
+        pv.textContent=eur(projRev*e,0);if(p2<1)requestAnimationFrame(tick);else pv.textContent=eur(projRev,0);})(performance.now());
+    }
+    const av = document.getElementById('groei-alltime-val');
+    if(av && allTimeRev>0){
+      const st=performance.now(),dur=900;
+      (function tick(now){const p2=Math.min((now-st)/dur,1),e=1-Math.pow(1-p2,3);
+        av.textContent=eur(allTimeRev*e,0);if(p2<1)requestAnimationFrame(tick);else av.textContent=eur(allTimeRev,0);})(performance.now());
     }
   }
 
-  // Maandtrend bars
+  // 7-maands omzettrend
   const trendEl = document.getElementById('groei-trend');
   if(trendEl){
     const months = [
-      {label:'Apr', rev:HIST.apr.rev, daily:dailyApr, proj:false, delay:'.1s'},
-      {label:'Mei', rev:HIST.mei.rev, daily:dailyMei, proj:false, delay:'.25s'},
-      {label:'Jun', rev:projRev,      daily:dailyCurr, proj:true, delay:'.4s'},
+      ...GROEI_HIST.map((m,i)=>({...m, daily:m.rev/m.days, proj:false, delay:`${i*.08+.05}s`})),
+      {label:'Jun', rev:projRev, orders:Math.round(ordMtd/dayOfMon*daysInMon), daily:dailyCurr, proj:true, delay:'.55s'},
     ];
     const maxRev = Math.max(...months.map(m=>m.rev));
     trendEl.innerHTML = months.map(m=>{
-      const pct = (m.rev/maxRev*100).toFixed(1);
-      const bg  = m.proj ? 'var(--pist)' : 'var(--sage)';
-      const op  = m.proj ? '.72' : '1';
-      return `<div style="margin-bottom:16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;font-size:13px">
-          <span style="font-weight:600;min-width:34px">${m.label}</span>
-          <span style="color:var(--muted);font-size:11px">${eur(m.daily,0)}/dag</span>
+      const pct = maxRev>0 ? (m.rev/maxRev*100).toFixed(1) : 0;
+      const bg  = m.note==='launch' ? 'var(--pist)' : m.proj ? 'var(--pist)' : 'var(--sage)';
+      const op  = m.proj ? '.7' : '1';
+      return `<div style="margin-bottom:11px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;font-size:12px">
+          <span style="font-weight:600;min-width:30px;color:${m.note==='launch'?'var(--muted)':'var(--ink)'}">${m.label}${m.note==='launch'?'<span style="font-size:9px;color:var(--muted);font-weight:400;margin-left:4px">launch</span>':''}</span>
+          <span style="color:var(--muted);font-size:10px">${m.orders||0} orders</span>
           <span style="font-weight:600">${eur(m.rev,0)}${m.proj?'<span class="groei-proj-badge">prognose</span>':''}</span>
         </div>
         <div class="groei-month-bar-track">
@@ -2342,43 +2426,20 @@ function renderGroei(){
     }).join('');
   }
 
-  // Orders-rij onder bars
-  const ordRow = document.getElementById('groei-orders-row');
-  if(ordRow){
-    const projOrds = Math.round(ordMtd/dayOfMon*daysInMon);
-    const cols = [
-      {lbl:'April', val:HIST.apr.orders, sub:'orders', proj:false},
-      {lbl:'Mei',   val:HIST.mei.orders, sub:'orders', proj:false},
-      {lbl:'Juni',  val:projOrds,        sub:'orders', proj:true},
-    ];
-    ordRow.innerHTML = cols.map(c=>`
-      <div class="groei-order-col">
-        <div class="groei-order-lbl">${c.lbl}</div>
-        <div class="groei-order-num ${c.proj?'':''}">
-          ${c.val}${c.proj?'<span class="groei-proj-badge">prognose</span>':''}
-        </div>
-        <div class="groei-order-sub">${c.sub}</div>
-      </div>
-    `).join('');
-  }
-
   // Week-over-week (DAILY_MTD)
   const weekEl = document.getElementById('groei-week');
   if(weekEl){
-    if(DAILY_MTD && DAILY_MTD.length > 0){
-      const weeks = {};
+    if(DAILY_MTD && DAILY_MTD.length>0){
+      const weeks={};
       DAILY_MTD.forEach(d=>{
-        const day = new Date(d.date).getDate();
-        const wn  = Math.floor((day-1)/7);
+        const day=new Date(d.date).getDate();
+        const wn=Math.floor((day-1)/7);
         if(!weeks[wn]) weeks[wn]={rev:0,orders:0,days:0,start:day};
-        weeks[wn].rev    += (d.rev||0);
-        weeks[wn].orders += (d.orders||0);
-        weeks[wn].days++;
-        weeks[wn].end = day;
+        weeks[wn].rev+=(d.rev||0);weeks[wn].orders+=(d.orders||0);weeks[wn].days++;weeks[wn].end=day;
       });
-      const wArr = Object.entries(weeks).map(([wn,w])=>({...w,wn:parseInt(wn)}));
-      const maxW = Math.max(...wArr.map(w=>w.rev),1);
-      weekEl.innerHTML = wArr.map((w,i)=>`
+      const wArr=Object.entries(weeks).map(([wn,w])=>({...w,wn:parseInt(wn)}));
+      const maxW=Math.max(...wArr.map(w=>w.rev),1);
+      weekEl.innerHTML=wArr.map((w,i)=>`
         <div style="margin-bottom:13px">
           <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
             <span style="color:var(--muted)">${w.start}–${w.end} jun</span>
@@ -2388,10 +2449,9 @@ function renderGroei(){
             <div class="groei-week-bar-fill" style="width:${(w.rev/maxW*100).toFixed(1)}%;background:var(--sage);animation-delay:${i*.12}s"></div>
           </div>
           <div style="font-size:11px;color:var(--muted);margin-top:3px">${w.orders} orders · ${eur(w.rev/w.days,0)}/dag gem.</div>
-        </div>
-      `).join('');
+        </div>`).join('');
     } else {
-      weekEl.innerHTML = `<div style="color:var(--muted);font-size:13px">Weekdata laadt na eerste data-refresh.</div>`;
+      weekEl.innerHTML=`<div style="color:var(--muted);font-size:13px">Weekdata laadt na eerste data-refresh.</div>`;
     }
   }
 
@@ -2399,27 +2459,25 @@ function renderGroei(){
   const sigEl = document.getElementById('groei-signals');
   if(sigEl){
     let s='';
-    // Tempo
-    if(growthPct > 3){
+    if(growthPct>3){
       s+=`<div class="signal good"><span class="dot live" style="margin-top:5px"></span><span><b>Groeitempo boven mei</b>Daggemiddelde ${eur(dailyCurr,0)} vs ${eur(dailyMei,0)} in mei (+${growthPct.toFixed(1)}%). Op koers voor ${eur(projRev,0)} in juni.</span></div>`;
-    } else if(growthPct < -5){
-      s+=`<div class="signal"><span class="dot flag" style="margin-top:5px"></span><span><b>Groeitempo achter op mei</b>Daggemiddelde ${eur(dailyCurr,0)}/dag vs ${eur(dailyMei,0)}/dag in mei. Actie nodig om meivolume te halen.</span></div>`;
+    } else if(growthPct<-5){
+      s+=`<div class="signal"><span class="dot flag" style="margin-top:5px"></span><span><b>Groeitempo achter op mei</b>Daggemiddelde ${eur(dailyCurr,0)}/dag vs ${eur(dailyMei,0)}/dag. Actie nodig.</span></div>`;
     } else {
       s+=`<div class="signal neutral"><span class="dot idle" style="margin-top:5px"></span><span><b>Groeitempo stabiel</b>Daggemiddelde ${eur(dailyCurr,0)}/dag — in lijn met mei (${eur(dailyMei,0)}/dag).</span></div>`;
     }
-    // AOV
-    const aovMei = HIST.mei.rev/HIST.mei.orders;
-    if(aovMtd>0 && aovMtd < aovMei-1.5){
-      s+=`<div class="signal"><span class="dot flag" style="margin-top:5px"></span><span><b>AOV licht gedaald</b>Gem. orderwaarde ${eur(aovMtd)} vs ${eur(aovMei)} in mei — meer kortingsgebruik of lagere combi.</span></div>`;
+    const aovMei=lastHist.rev/lastHist.orders;
+    if(aovMtd>0&&aovMtd<aovMei-1.5){
+      s+=`<div class="signal"><span class="dot flag" style="margin-top:5px"></span><span><b>AOV licht gedaald</b>Gem. orderwaarde ${eur(aovMtd)} vs ${eur(aovMei)} in mei.</span></div>`;
     } else if(aovMtd>0){
-      s+=`<div class="signal good"><span class="dot live" style="margin-top:5px"></span><span><b>AOV stabiel</b>Gem. orderwaarde ${eur(aovMtd)} — historisch gemiddelde €65–67. Geen prijsdruk.</span></div>`;
+      s+=`<div class="signal good"><span class="dot live" style="margin-top:5px"></span><span><b>AOV stabiel</b>Gem. orderwaarde ${eur(aovMtd)} — historisch gemiddelde €65–67.</span></div>`;
     }
-    // Ordersnelheid
-    const opMei  = HIST.mei.orders/HIST.mei.days;
-    const opCurr = ordMtd/dayOfMon;
-    const opGrowth = opMei>0?(opCurr-opMei)/opMei*100:0;
-    s+=`<div class="signal neutral"><span class="dot idle" style="margin-top:5px"></span><span><b>Ordersnelheid: ${opCurr.toFixed(1)}/dag</b>${opGrowth>=0?'+':''}${opGrowth.toFixed(0)}% vs mei (${opMei.toFixed(1)}/dag). Prognose: ${Math.round(opCurr*daysInMon)} orders voor de hele maand.</span></div>`;
-    sigEl.innerHTML = s;
+    const opMei=lastHist.orders/lastHist.days,opCurr=ordMtd/dayOfMon;
+    const opG=opMei>0?(opCurr-opMei)/opMei*100:0;
+    s+=`<div class="signal neutral"><span class="dot idle" style="margin-top:5px"></span><span><b>Ordersnelheid: ${opCurr.toFixed(1)}/dag</b>${opG>=0?'+':''}${opG.toFixed(0)}% vs mei (${opMei.toFixed(1)}/dag). Prognose: ${Math.round(opCurr*daysInMon)} orders voor juni.</span></div>`;
+    // Retentie signaal
+    s+=`<div class="signal"><span class="dot flag" style="margin-top:5px"></span><span><b>Terugkerende klanten 1,1%</b>Shopify benchmark: 5–15%. Klaviyo flows en post-purchase sequenties kunnen dit verhogen.</span></div>`;
+    sigEl.innerHTML=s;
   }
 }
 
@@ -2520,6 +2578,7 @@ function render(k){
   renderChannelViews(k);
   renderMarketing(k);
   renderGroei();
+  renderMetaKillScale();
   drpUpdate(k);
   aeUpdateCounts();
 }
@@ -2886,7 +2945,6 @@ function markStockUrgency(){
 loadData().then(()=>{
   render('mtd');
   hideLoader();
-  injectScanLine();
   setTimeout(()=>{
     const tot=document.querySelector('.ps-total');
     if(tot){
