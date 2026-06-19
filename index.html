@@ -547,6 +547,18 @@
 .stock-val.crit{color:#C8705A}
 .stock-val.good{color:var(--good)}
 .stock-sub{font-size:11px;color:var(--muted)}
+
+/* ── groei tab ── */
+.groei-month-bar-track{height:10px;border-radius:5px;background:var(--line);overflow:hidden;margin-top:5px}
+.groei-month-bar-fill{height:100%;border-radius:5px;animation:barFill .7s cubic-bezier(.22,.68,0,1.2) backwards}
+.groei-week-bar-track{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:4px}
+.groei-week-bar-fill{height:100%;border-radius:4px;animation:barFill .6s cubic-bezier(.22,.68,0,1.2) backwards}
+.groei-order-col{flex:1;text-align:center;padding:0 8px}
+.groei-order-col+.groei-order-col{border-left:1px solid var(--line)}
+.groei-order-num{font-size:22px;font-weight:700;letter-spacing:-.01em}
+.groei-order-lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px}
+.groei-order-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.groei-proj-badge{display:inline-block;font-size:9px;text-transform:uppercase;letter-spacing:.08em;border:1px dashed var(--sage);border-radius:999px;padding:1px 7px;color:var(--muted);margin-left:6px;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -629,6 +641,7 @@
     <button class="tab-btn active" data-tab="overzicht">Overzicht</button>
     <button class="tab-btn" data-tab="marges">Marges</button>
     <button class="tab-btn" data-tab="marketing">Marketing</button>
+    <button class="tab-btn" data-tab="groei">Groei</button>
     <span style="width:1px;background:var(--line);margin:8px 6px;flex-shrink:0"></span>
     <button class="tab-btn" data-tab="ch-meta" title="Meta Ads" style="display:inline-flex;align-items:center;padding:10px 14px"><svg width="22" height="14" viewBox="0 0 44 24" style="flex-shrink:0;display:block"><path d="M22 12C20.5 7.5 18 4.5 14.5 4.5C10.5 4.5 8 7.5 8 12C8 16.5 10.5 19.5 14.5 19.5C18 19.5 20.5 16.5 22 12Z" fill="#0082FB"/><path d="M22 12C23.5 7.5 26 4.5 29.5 4.5C33.5 4.5 36 7.5 36 12C36 16.5 33.5 19.5 29.5 19.5C26 19.5 23.5 16.5 22 12Z" fill="#0082FB"/></svg></button>
     <button class="tab-btn" data-tab="ch-google" title="Google Ads" style="display:inline-flex;align-items:center;padding:10px 14px"><svg width="18" height="18" viewBox="0 0 24 24" style="flex-shrink:0;display:block"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></button>
@@ -867,6 +880,25 @@
     <h2>Acties · Klaviyo</h2>
     <div id="ch-klav-actions"></div>
   </div><!-- /tab-ch-klaviyo -->
+
+  <div class="tab-pane" id="tab-groei">
+    <div class="grid kpis" id="groei-kpis" style="margin-bottom:16px"></div>
+    <div class="grid" style="grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="card" id="groei-trend-card">
+        <h2 style="margin-bottom:18px">Maandomzet · 3 maanden</h2>
+        <div id="groei-trend"></div>
+        <div id="groei-orders-row" style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line);display:flex;gap:0"></div>
+      </div>
+      <div class="card" id="groei-week-card">
+        <h2 style="margin-bottom:18px">Week-over-week · juni</h2>
+        <div id="groei-week"></div>
+      </div>
+    </div>
+    <div class="card" id="groei-signals-card">
+      <h2 style="margin-bottom:14px">Groei-signalen</h2>
+      <div id="groei-signals"></div>
+    </div>
+  </div><!-- /tab-groei -->
 
 </div><!-- /wrap -->
 
@@ -2224,6 +2256,173 @@ function renderMarketing(k){
   }
 }
 
+function renderGroei(){
+  const HIST = {
+    apr: {rev:2525.34, orders:39, days:30, label:'April'},
+    mei: {rev:3077.95, orders:46, days:31, label:'Mei'},
+  };
+  const p = P.mtd || {};
+  const revMtd   = p.rev    || 0;
+  const ordMtd   = p.orders || 0;
+  const aovMtd   = ordMtd > 0 ? revMtd / ordMtd : 0;
+  const today    = new Date();
+  const dayOfMon = today.getDate();
+  const daysInMon = 30; // juni
+  const dailyMei  = HIST.mei.rev / HIST.mei.days;
+  const dailyApr  = HIST.apr.rev / HIST.apr.days;
+  const dailyCurr = dayOfMon > 0 ? revMtd / dayOfMon : 0;
+  const projRev   = dailyCurr * daysInMon;
+  const growthPct = dailyMei > 0 ? (dailyCurr - dailyMei) / dailyMei * 100 : 0;
+  const NEW_CUST_MTD = 30; // Shopify MCP: 30 nieuwe klanten 1–19 jun
+
+  // KPI cards
+  const kpisEl = document.getElementById('groei-kpis');
+  if(kpisEl){
+    const gSign = growthPct >= 0 ? '+' : '';
+    kpisEl.innerHTML = `
+      <div class="card kpi">
+        <div class="label">Prognose juni</div>
+        <div class="val" id="groei-proj-val">${eur(projRev,0)}</div>
+        <div class="sub">obv ${dayOfMon} dagen · ${eur(dailyCurr,0)}/dag</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">Groeitempo</div>
+        <div class="val ${growthPct>=0?'good':'warn'}">${gSign}${growthPct.toFixed(1)}%</div>
+        <div class="sub">daggemiddelde vs mei (${eur(dailyMei,0)}/dag)</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">Gem. orderwaarde</div>
+        <div class="val">${aovMtd>0?eur(aovMtd):'—'}</div>
+        <div class="sub">mei ${eur(HIST.mei.rev/HIST.mei.orders)} &nbsp;·&nbsp; apr ${eur(HIST.apr.rev/HIST.apr.orders)}</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">Nieuwe klanten MTD</div>
+        <div class="val">${NEW_CUST_MTD}</div>
+        <div class="sub">${(NEW_CUST_MTD/dayOfMon).toFixed(1)}/dag &nbsp;·&nbsp; prognose ${Math.round(NEW_CUST_MTD/dayOfMon*daysInMon)}/mnd</div>
+      </div>
+    `;
+    // count-up animatie op prognose
+    const pv = document.getElementById('groei-proj-val');
+    if(pv && projRev > 0){
+      const st = performance.now();
+      const dur = 800;
+      (function tick(now){
+        const prog = Math.min((now-st)/dur,1);
+        const ease = 1-Math.pow(1-prog,3);
+        pv.textContent = eur(projRev*ease,0);
+        if(prog<1) requestAnimationFrame(tick);
+        else pv.textContent = eur(projRev,0);
+      })(performance.now());
+    }
+  }
+
+  // Maandtrend bars
+  const trendEl = document.getElementById('groei-trend');
+  if(trendEl){
+    const months = [
+      {label:'Apr', rev:HIST.apr.rev, daily:dailyApr, proj:false, delay:'.1s'},
+      {label:'Mei', rev:HIST.mei.rev, daily:dailyMei, proj:false, delay:'.25s'},
+      {label:'Jun', rev:projRev,      daily:dailyCurr, proj:true, delay:'.4s'},
+    ];
+    const maxRev = Math.max(...months.map(m=>m.rev));
+    trendEl.innerHTML = months.map(m=>{
+      const pct = (m.rev/maxRev*100).toFixed(1);
+      const bg  = m.proj ? 'var(--pist)' : 'var(--sage)';
+      const op  = m.proj ? '.72' : '1';
+      return `<div style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;font-size:13px">
+          <span style="font-weight:600;min-width:34px">${m.label}</span>
+          <span style="color:var(--muted);font-size:11px">${eur(m.daily,0)}/dag</span>
+          <span style="font-weight:600">${eur(m.rev,0)}${m.proj?'<span class="groei-proj-badge">prognose</span>':''}</span>
+        </div>
+        <div class="groei-month-bar-track">
+          <div class="groei-month-bar-fill" style="width:${pct}%;background:${bg};opacity:${op};animation-delay:${m.delay}"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Orders-rij onder bars
+  const ordRow = document.getElementById('groei-orders-row');
+  if(ordRow){
+    const projOrds = Math.round(ordMtd/dayOfMon*daysInMon);
+    const cols = [
+      {lbl:'April', val:HIST.apr.orders, sub:'orders', proj:false},
+      {lbl:'Mei',   val:HIST.mei.orders, sub:'orders', proj:false},
+      {lbl:'Juni',  val:projOrds,        sub:'orders', proj:true},
+    ];
+    ordRow.innerHTML = cols.map(c=>`
+      <div class="groei-order-col">
+        <div class="groei-order-lbl">${c.lbl}</div>
+        <div class="groei-order-num ${c.proj?'':''}">
+          ${c.val}${c.proj?'<span class="groei-proj-badge">prognose</span>':''}
+        </div>
+        <div class="groei-order-sub">${c.sub}</div>
+      </div>
+    `).join('');
+  }
+
+  // Week-over-week (DAILY_MTD)
+  const weekEl = document.getElementById('groei-week');
+  if(weekEl){
+    if(DAILY_MTD && DAILY_MTD.length > 0){
+      const weeks = {};
+      DAILY_MTD.forEach(d=>{
+        const day = new Date(d.date).getDate();
+        const wn  = Math.floor((day-1)/7);
+        if(!weeks[wn]) weeks[wn]={rev:0,orders:0,days:0,start:day};
+        weeks[wn].rev    += (d.rev||0);
+        weeks[wn].orders += (d.orders||0);
+        weeks[wn].days++;
+        weeks[wn].end = day;
+      });
+      const wArr = Object.entries(weeks).map(([wn,w])=>({...w,wn:parseInt(wn)}));
+      const maxW = Math.max(...wArr.map(w=>w.rev),1);
+      weekEl.innerHTML = wArr.map((w,i)=>`
+        <div style="margin-bottom:13px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+            <span style="color:var(--muted)">${w.start}–${w.end} jun</span>
+            <span style="font-weight:600">${eur(w.rev,0)}</span>
+          </div>
+          <div class="groei-week-bar-track">
+            <div class="groei-week-bar-fill" style="width:${(w.rev/maxW*100).toFixed(1)}%;background:var(--sage);animation-delay:${i*.12}s"></div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">${w.orders} orders · ${eur(w.rev/w.days,0)}/dag gem.</div>
+        </div>
+      `).join('');
+    } else {
+      weekEl.innerHTML = `<div style="color:var(--muted);font-size:13px">Weekdata laadt na eerste data-refresh.</div>`;
+    }
+  }
+
+  // Groei-signalen
+  const sigEl = document.getElementById('groei-signals');
+  if(sigEl){
+    let s='';
+    // Tempo
+    if(growthPct > 3){
+      s+=`<div class="signal good"><span class="dot live" style="margin-top:5px"></span><span><b>Groeitempo boven mei</b>Daggemiddelde ${eur(dailyCurr,0)} vs ${eur(dailyMei,0)} in mei (+${growthPct.toFixed(1)}%). Op koers voor ${eur(projRev,0)} in juni.</span></div>`;
+    } else if(growthPct < -5){
+      s+=`<div class="signal"><span class="dot flag" style="margin-top:5px"></span><span><b>Groeitempo achter op mei</b>Daggemiddelde ${eur(dailyCurr,0)}/dag vs ${eur(dailyMei,0)}/dag in mei. Actie nodig om meivolume te halen.</span></div>`;
+    } else {
+      s+=`<div class="signal neutral"><span class="dot idle" style="margin-top:5px"></span><span><b>Groeitempo stabiel</b>Daggemiddelde ${eur(dailyCurr,0)}/dag — in lijn met mei (${eur(dailyMei,0)}/dag).</span></div>`;
+    }
+    // AOV
+    const aovMei = HIST.mei.rev/HIST.mei.orders;
+    if(aovMtd>0 && aovMtd < aovMei-1.5){
+      s+=`<div class="signal"><span class="dot flag" style="margin-top:5px"></span><span><b>AOV licht gedaald</b>Gem. orderwaarde ${eur(aovMtd)} vs ${eur(aovMei)} in mei — meer kortingsgebruik of lagere combi.</span></div>`;
+    } else if(aovMtd>0){
+      s+=`<div class="signal good"><span class="dot live" style="margin-top:5px"></span><span><b>AOV stabiel</b>Gem. orderwaarde ${eur(aovMtd)} — historisch gemiddelde €65–67. Geen prijsdruk.</span></div>`;
+    }
+    // Ordersnelheid
+    const opMei  = HIST.mei.orders/HIST.mei.days;
+    const opCurr = ordMtd/dayOfMon;
+    const opGrowth = opMei>0?(opCurr-opMei)/opMei*100:0;
+    s+=`<div class="signal neutral"><span class="dot idle" style="margin-top:5px"></span><span><b>Ordersnelheid: ${opCurr.toFixed(1)}/dag</b>${opGrowth>=0?'+':''}${opGrowth.toFixed(0)}% vs mei (${opMei.toFixed(1)}/dag). Prognose: ${Math.round(opCurr*daysInMon)} orders voor de hele maand.</span></div>`;
+    sigEl.innerHTML = s;
+  }
+}
+
 function render(k){
   currentK = k;
   const p=P[k];
@@ -2320,6 +2519,7 @@ function render(k){
   renderEmail();
   renderChannelViews(k);
   renderMarketing(k);
+  renderGroei();
   drpUpdate(k);
   aeUpdateCounts();
 }
