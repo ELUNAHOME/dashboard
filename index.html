@@ -2026,6 +2026,16 @@ function renderStockBar(k){
     return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' });
   })() : null;
 
+  // Totale stockout: FOUR + PBL samen op
+  const totalRunway = dailyUnits ? Math.round((stock + (pblStock||0)) / dailyUnits) : null;
+  const totalStockout = totalRunway != null ? (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + totalRunway);
+    return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' });
+  })() : null;
+  const totalRunwayCls = totalRunway == null ? '' : totalRunway <= 45 ? 'crit' : totalRunway <= 65 ? 'warn' : 'good';
+  const totalTileCls   = totalRunway == null ? '' : totalRunway <= 45 ? 'crit' : totalRunway <= 65 ? 'warn' : '';
+
   const stockCls = stock <= 10 ? 'crit' : stock <= 20 ? 'warn' : 'good';
   const runwayCls = runway == null ? '' : runway <= 10 ? 'crit' : runway <= 20 ? 'warn' : 'good';
   const tileCls = stock <= 10 ? 'crit' : stock <= 20 ? 'warn' : 'good';
@@ -2128,15 +2138,15 @@ function renderStockBar(k){
       </div>
       ${moqHtml}
     </div>
-    <div class="stock-tile" style="grid-column: span 2">
+    <div class="stock-tile ${runwayCls}" style="grid-column: span 2">
       <div class="stock-lbl">Stockout FOUR</div>
       <div class="stock-val ${runwayCls}" style="font-size:18px">${stockout || '—'}</div>
-      <div class="stock-sub">bestel nu · lead time 45–65d</div>
+      <div class="stock-sub">aanvullen vanuit PBL &middot; 2-3 dgn</div>
     </div>
-    <div class="stock-tile" style="grid-column: span 2">
-      <div class="stock-lbl">Ad spend / dag</div>
-      <div class="stock-val" style="font-size:18px">${dailySpend > 0 ? eur(dailySpend) : '—'}</div>
-      <div class="stock-sub">ROAS ${blendedRoas ? blendedRoas.toFixed(2).replace('.',',')+'×' : '—'} · gemiddeld over periode</div>
+    <div class="stock-tile ${totalTileCls}" style="grid-column: span 2">
+      <div class="stock-lbl">Stockout PBL</div>
+      <div class="stock-val ${totalRunwayCls}" style="font-size:18px">${totalStockout || '—'}</div>
+      <div class="stock-sub">${totalRunway != null && totalRunway <= 65 ? 'bestel nu bij Windspro' : 'lead time 45-65d'} &middot; ${totalRunway != null ? totalRunway + ' dgn' : '—'}</div>
     </div>`;
 }
 
