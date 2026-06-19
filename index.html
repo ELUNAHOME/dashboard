@@ -1072,10 +1072,23 @@ function generateActions(k){
   if(p.ctr>2.8&&p.mroas!=null&&p.mroas<0.8)
     meta.push(I('data',T('data-tag','Data'),'CTR '+pct(p.ctr)+' sterk &mdash; LP converteert niet',
       'Mensen klikken maar kopen niet. Check LP: laadtijd, reviews, headline, risk reversal.','','NU'));
+  // Dynamische kill-tip op basis van META_ADS snapshot
+  const _killAds = META_ADS.filter(a=>a.status==='ACTIVE'&&a.spend>25&&(a.roas===0||a.roas<1.0));
+  const _bestActive = META_ADS.filter(a=>a.status==='ACTIVE'&&a.roas>0).sort((a,b)=>b.roas-a.roas)[0];
+  const _heractief  = META_ADS.filter(a=>a.status==='PAUSED'&&a.roas>=1.5).sort((a,b)=>b.roas-a.roas)[0];
+  if(_killAds.length>0){
+    const _kNames = _killAds.map(a=>a.n).join(' + ');
+    const _kTotal = _killAds.reduce((s,a)=>s+a.spend,0);
+    const _kSales = _killAds.reduce((s,a)=>s+a.sales,0);
+    meta.push(I('data',T('data-tag','Data'),`Stop nu: ${_kNames}`,
+      `${eur(_kTotal,0)} spend deze maand, ${_kSales} ${_kSales===1?'aankoop':'aankopen'}. Budget heralloceren naar ${_bestActive?_bestActive.n+' ('+_bestActive.roas.toFixed(2)+'×)':_heractief?_heractief.n:'betere creatives'}.`,'','NU'));
+  }
+  if(_heractief){
+    meta.push(I('playbook',T('meta','Meta'),`Heractief: ${_heractief.n} (${_heractief.roas.toFixed(2)}× voor pauzeren)`,
+      `Beste performer van ${META_ADS_DATE} vóór pauzeren. Zet terug actief in eigen CBO, €15/dag, 3 dagen meten. Als ROAS herbevestigd — budget opbouwen.`,'','NU'));
+  }
   meta.push(I('research',T('research-tag','Research'),'Ad Library: "zonder plastic" hoek vrij in NL',
-    'Scan 13-06-2026: geen concurrent adverteert op dit onderscheid. Whitespace om direct te claimen.','','NU'));
-  meta.push(I('playbook',T('meta','Meta'),'V7 (8,87×) + V47 (7,12×) naar eigen CBO isoleren',
-    'Budget lekt nu naar V50 (1,87×). Eigen CBO = direct hogere gemiddelde ROAS zonder extra spend.','','NU'));
+    'Scan jun-2026: geen concurrent adverteert op dit onderscheid. Whitespace om direct te claimen.','','BINNENKORT'));
   meta.push(I('research',T('research-tag','Research'),'Ad Library: "duurzaam design" concurrent actief 4+ mnd',
     'Kokendwatergigant bewijst dat de hoek werkt — maar verkoopt kranen. ELÛNA kan design-positie opeisen in kettle-segment.','','BINNENKORT'));
   if(retC&&retC.cpm>22)
@@ -1695,6 +1708,43 @@ function renderChart(k){
   inner.classList.remove('no-chart');
   chartCol.style.removeProperty('display');
 
+  // ── Maximaal: maandgrafiek op basis van GROEI_HIST + lopende maand ──
+  if(k==='max'){
+    document.getElementById('perf-title').textContent = 'Omzetgroei · since launch';
+    const p = P.mtd||{};
+    const revMtd = p.rev||0;
+    const today = new Date(), dom = today.getDate();
+    const daysInJun = 30;
+    const projJun = dom>0 ? revMtd/dom*daysInJun : 0;
+    const months = [
+      ...GROEI_HIST,
+      {label:'Jun', rev:revMtd, proj:true, orders:(p.orders||0)},
+    ];
+    const maxRev = Math.max(...months.map(m=>m.rev),1);
+    const niceMax = Math.ceil(maxRev/500)*500;
+    const barsHtml = months.map((m,i)=>{
+      const pct = Math.max(4,(m.rev/niceMax*100)).toFixed(1);
+      const prev = i>0?months[i-1]:null;
+      const growthPct = prev&&prev.rev>0?((m.rev-prev.rev)/prev.rev*100):null;
+      const growthTxt = growthPct!=null?(growthPct>=0?'+':'')+growthPct.toFixed(0)+'%':'';
+      const barClr = m.note==='launch'?'var(--pist)':m.proj?'var(--pist)':'var(--sage)';
+      const op = m.proj?'.75':'1';
+      const isLow = m.note==='launch';
+      return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;gap:4px">
+        ${growthTxt?`<div style="font-size:9px;color:${growthPct>=0?'var(--good)':'#C8705A'};font-weight:700;letter-spacing:.02em">${growthTxt}</div>`:'<div style="font-size:9px">&nbsp;</div>'}
+        <div style="font-size:10px;font-weight:600;color:${m.proj?'var(--muted)':'var(--ink)'};white-space:nowrap">${eur(m.rev,0)}${m.proj?'*':''}</div>
+        <div style="width:100%;background:var(--line);border-radius:3px 3px 0 0;overflow:hidden;display:flex;align-items:flex-end;height:100px">
+          <div style="width:100%;height:${pct}%;background:${barClr};opacity:${op};border-radius:3px 3px 0 0;transition:height .5s"></div>
+        </div>
+        <div style="font-size:10px;color:${isLow?'var(--muted)':'var(--ink)'};font-weight:${isLow?'400':'500'};text-align:center">${m.label}${isLow?'<div style="font-size:8px;color:var(--muted)">launch</div>':''}</div>
+      </div>`;
+    }).join('');
+    chartCol.innerHTML = `
+      <div style="display:flex;align-items:flex-end;gap:6px;height:150px;padding-bottom:4px">${barsHtml}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:6px">* jun prognose obv ${dom} dagen · ${eur(revMtd/dom,0)}/dag</div>`;
+    return;
+  }
+
   const rawDays = k==='d7' ? DAILY_D7 : k==='d30' ? DAILY_D30 : k==='custom' ? DAILY_CUSTOM : DAILY_MTD;
   const rawPrev = k==='d7' ? DAILY_PREV_D7 : k==='d30' ? DAILY_PREV_D30 : k==='custom' ? DAILY_PREV_CUSTOM : DAILY_PREV_MTD;
 
@@ -2311,72 +2361,65 @@ function renderMetaKillScale(){
   const BE = 2.65;
 
   function verdict(a){
-    if(a.status==='PAUSED'){
-      if(a.roas>=1.5) return {lbl:'HERACTIEF?', cls:'badge-scale', clr:'var(--good)'};
-      return {lbl:'PAUSED', cls:'badge-paused', clr:'var(--muted)'};
-    }
-    if(a.roas>=BE)                          return {lbl:'SCHAAL OP', cls:'badge-scale',  clr:'var(--good)'};
-    if((a.roas===0||a.roas<1.0)&&a.spend>25) return {lbl:'KILL',    cls:'badge-kill',   clr:'#C8705A'};
-    if(a.roas>=1.0&&a.roas<BE&&a.spend>25) return {lbl:'REDUCEER',  cls:'badge-reduce', clr:'var(--warn)'};
+    if(a.roas>=BE)                              return {lbl:'SCHAAL OP', cls:'badge-scale',  clr:'var(--good)'};
+    if((a.roas===0||a.roas<1.0)&&a.spend>25)   return {lbl:'KILL',      cls:'badge-kill',   clr:'#C8705A'};
+    if(a.roas>=1.0&&a.roas<BE&&a.spend>25)     return {lbl:'REDUCEER',  cls:'badge-reduce', clr:'var(--warn)'};
     return {lbl:'WATCH', cls:'badge-watch', clr:'var(--muted)'};
   }
 
-  // Actief eerst, dan paused
-  const sorted = [...META_ADS].sort((a,b)=>{
-    if(a.status!==b.status) return a.status==='ACTIVE'?-1:1;
-    return b.spend-a.spend;
-  });
+  const activeAds = META_ADS.filter(a=>a.status==='ACTIVE'&&a.spend>=1).sort((a,b)=>b.spend-a.spend);
+  const heractiefAds = META_ADS.filter(a=>a.status==='PAUSED'&&a.roas>=1.5).sort((a,b)=>b.roas-a.roas);
 
-  const rows = sorted.map(a=>{
+  // Kill verdicts eerst, dan reduceer, dan watch
+  const order = {KILL:0,'SCHAAL OP':1,REDUCEER:2,WATCH:3};
+  activeAds.sort((a,b)=>(order[verdict(a).lbl]??9)-(order[verdict(b).lbl]??9)||b.spend-a.spend);
+
+  const rows = activeAds.map(a=>{
     const v = verdict(a);
     const roasTxt = a.roas>0 ? a.roas.toFixed(2)+'×' : '—';
-    const roasClr = a.roas>=BE?'var(--good)':a.roas>1?'var(--warn)':'#C8705A';
-    const barW = a.roas>0 ? Math.min(100,(a.roas/BE)*100).toFixed(0) : 0;
+    const roasClr = a.roas>=BE?'var(--good)':a.roas>=1?'var(--warn)':'#C8705A';
+    const barW = a.roas>0 ? Math.min(100,(a.roas/BE)*100) : 0;
     const barClr = a.roas>=BE?'var(--good)':a.roas>0?'var(--warn)':'var(--line)';
-    const dimmed = a.status==='PAUSED'&&v.lbl==='PAUSED';
-    return `<tr class="meta-ad-tr${dimmed?' meta-ad-dim':''}">
-      <td style="max-width:180px">
-        <div style="font-size:12px;font-weight:500;line-height:1.3">${a.n}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:1px">${a.status==='ACTIVE'?'actief':'gepauzeerd'} · CTR ${a.ctr.toFixed(1)}%</div>
-      </td>
-      <td style="text-align:right;font-weight:700;font-size:14px;color:${a.roas>0?roasClr:'var(--muted)'};white-space:nowrap">${roasTxt}</td>
-      <td style="text-align:right;font-size:12px;color:var(--muted);white-space:nowrap">${a.sales}</td>
-      <td style="min-width:80px">
-        <div style="height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:2px">
-          <div style="height:100%;width:${barW}%;background:${barClr};border-radius:3px"></div>
+    const isKill = v.lbl==='KILL';
+    return `<div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--line)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:${isKill?'700':'500'};color:${isKill?'var(--ink)':'var(--ink)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.n}</div>
+        <div style="margin-top:5px;height:4px;background:var(--line);border-radius:2px;overflow:hidden">
+          <div style="height:100%;width:${barW.toFixed(0)}%;background:${barClr};border-radius:2px"></div>
         </div>
-        <div style="font-size:10px;color:var(--muted)">${eur(a.spend,0)}</div>
-      </td>
-      <td style="text-align:right;white-space:nowrap"><span class="meta-adset-badge ${v.cls}" style="color:${v.clr};border-color:${v.clr}">${v.lbl}</span></td>
-    </tr>`;
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">${eur(a.spend,0)} spend · ${a.sales} ${a.sales===1?'aankoop':'aankopen'} · CTR ${a.ctr.toFixed(1)}%</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:15px;font-weight:700;color:${a.roas>0?roasClr:'var(--muted)'};margin-bottom:5px">${roasTxt}</div>
+        <span class="meta-adset-badge ${v.cls}" style="color:${v.clr};border-color:${v.clr}">${v.lbl}</span>
+      </div>
+    </div>`;
   }).join('');
 
-  const activeAds  = META_ADS.filter(a=>a.status==='ACTIVE');
-  const totalSpend = META_ADS.reduce((s,a)=>s+a.spend,0);
-  const totalSales = META_ADS.reduce((s,a)=>s+a.sales,0);
-  const killSpend  = activeAds.filter(a=>verdict(a).lbl==='KILL').reduce((s,a)=>s+a.spend,0);
+  const hRows = heractiefAds.map(a=>`
+    <div style="display:flex;align-items:center;gap:14px;padding:8px 0;border-bottom:1px solid var(--line)">
+      <div style="flex:1;font-size:12px;color:var(--muted)">${a.n}</div>
+      <div style="font-size:13px;font-weight:700;color:var(--warn);margin-right:8px">${a.roas.toFixed(2)}×</div>
+      <span class="meta-adset-badge badge-scale" style="color:var(--good);border-color:var(--good)">HERACTIEF?</span>
+    </div>`).join('');
+
+  const actSpend = activeAds.reduce((s,a)=>s+a.spend,0);
+  const actSales = activeAds.reduce((s,a)=>s+a.sales,0);
+  const killSpend = activeAds.filter(a=>verdict(a).lbl==='KILL').reduce((s,a)=>s+a.spend,0);
 
   el.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-      <h2 style="margin:0">Advertentie-advies · ${META_ADS_DATE}</h2>
-      <span style="font-size:11px;color:var(--muted)">Break-even ${BE}× · ${activeAds.length} actief · ${totalSales} aankopen</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px">
+      <h2 style="margin:0">Actieve advertenties · ${META_ADS_DATE}</h2>
+      <span style="font-size:11px;color:var(--muted)">break-even ${BE}× · ${activeAds.length} actief</span>
     </div>
-    <table style="width:100%;border-collapse:collapse">
-      <thead><tr style="font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)">
-        <th style="text-align:left;padding:0 8px 8px 0;font-weight:600">Advertentie</th>
-        <th style="text-align:right;padding:0 8px 8px;font-weight:600">ROAS</th>
-        <th style="text-align:right;padding:0 8px 8px;font-weight:600">Sales</th>
-        <th style="padding:0 8px 8px;font-weight:600">Spend</th>
-        <th style="text-align:right;padding:0 0 8px;font-weight:600">Advies</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px">ROAS-bar toont hoeveel % van break-even bereikt is</div>
+    <div>${rows}</div>
+    ${heractiefAds.length?`<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-bottom:8px">Gepauzeerd · overweeg heractief</div>${hRows}</div>`:''}
     <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:flex;gap:20px;flex-wrap:wrap">
-      <span>Totaal spend: <b>${eur(totalSpend,0)}</b></span>
-      <span>Kill-kandidaten: <b style="color:#C8705A">${eur(killSpend,0)} te besparen</b></span>
-      <span>Gem. CPP: <b>${totalSales>0?eur(totalSpend/totalSales,0):'—'}</b></span>
-    </div>
-  `;
+      <span>Spend actief: <b>${eur(actSpend,0)}</b></span>
+      ${killSpend>0?`<span>Stop deze ads: <b style="color:#C8705A">${eur(killSpend,0)} vrij</b></span>`:''}
+      <span>CPP: <b>${actSales>0?eur(actSpend/actSales,0):'—'}</b></span>
+    </div>`;
 }
 
 function renderGroei(){
