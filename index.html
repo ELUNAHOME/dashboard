@@ -116,8 +116,9 @@
   .ae-item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px;font-size:13px;position:relative}
   .ae-item.data{border-left:3px solid #B0703F}
   .ae-item.data.ok{border-left-color:var(--good)}
-  .ae-item.research{border-left:3px solid #3A5BD9}
-  .ae-item.playbook{border-left:3px solid var(--line)}
+  .ae-item.research{border-left:3px solid var(--sage)}
+  .ae-item.playbook{border-left:3px solid var(--sage)}
+  .ae-item.creative{border-left:3px solid var(--pist)}
   .ae-item-title{font-weight:600;color:var(--ink);margin-bottom:4px;line-height:1.35}
   .ae-item-body{font-size:12px;color:var(--muted);line-height:1.5}
   .ae-tags{display:flex;gap:5px;margin-bottom:7px;flex-wrap:wrap}
@@ -140,6 +141,9 @@
   .ae-ch-dot.google{background:#1F7A45}
   .ae-ch-dot.klaviyo{background:#6A3D9A}
   .ae-ch-dot.strat{background:var(--muted)}
+  .ae-ch-dot.creative{background:#C8A055}
+  .ae-tag.creative{background:#F5EDD8;color:#7A5820}
+  .ae-tag.higgsfield{background:#F5EDD8;color:#7A5820}
   .ae-impact{font-size:9px;position:absolute;top:12px;right:34px;color:var(--muted);font-weight:700;letter-spacing:.06em}
   .ae-btn-x{position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;
     font-size:13px;color:var(--muted);padding:2px 5px;border-radius:5px;line-height:1;
@@ -689,12 +693,14 @@
         <button class="ae-tab active" onclick="aeTab('meta')" data-aetab="meta"><span class="ae-ch-dot meta"></span>Meta Ads</button>
         <button class="ae-tab" onclick="aeTab('google')" data-aetab="google"><span class="ae-ch-dot google"></span>Google Ads</button>
         <button class="ae-tab" onclick="aeTab('klaviyo')" data-aetab="klaviyo"><span class="ae-ch-dot klaviyo"></span>Klaviyo</button>
+        <button class="ae-tab" onclick="aeTab('creative')" data-aetab="creative"><span class="ae-ch-dot creative"></span>Creatives</button>
         <button class="ae-tab" onclick="aeTab('strat')" data-aetab="strat"><span class="ae-ch-dot strat"></span>Strategisch</button>
       </div>
       <div class="ae-cols">
         <div class="ae-col active" id="col-meta"><div class="ae-col-head"><span class="ae-ch-dot meta"></span>Meta Ads</div><div id="ae-meta"></div><div class="ae-footer" onclick="aeRestore()"></div></div>
         <div class="ae-col" id="col-google"><div class="ae-col-head"><span class="ae-ch-dot google"></span>Google Ads</div><div id="ae-google"></div><div class="ae-footer" onclick="aeRestore()"></div></div>
         <div class="ae-col" id="col-klaviyo"><div class="ae-col-head"><span class="ae-ch-dot klaviyo"></span>Klaviyo</div><div id="ae-klaviyo"></div><div class="ae-footer" onclick="aeRestore()"></div></div>
+        <div class="ae-col" id="col-creative"><div class="ae-col-head"><span class="ae-ch-dot creative"></span>Creatives</div><div id="ae-creative"></div><div class="ae-footer" onclick="aeRestore()"></div></div>
         <div class="ae-col" id="col-strat"><div class="ae-col-head"><span class="ae-ch-dot strat"></span>Strategisch</div><div id="ae-strat"></div><div class="ae-footer" onclick="aeRestore()"></div></div>
       </div>
     </div>
@@ -1054,7 +1060,7 @@ function generateActions(k){
   const aov=p.orders>0?p.rev/p.orders:null;
   const retC=camps.find(c=>c.name.includes('RETAR'));
   const trackGap=roas>0&&p.mroas>0?roas/p.mroas:0;
-  const meta=[], google=[], klaviyo=[], strat=[];
+  const meta=[], google=[], klaviyo=[], strat=[], creative=[];
 
   // ── META ──────────────────────────────────────────────────────
   if(cac!=null&&cac>GROSS)
@@ -1153,7 +1159,34 @@ function generateActions(k){
   strat.push(I('playbook',T('pr','PR'),'PR: Libelle, Margriet, HLN Lifestyle',
     'Gratis product + persbericht "duurzame waterkoker zonder plastic". 1 placement = €5k–€10k omzet + SEO backlinks.','','LATER'));
 
-  return {meta, google, klaviyo, strat};
+  // ── CREATIVES / HIGGSFIELD ────────────────────────────────────
+  // Analyse op basis van META_ADS snapshot
+  const _ctrTop = [...META_ADS].sort((a,b)=>b.ctr-a.ctr)[0]; // hoogste CTR
+  const _roasTop = META_ADS.filter(a=>a.status==='ACTIVE'&&a.roas>0).sort((a,b)=>b.roas-a.roas)[0];
+  const _killConc = META_ADS.filter(a=>a.spend>50&&a.sales===0&&a.status==='ACTIVE'); // actief, veel spend, 0 sales
+
+  if(_roasTop){
+    creative.push(I('creative',T('higgsfield','Higgsfield'),`Maak video-variant van ${_roasTop.n}`,
+      `Beste actieve ROAS (${_roasTop.roas.toFixed(2)}×). Zelfde concept omzetten naar 15s video in Higgsfield: ochtendmoment, waterkoker centraal, geen gezicht nodig. Soul: rustig + minimalistisch.`,'','NU'));
+  }
+  if(_ctrTop&&_ctrTop.sales===0&&_ctrTop.spend>30){
+    creative.push(I('data',T('higgsfield','Higgsfield'),`${_ctrTop.n} — CTR ${_ctrTop.ctr.toFixed(1)}% maar 0 sales`,
+      `Concept trekt clicks (${_ctrTop.ctr.toFixed(1)}% CTR) maar converteert niet op de LP. Pas de CTA aan in beeld: voeg prijs + review toe vóór het einde. Geen nieuw concept nodig — bestaande angle aanscherpen.`,'','NU'));
+  }
+  if(_killConc.length>0){
+    creative.push(I('data',T('creative','Concept'),`Stop: ${_killConc.map(a=>a.n).join(', ')} — geen conversies`,
+      `${_killConc.length > 1 ? 'Deze concepten leveren' : 'Dit concept levert'} na €${_killConc.reduce((s,a)=>s+a.spend,0).toFixed(0)} spend 0 aankopen. Geen varianten meer maken op deze creatieve hoek.`,'','NU'));
+  }
+  creative.push(I('creative',T('higgsfield','Higgsfield'),'Hook test: "plastic in je koffie" direct response',
+    'Open met vraag: "Wist je dat plastic waterkokers giftige stoffen afgeven?" → ELÛNA als schoon alternatief. Comparison format. Verwacht hoge thumb-stop rate. 15 sec, tekst op beeld.','','BINNENKORT'));
+  creative.push(I('creative',T('higgsfield','Higgsfield'),'Higgsfield: gieten-macro shot — water als held',
+    'Geen tekst, geen voiceover. Camera volgt het water: inkoken → gieten → stoom. Muziek: rustig, minimalistische piano. 8 seconden. Ideaal als thumb-stopper voor retargeting.','','BINNENKORT'));
+  creative.push(I('creative',T('higgsfield','Higgsfield'),'Seizoen Q4: Kerst-angle in Higgsfield — start augustus',
+    'Waterkoker als cadeau. Warme belichting, cadeaulint, "voor iemand die het verdient." Q4 is historisch 3–5× hogere ROAS. Brief nu klaarzetten zodat in aug productie kan starten.','','LATER'));
+  creative.push(I('playbook',T('creative','UGC'),'3 klantvideo\'s verzamelen voor UGC ads',
+    'Email top-kopers (>€69,95 eenmalig, geen retour). Vraag 30-sec video: "hoe gebruik je ELÛNA elke ochtend?" Stuur Higgsfield-brief mee. UGC halveert doorgaans CPP vs branded content.','','LATER'));
+
+  return {meta, google, klaviyo, strat, creative};
 }
 
 function renderPerfStats(k, grossEx, cac, net){
@@ -2634,10 +2667,11 @@ function render(k){
   if(roas<2.65) s+=`<div class="signal"><span class="dot flag" style="margin-top:6px"></span><span><b>Blended ROAS onder break-even</b>Break-even ~2,65×. Nu ${xfmt(roas)}. CAPI + LP-fix vóór opschalen.</span></div>`;
   document.getElementById('signals').innerHTML=s;
 
-  const {meta,google,klaviyo,strat}=generateActions(k);
+  const {meta,google,klaviyo,strat,creative}=generateActions(k);
   document.getElementById('ae-meta').innerHTML=meta.join('');
   document.getElementById('ae-google').innerHTML=google.join('');
   document.getElementById('ae-klaviyo').innerHTML=klaviyo.join('');
+  document.getElementById('ae-creative').innerHTML=creative.join('');
   document.getElementById('ae-strat').innerHTML=strat.join('');
 
   // Forecast
