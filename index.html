@@ -1750,6 +1750,11 @@ function renderMargesTable(){
 function renderChart(k){
   const inner    = document.getElementById('perf-inner');
   const chartCol = document.getElementById('perf-chart-col');
+  const perfCard = document.getElementById('perf-card');
+
+  // Reset max-mode overrides
+  if(perfCard) perfCard.style.gridColumn = '';
+  inner.style.gridTemplateColumns = '';
 
   if(k==='today'||k==='gisteren'){
     inner.classList.add('no-chart');
@@ -1762,37 +1767,53 @@ function renderChart(k){
   // ── Maximaal: maandgrafiek op basis van GROEI_HIST + lopende maand ──
   if(k==='max'){
     document.getElementById('perf-title').textContent = 'Omzetgroei · since launch';
+    if(perfCard) perfCard.style.gridColumn = '1 / -1';
+    inner.style.gridTemplateColumns = '1fr';
+
     const p = P.mtd||{};
     const revMtd = p.rev||0;
     const today = new Date(), dom = today.getDate();
     const daysInJun = 30;
-    const projJun = dom>0 ? revMtd/dom*daysInJun : 0;
     const months = [
       ...GROEI_HIST,
       {label:'Jun', rev:revMtd, proj:true, orders:(p.orders||0)},
     ];
     const maxRev = Math.max(...months.map(m=>m.rev),1);
     const niceMax = Math.ceil(maxRev/500)*500;
+    const totalRev = months.reduce((s,m)=>s+m.rev,0);
+    const totalOrders = months.reduce((s,m)=>s+(m.orders||0),0);
+
     const barsHtml = months.map((m,i)=>{
       const pct = Math.max(4,(m.rev/niceMax*100)).toFixed(1);
       const prev = i>0?months[i-1]:null;
       const growthPct = prev&&prev.rev>0?((m.rev-prev.rev)/prev.rev*100):null;
       const growthTxt = growthPct!=null?(growthPct>=0?'+':'')+growthPct.toFixed(0)+'%':'';
-      const barClr = m.note==='launch'?'var(--pist)':m.proj?'var(--pist)':'var(--sage)';
-      const op = m.proj?'.75':'1';
+      const barClr = m.note==='launch'?'var(--pist)':m.proj?'rgba(102,140,112,.65)':'var(--sage)';
       const isLow = m.note==='launch';
       return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;gap:4px">
-        ${growthTxt?`<div style="font-size:9px;color:${growthPct>=0?'var(--good)':'#C8705A'};font-weight:700;letter-spacing:.02em">${growthTxt}</div>`:'<div style="font-size:9px">&nbsp;</div>'}
-        <div style="font-size:10px;font-weight:600;color:${m.proj?'var(--muted)':'var(--ink)'};white-space:nowrap">${eur(m.rev,0)}${m.proj?'*':''}</div>
-        <div style="width:100%;background:var(--line);border-radius:3px 3px 0 0;overflow:hidden;display:flex;align-items:flex-end;height:100px">
-          <div style="width:100%;height:${pct}%;background:${barClr};opacity:${op};border-radius:3px 3px 0 0;transition:height .5s"></div>
+        ${growthTxt?`<div style="font-size:11px;color:${growthPct>=0?'var(--good)':'#C8705A'};font-weight:700;letter-spacing:.02em">${growthTxt}</div>`:'<div style="font-size:11px">&nbsp;</div>'}
+        <div style="font-size:12px;font-weight:700;color:${m.proj?'var(--muted)':'var(--ink)'};white-space:nowrap">${eur(m.rev,0)}${m.proj?'*':''}</div>
+        <div style="width:100%;background:var(--line);border-radius:4px 4px 0 0;overflow:hidden;display:flex;align-items:flex-end;height:180px">
+          <div style="width:100%;height:${pct}%;background:${barClr};border-radius:4px 4px 0 0;transition:height .6s cubic-bezier(.22,1,.36,1)"></div>
         </div>
-        <div style="font-size:10px;color:${isLow?'var(--muted)':'var(--ink)'};font-weight:${isLow?'400':'500'};text-align:center">${m.label}${isLow?'<div style="font-size:8px;color:var(--muted)">launch</div>':''}</div>
+        <div style="font-size:11px;color:${isLow?'var(--muted)':'var(--ink)'};font-weight:600;text-align:center;margin-top:2px">${m.label}${isLow?'<div style="font-size:9px;color:var(--muted)">launch</div>':''}</div>
+        <div style="font-size:10px;color:var(--muted);text-align:center">${m.orders||0} orders</div>
       </div>`;
     }).join('');
+
     chartCol.innerHTML = `
-      <div style="display:flex;align-items:flex-end;gap:6px;height:150px;padding-bottom:4px">${barsHtml}</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:6px">* jun prognose obv ${dom} dagen · ${eur(revMtd/dom,0)}/dag</div>`;
+      <div style="display:flex;align-items:flex-end;gap:12px;height:240px;padding-bottom:4px;padding-top:24px;position:relative">
+        <div style="position:absolute;top:24px;left:0;right:0;height:1px;background:var(--line);opacity:.6"></div>
+        <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:var(--line);opacity:.4;transform:translateY(-50%)"></div>
+        ${barsHtml}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
+        <div style="font-size:10px;color:var(--muted)">* jun prognose obv ${dom} dagen &middot; ${eur(revMtd/dom,0)}/dag</div>
+        <div style="display:flex;gap:20px">
+          <div style="text-align:right"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">All-time omzet</div><div style="font-size:16px;font-weight:700;color:var(--ink)">${eur(totalRev,0)}</div></div>
+          <div style="text-align:right"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">All-time orders</div><div style="font-size:16px;font-weight:700;color:var(--ink)">${totalOrders}</div></div>
+        </div>
+      </div>`;
     return;
   }
 
