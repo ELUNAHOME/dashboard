@@ -1060,9 +1060,11 @@ function generateActions(k){
   if(cac!=null&&cac>GROSS)
     meta.unshift(I('data',T('data-tag','Data'),'Budget bevriezen &mdash; CAC verlieslatend',
       `CAC ${eur(cac)}/stuk vs brutomarge ${eur(GROSS)}. Geen opschaling. Fix CAPI + LP eerst.`,'','NU'));
-  else if(cac!=null)
+  else if(cac!=null){
+    const _scaleAd = META_ADS.filter(a=>a.status==='ACTIVE'&&a.roas>0).sort((a,b)=>b.roas-a.roas)[0];
     meta.unshift(I('data ok',T('data-tag','Data'),'Winstgevend &mdash; voorzichtig opschalen',
-      `Netto +${eur(net)}/stuk. Verhoog Meta €10/dag per week. Monitor blended ROAS.`,'','NU'));
+      `Netto +${eur(net)}/stuk. ${_scaleAd?'Focus op '+_scaleAd.n+' ('+_scaleAd.roas.toFixed(2)+'×) — verhoog budget met €10/dag per week.':'Verhoog Meta budget stapsgewijs €10/dag per week.'} Monitor blended ROAS.`,'','NU'));
+  }
   if(trackGap>=1.7&&roas<2.65)
     meta.push(I('data',T('data-tag','Data'),'Trackinggat: blended '+xfmt(roas)+' vs Meta '+xfmt(p.mroas),
       `Meta ziet ${Math.round((1-1/trackGap)*100)}% van je conversies niet. CAPI Maximum Data Sharing activeren.`,'','NU'));
@@ -1088,9 +1090,7 @@ function generateActions(k){
       `Beste performer van ${META_ADS_DATE} vóór pauzeren. Zet terug actief in eigen CBO, €15/dag, 3 dagen meten. Als ROAS herbevestigd — budget opbouwen.`,'','NU'));
   }
   meta.push(I('research',T('research-tag','Research'),'Ad Library: "zonder plastic" hoek vrij in NL',
-    'Scan jun-2026: geen concurrent adverteert op dit onderscheid. Whitespace om direct te claimen.','','BINNENKORT'));
-  meta.push(I('research',T('research-tag','Research'),'Ad Library: "duurzaam design" concurrent actief 4+ mnd',
-    'Kokendwatergigant bewijst dat de hoek werkt — maar verkoopt kranen. ELÛNA kan design-positie opeisen in kettle-segment.','','BINNENKORT'));
+    'Scan jun-2026: geen concurrent adverteert op dit onderscheid. Creëer een ad specifiek rondom dit onderscheid.','','BINNENKORT'));
   if(retC&&retC.cpm>22)
     meta.push(I('data',T('data-tag','Data'),'Retargeting CPM '+eur(retC.cpm)+' &mdash; ad fatigue',
       'Verklein audience (90d i.p.v. 180d) + nieuw creatief voor retargeting.','','BINNENKORT'));
