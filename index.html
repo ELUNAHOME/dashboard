@@ -188,6 +188,11 @@
   .pov-role{font-size:11px;color:var(--muted);margin-bottom:12px}
   .pov-quote{font-size:13px;color:var(--ink);line-height:1.6;margin-bottom:10px}
   .pov-action{font-size:12px;font-weight:600;color:var(--warn);border-top:1px solid var(--line);padding-top:10px}
+  .pov-actions{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:7px}
+  .pov-btn{display:inline-flex;align-items:center;font-size:11px;font-weight:600;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:999px;padding:5px 13px;text-decoration:none;transition:.12s;white-space:nowrap;cursor:pointer;font-family:inherit}
+  .pov-btn:hover{border-color:var(--sage);background:var(--card)}
+  .pov-btn.warn{border-color:#D4A07A;color:var(--warn);background:#FBF5EF}
+  .pov-tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:999px;padding:2px 8px;vertical-align:middle;margin-left:6px}
 
   /* forecast */
   .fc-row{display:grid;grid-template-columns:140px 1fr 90px;align-items:center;gap:10px;margin-bottom:10px;font-size:13px}
@@ -714,36 +719,49 @@
         <div class="pov-name">Sam Piliero</div>
         <div class="pov-role">Meta Ads &middot; The Momentum Agency &middot; creative &amp; CAPI</div>
         <ul class="pov-bullets">
-          <li>CAPI match rate &lt;50% = blinde motor. Meta optimaliseert op conversies die het niet ziet. Maximum Data Sharing in Events Manager is stap 1 &mdash; v&oacute;&oacute;r elk creatief test.</li>
-          <li>Creative is je targeting. Broad audiences + de eerste 3 seconden van je hook bepalen je CPA. Niet je doelgroepinstellingen.</li>
-          <li>Test &eacute;&eacute;n variabele tegelijk: hook vs hook. Nooit hook + format + copy tegelijk &mdash; dan weet je nooit wat werkte.</li>
-          <li>Retargeting met TOF-creatief converteert niet. Warme bezoekers hebben bewijs nodig: reviews, UGC, garantie boven de fold.</li>
+          <li><b>IMAGE V13 Partner AD: stop nu.</b> €94 spend, 0 aankopen. Partner format is awareness, niet conversie. Geen varianten meer maken op dit concept.</li>
+          <li><b>IMAGE V48 is je beste actieve ad (ROAS 1.91&times;).</b> 0.74&times; onder break-even. Eerste 3 sec aanpassen: prijs tonen (€69,95) + één review in beeld vóór de CTA.</li>
+          <li><b>Retargeting heeft nieuw creatief nodig.</b> Warme bezoekers (Add to Cart) kennen het product al. Toon garantie + reviews &mdash; geen productintro.</li>
+          <li><b>Broad + sterke hook &gt; niche targeting.</b> ELÛNA's probleem zit in de LP-conversie, niet de doelgroep. Fix LP eerst, schaal daarna.</li>
         </ul>
-        <div class="pov-action">Actie: CAPI Maximum Data Sharing activeren. Dan nieuwe hook (3 sec) vs controle &mdash; br&eacute;&eacute;dste audience.</div>
+        <div class="pov-action">Stop V13 · Pas hook V48 aan · Nieuw retargeting creatief</div>
+        <div class="pov-actions">
+          <a class="pov-btn warn" href="https://adsmanager.facebook.com/adsmanager/manage/ads?act=924352226288770" target="_blank">Open Ad Manager</a>
+          <a class="pov-btn" href="https://adsmanager.facebook.com/adsmanager/manage/ads?act=924352226288770&filter_field=effective_status&filter_value=ACTIVE" target="_blank">Actieve ads</a>
+        </div>
       </div>
 
       <div class="pov">
         <div class="pov-name">Ben Heath</div>
-        <div class="pov-role">Google Ads &middot; Shopping &middot; Performance Max</div>
+        <div class="pov-role">Google Ads &middot; Shopping &middot; Performance Max &middot; klant-ID 470-420-6454</div>
         <ul class="pov-bullets">
-          <li>PMax zonder gesegmenteerde asset groups is een black box. Je geeft Google vrijheid om budget te verspillen op display zonder koopintentie.</li>
-          <li>Merk vs generiek splitsen is niet optioneel. Merkzoekopdrachten converteren 5&ndash;10&times; beter &mdash; die wil je apart budgetteren en controleren.</li>
-          <li>Conversietracking via Shopify &rarr; Google Tag is bij DTC vaak fout ingesteld. Controleer "conversion lag" in Search Terms &mdash; dubbele attributie = foute bidstrategie.</li>
-          <li>Zoekintentie is warmer dan Meta traffic. Iemand op "waterkoker kopen" is ver in de funnel. Zorg dat je bid-to-value klopt op Shopping.</li>
+          <li><b>PMax asset groups segmenteren.</b> Maak 3 aparte asset groups: (1) Branded &mdash; "ELÛNA waterkoker", (2) Categorie &mdash; "RVS waterkoker kopen", (3) Competitor &mdash; "waterkoker zonder plastic". Zo zie je per intentie waar budget heen gaat.</li>
+          <li><b>Target ROAS instellen op 3&times;.</b> Break-even is 2,65&times;. Als target ROAS niet expliciet staat, geeft Google zichzelf ruimte om verlieslatend te bieden. Stel in per campagne.</li>
+          <li><b>Primaire conversie controleren.</b> Alleen "Purchase" mag primaire conversie zijn. Als "Add to Cart" of "Begin Checkout" meerekent, rapporteert Google een te hoge ROAS &mdash; en bid-strategie klopt niet.</li>
+          <li><b>Search Terms rapport bekijken.</b> Filter op zoektermen die klikken genereren maar niet converteren. Voeg die toe als exact-negatief om budgetverspilling te stoppen.</li>
         </ul>
-        <div class="pov-action">Actie: Controleer conversion tracking. Splits PMax asset groups: merk / categorie / concurrent.</div>
+        <div class="pov-action">Segmenteer asset groups · Zet target ROAS op 3× · Controleer primaire conversie</div>
+        <div class="pov-actions">
+          <a class="pov-btn warn" href="https://ads.google.com/aw/campaigns" target="_blank">Open Campagnes</a>
+          <a class="pov-btn" href="https://ads.google.com/aw/conversions" target="_blank">Conversie-instellingen</a>
+          <a class="pov-btn" href="https://ads.google.com/aw/reports/search-terms" target="_blank">Search Terms</a>
+        </div>
       </div>
 
       <div class="pov">
         <div class="pov-name">Hormozi &times; Davie Fogarty</div>
         <div class="pov-role">Offer-design &middot; DTC scaling &middot; product-led growth</div>
         <ul class="pov-bullets">
-          <li>Hormozi: fix de offer-economics v&oacute;&oacute;r je creatief test. Slechte offer + goed creatief = duurder falen op schaal.</li>
-          <li>Geen bundle = geld op tafel. &euro;69,95 solo vs &euro;89,95 met beschermhoes + levenslange garantie: hogere AOV, zelfde fulfillment.</li>
-          <li>Davie: micro-influencers (5k&ndash;30k NL) converteren 3&ndash;7&times; beter dan macro. Stuur 10 waterkokers naar food/lifestyle creators &mdash; &euro;350 COGS, geen spend, UGC als bijvangst.</li>
-          <li>"30 dagen retour" is je sterkste conversiehefboom. Grootste tekst boven de fold, niet een bullet onderin.</li>
+          <li><b>ELÛNA offer nu: €69,95 solo, geen upsell, geen bundel.</b> Hormozi: slechte offer + goed creatief = duurder falen op schaal. Fix offer economics vóór je budget verhoogt.</li>
+          <li><b>Bundle-test: ELÛNA + beschermhoes €89,95.</b> Als 20% bundel kiest stijgt AOV met €15 en daalt CAC/stuk met ~€10. Aanmaken in Shopify kost 20 minuten.</li>
+          <li><b>Davie-formule: 10 micro-influencers (5k&ndash;30k NL, food/interieur/lifestyle).</b> Stuur product gratis &mdash; €350 COGS, €0 spend. Verwacht 6 posts = ~90k bereik + UGC hergebruiken als Meta ad.</li>
+          <li><b>"30 dagen retour" staat nu onderaan de LP.</b> Dit is je sterkste conversiehefboom. Zet het boven de fold, grote tekst, boven de koopknop.</li>
         </ul>
-        <div class="pov-action">Actie: Levenslange garantie + bundle-optie op LP. 10 waterkokers naar creators. Kost &euro;0 extra als je het nu doet.</div>
+        <div class="pov-action">Maak bundel in Shopify · Schrijf retour-garantie boven de fold · Stuur 10 creators een product</div>
+        <div class="pov-actions">
+          <a class="pov-btn warn" href="https://admin.shopify.com/store/elunahome/products/new" target="_blank">Nieuwe bundel aanmaken</a>
+          <a class="pov-btn" href="https://admin.shopify.com/store/elunahome/themes/current/editor" target="_blank">LP aanpassen</a>
+        </div>
       </div>
 
       <!-- THE OPERATORS — dynamisch via JS -->
