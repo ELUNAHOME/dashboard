@@ -1339,14 +1339,14 @@ function renderGoogleCamp(k){
             <td style="text-align:right;color:var(--muted)">—</td>
             ${dailyAvg!=null?`<td style="text-align:right;color:var(--muted)">—</td>`:''}
             <td style="text-align:right;color:var(--muted)">—</td>
-            <td style="text-align:right"><span class="badge-ip">API pending</span></td>
+            <td style="text-align:right"><span style="font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 7px">Handmatig</span></td>
           </tr>
           <tr>
             <td><div style="font-weight:600">Brand Search</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Search · merkbescherming</div></td>
             <td style="text-align:right;color:var(--muted)">—</td>
             ${dailyAvg!=null?`<td style="text-align:right;color:var(--muted)">—</td>`:''}
             <td style="text-align:right;color:var(--muted)">—</td>
-            <td style="text-align:right"><span class="badge-ip">API pending</span></td>
+            <td style="text-align:right"><span style="font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 7px">Handmatig</span></td>
           </tr>`;
         })()}
       </tbody>
@@ -1360,7 +1360,7 @@ function renderGoogleCamp(k){
     </table>
 
     <div style="font-size:11px;color:var(--muted);margin-top:12px">
-      ${(GC[k]||[]).length>0 ? 'Live via Google Ads API v21.' : 'Campagnedata beschikbaar via Google Ads API — controleer of env vars zijn ingesteld in Vercel.'}
+      ${(GC[k]||[]).length>0 ? 'Live via Google Ads API v21.' : 'Campagne-uitsplitsing via account-totaal. Voor live campagnedata: stel GOOGLE_ADS_CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN en DEVELOPER_TOKEN in als Vercel env vars.'}
     </div>`;
 }
 
@@ -2443,25 +2443,29 @@ const GROEI_HIST = [
 ];
 
 // Meta advertentie-snapshot — bijwerken via MCP ads_get_ad_entities level=ad (this_month)
-const META_ADS_DATE = '1–19 jun 2026';
+const META_ADS_DATE = '1-20 jun 2026';
 const META_ADS = [
-  // ACTIEF
-  {n:'IMAGE V13 · Partner AD',  spend:94.00, roas:0,    sales:0, ctr:1.51, status:'ACTIVE'},
-  {n:'IMAGE V41',               spend:93.49, roas:0.67, sales:1, ctr:2.34, status:'ACTIVE'},
-  {n:'IMAGE V48',               spend:36.67, roas:1.91, sales:1, ctr:1.16, status:'ACTIVE'},
-  {n:'VIDEO V7 · Whispering',   spend:23.44, roas:0,    sales:0, ctr:1.69, status:'ACTIVE'},
-  {n:'IMAGE V57',               spend:13.56, roas:0,    sales:0, ctr:1.38, status:'ACTIVE'},
-  {n:'IMAGE V47',               spend:5.99,  roas:0,    sales:0, ctr:2.52, status:'ACTIVE'},
-  {n:'IMAGE V53',               spend:4.61,  roas:0,    sales:0, ctr:3.07, status:'ACTIVE'},
-  {n:'IMAGE V55',               spend:4.05,  roas:0,    sales:0, ctr:1.23, status:'ACTIVE'},
-  // GEPAUZEERD (alleen relevante met spend >€10)
-  {n:'IMAGE V50',               spend:165.73,roas:1.52, sales:4, ctr:1.80, status:'PAUSED'},
-  {n:'VIDEO V14 · Kaatjekraal', spend:108.47,roas:0.58, sales:1, ctr:5.28, status:'PAUSED'},
-  {n:'IMAGE V43 · ATC',         spend:39.69, roas:0,    sales:0, ctr:2.29, status:'PAUSED'},
-  {n:'IMAGE V56',               spend:34.42, roas:0,    sales:0, ctr:1.48, status:'PAUSED'},
-  {n:'IMAGE V12 · Maison',      spend:28.31, roas:0,    sales:0, ctr:2.01, status:'PAUSED'},
-  {n:'VIDEO V14 · Partner AD',  spend:18.42, roas:0,    sales:0, ctr:3.11, status:'PAUSED'},
-  {n:'IMAGE V46 · ATC',         spend:16.21, roas:0,    sales:0, ctr:3.13, status:'PAUSED'},
+  // ACTIEF (effective_status=ACTIVE, gesorteerd op spend)
+  {n:'IMAGE V50',                spend:203.64, roas:1.24, sales:4, ctr:1.88, status:'ACTIVE'},
+  {n:'VIDEO V7 · Whispering',    spend:23.84,  roas:0,    sales:0, ctr:1.65, status:'ACTIVE'},
+  {n:'IMAGE V57',                spend:21.78,  roas:0,    sales:0, ctr:1.31, status:'ACTIVE'},
+  {n:'IMAGE V13 · Kleijne',      spend:7.15,   roas:0,    sales:0, ctr:1.44, status:'ACTIVE'},
+  {n:'IMAGE V47',                spend:6.07,   roas:0,    sales:0, ctr:2.70, status:'ACTIVE'},
+  {n:'IMAGE V53',                spend:4.96,   roas:0,    sales:0, ctr:2.73, status:'ACTIVE'},
+  {n:'IMAGE V55',                spend:4.05,   roas:0,    sales:0, ctr:1.23, status:'ACTIVE'},
+  {n:'IMAGE V54',                spend:2.63,   roas:0,    sales:0, ctr:1.58, status:'ACTIVE'},
+  // GEPAUZEERD (spend >€5)
+  {n:'VIDEO V14 · Kaatjekraal',  spend:108.47, roas:0.58, sales:1, ctr:5.28, status:'PAUSED'},
+  {n:'IMAGE V13 · Partner AD',   spend:95.03,  roas:0,    sales:0, ctr:1.51, status:'PAUSED'},
+  {n:'IMAGE V41',                spend:93.49,  roas:0.67, sales:1, ctr:2.34, status:'PAUSED'},
+  {n:'IMAGE V43 · ATC',          spend:39.69,  roas:0,    sales:0, ctr:2.29, status:'PAUSED'},
+  {n:'IMAGE V48',                spend:37.23,  roas:1.88, sales:1, ctr:1.14, status:'PAUSED'},
+  {n:'IMAGE V56',                spend:34.42,  roas:0,    sales:0, ctr:1.48, status:'PAUSED'},
+  {n:'IMAGE V12 · Maison',       spend:28.31,  roas:0,    sales:0, ctr:2.01, status:'PAUSED'},
+  {n:'VIDEO V14 · Partner AD',   spend:18.42,  roas:0,    sales:0, ctr:3.11, status:'PAUSED'},
+  {n:'IMAGE V46 · ATC',          spend:16.21,  roas:0,    sales:0, ctr:3.13, status:'PAUSED'},
+  {n:'IMAGE V51',                spend:11.81,  roas:0,    sales:0, ctr:1.74, status:'PAUSED'},
+  {n:'IMAGE V49',                spend:7.24,   roas:0,    sales:0, ctr:3.00, status:'PAUSED'},
 ];
 
 function renderMetaKillScale(){
