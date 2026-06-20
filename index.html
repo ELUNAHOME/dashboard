@@ -1828,10 +1828,37 @@ function renderChart(k){
 
   // D7 = altijd dagelijks; MTD/D30/custom ≥14d = wekelijks
   const useWeekly = k !== 'd7' && rawDays.length >= 14;
-  const days     = useWeekly ? aggWeek(rawDays) : rawDays;
+  let days     = useWeekly ? aggWeek(rawDays) : rawDays;
   const prevDays = useWeekly ? aggWeek(rawPrev) : rawPrev;
 
-  const labelMap = {d7:'7 dagen', d30:'30 dagen', mtd:'MTD', custom:'Aangepast'};
+  // Strip trailing zero-revenue buckets (toekomstige weken zonder orders)
+  if (useWeekly) {
+    while (days.length > 1 && days[days.length - 1].rev === 0) days = days.slice(0, -1);
+  }
+
+  const isMax = !!(window._drpMaxActive && k === 'custom');
+
+  // Full-width layout voor Maximaal
+  const perfCardEl  = document.getElementById('perf-card');
+  const admixCardEl = document.getElementById('admix-card');
+  const statsColEl  = document.getElementById('perf-stats');
+  if (isMax) {
+    if (perfCardEl)  perfCardEl.style.gridColumn   = '1 / -1';
+    if (admixCardEl) admixCardEl.style.display     = 'none';
+    inner.style.gridTemplateColumns                = '1fr';
+    if (statsColEl)  statsColEl.style.display      = 'none';
+    chartCol.style.borderRight  = 'none';
+    chartCol.style.paddingRight = '0';
+  } else {
+    if (perfCardEl)  perfCardEl.style.gridColumn   = '';
+    if (admixCardEl) admixCardEl.style.display     = '';
+    inner.style.gridTemplateColumns                = '';
+    if (statsColEl)  statsColEl.style.display      = '';
+    chartCol.style.borderRight  = '';
+    chartCol.style.paddingRight = '';
+  }
+
+  const labelMap = {d7:'7 dagen', d30:'30 dagen', mtd:'MTD', custom: isMax ? 'Maximaal' : 'Aangepast'};
   document.getElementById('perf-title').textContent = 'Omzetprestatie · ' + (labelMap[k]||'');
 
   const allRevs = [...days.map(d=>d.rev), ...(prevDays||[]).map(d=>d.rev)];
@@ -1867,7 +1894,7 @@ function renderChart(k){
       <div class="chart-plot">
         <div class="chart-gline" style="top:0"></div>
         <div class="chart-gline" style="top:50%"></div>
-        <div class="chart-days">${barsHtml}</div>
+        <div class="chart-days" style="${isMax?'height:180px':''}">${barsHtml}</div>
         <div class="chart-labels">${labelsHtml}</div>
       </div>
     </div>
@@ -2917,6 +2944,7 @@ function drpUpdate(k) {
 
 async function drpSelectMax() {
   drpClose();
+  window._drpMaxActive = true;
   const now = new Date();
   const end = now.toISOString().slice(0,10);
   const start = '2025-04-01'; // ELÛNA max history
@@ -2948,6 +2976,7 @@ async function drpPickDay(dateStr) {
     _drpCustom  = { start, end };
     _drpPicking = false;
     _drpPickStart = null;
+    window._drpMaxActive = false;
     drpClose();
     await fetchCustomRange(start, end);
   }
@@ -3046,6 +3075,7 @@ function renderDrpCalendar(k) {
 }
 
 document.querySelectorAll('.drp-preset[data-k]').forEach(b => b.addEventListener('click', () => {
+  window._drpMaxActive = false;
   if (!b.dataset.k || b.dataset.k === 'custom') { render('custom'); drpClose(); return; }
   render(b.dataset.k);
   drpClose();
