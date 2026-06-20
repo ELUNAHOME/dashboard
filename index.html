@@ -193,6 +193,28 @@
   .pov-btn:hover{border-color:var(--sage);background:var(--card)}
   .pov-btn.warn{border-color:#D4A07A;color:var(--warn);background:#FBF5EF}
   .pov-tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:999px;padding:2px 8px;vertical-align:middle;margin-left:6px}
+  .pov-bullets{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+  .pov-bullets li{font-size:11.5px;color:var(--muted);line-height:1.5;padding-left:14px;position:relative}
+  .pov-bullets li::before{content:'›';position:absolute;left:0;color:var(--sage);font-size:13px}
+  .pov-bullets li b{color:var(--ink);display:block;font-size:12px;margin-bottom:1px}
+
+  /* guru orb */
+  .guru-orb-wrap{display:flex;flex-direction:column;align-items:center;padding:44px 0 28px}
+  .guru-orb{width:72px;height:72px;border-radius:50%;background:radial-gradient(circle at 38% 38%,#d4e0c6,#7a9468);display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;position:relative;animation:guruPulse 3s ease-in-out infinite;transition:transform .2s}
+  .guru-orb:hover{transform:scale(1.1)}
+  .guru-orb::after{content:'';position:absolute;inset:-10px;border-radius:50%;border:1.5px solid var(--sage);opacity:.4;animation:guruRing 3s ease-in-out infinite 1.4s}
+  @keyframes guruPulse{0%,100%{box-shadow:0 0 0 0 rgba(143,160,122,.4)}55%{box-shadow:0 0 0 22px rgba(143,160,122,0)}}
+  @keyframes guruRing{0%,100%{transform:scale(1);opacity:.35}50%{transform:scale(1.18);opacity:0}}
+  .guru-orb-label{margin-top:14px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .guru-orb-sub{font-size:10px;color:var(--muted);margin-top:3px;text-align:center;max-width:300px}
+  .guru-modal{position:fixed;inset:0;z-index:500;display:none;flex-direction:column;justify-content:flex-end}
+  .guru-modal.open{display:flex}
+  .guru-modal-bg{position:absolute;inset:0;background:rgba(0,0,0,.38);backdrop-filter:blur(3px)}
+  .guru-modal-sheet{position:relative;z-index:1;width:100%;max-height:90vh;overflow-y:auto;background:var(--bg);border-radius:18px 18px 0 0;padding:22px 24px 52px;box-shadow:0 -4px 40px rgba(0,0,0,.1);animation:gmSlide .22s ease}
+  @keyframes gmSlide{from{transform:translateY(52px);opacity:.3}to{transform:translateY(0);opacity:1}}
+  .guru-modal-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+  .guru-close-btn{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--card);cursor:pointer;font-size:17px;line-height:1;color:var(--muted);display:flex;align-items:center;justify-content:center;font-family:inherit;flex-shrink:0}
+  .guru-close-btn:hover{background:var(--line)}
 
   /* forecast */
   .fc-row{display:grid;grid-template-columns:140px 1fr 90px;align-items:center;gap:10px;margin-bottom:10px;font-size:13px}
@@ -710,71 +732,92 @@
       </div>
     </div>
 
-    <!-- OPERATOR POV (bullets) -->
-    <h2 style="margin-top:34px">Strategisch perspectief · vier lenzen</h2>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Niet data — opinie. Concreet, kritisch, uitvoerbaar. Bijgewerkt per geselecteerde periode.</div>
-    <div class="pov-grid" id="pov-grid">
+    <!-- GURU ORB -->
+    <div class="guru-orb-wrap">
+      <button class="guru-orb" onclick="openGuruModal()" aria-label="Strategisch perspectief">
+        <svg width="34" height="24" viewBox="0 0 34 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="17" cy="12" rx="16" ry="10" stroke="rgba(255,255,255,.8)" stroke-width="1.4"/>
+          <circle cx="17" cy="12" r="5.5" fill="rgba(255,255,255,.95)"/>
+          <circle cx="17" cy="12" r="2.8" fill="rgba(50,65,35,.72)"/>
+          <circle cx="18.6" cy="10.4" r="1.1" fill="rgba(255,255,255,.65)"/>
+        </svg>
+      </button>
+      <div class="guru-orb-label">Strategisch perspectief</div>
+      <div class="guru-orb-sub">Sam Piliero &middot; Ben Heath &middot; Hormozi &times; Davie &middot; The Operators</div>
+    </div>
 
-      <div class="pov">
-        <div class="pov-name">Sam Piliero</div>
-        <div class="pov-role">Meta Ads &middot; The Momentum Agency &middot; creative &amp; CAPI</div>
-        <ul class="pov-bullets">
-          <li><b>IMAGE V13 Partner AD: stop nu.</b> €94 spend, 0 aankopen. Partner format is awareness, niet conversie. Geen varianten meer maken op dit concept.</li>
-          <li><b>IMAGE V48 is je beste actieve ad (ROAS 1.91&times;).</b> 0.74&times; onder break-even. Eerste 3 sec aanpassen: prijs tonen (€69,95) + één review in beeld vóór de CTA.</li>
-          <li><b>Retargeting heeft nieuw creatief nodig.</b> Warme bezoekers (Add to Cart) kennen het product al. Toon garantie + reviews &mdash; geen productintro.</li>
-          <li><b>Broad + sterke hook &gt; niche targeting.</b> ELÛNA's probleem zit in de LP-conversie, niet de doelgroep. Fix LP eerst, schaal daarna.</li>
-        </ul>
-        <div class="pov-action">Stop V13 · Pas hook V48 aan · Nieuw retargeting creatief</div>
-        <div class="pov-actions">
-          <a class="pov-btn warn" href="https://adsmanager.facebook.com/adsmanager/manage/ads?act=924352226288770" target="_blank">Open Ad Manager</a>
-          <a class="pov-btn" href="https://adsmanager.facebook.com/adsmanager/manage/ads?act=924352226288770&filter_field=effective_status&filter_value=ACTIVE" target="_blank">Actieve ads</a>
+    <!-- GURU MODAL -->
+    <div class="guru-modal" id="guru-modal">
+      <div class="guru-modal-bg" onclick="closeGuruModal()"></div>
+      <div class="guru-modal-sheet">
+        <div class="guru-modal-hd">
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Strategisch perspectief</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">Opinie, niet data. Concreet en uitvoerbaar.</div>
+          </div>
+          <button class="guru-close-btn" onclick="closeGuruModal()">&#x2715;</button>
+        </div>
+        <div class="pov-grid" id="pov-grid">
+
+          <div class="pov">
+            <div class="pov-name">Sam Piliero</div>
+            <div class="pov-role">Meta Ads &middot; The Momentum Agency &middot; creative &amp; CAPI</div>
+            <ul class="pov-bullets" id="sam-bullets">
+              <li><b>IMAGE V50 is je enige converterende ad (ROAS 1.24&times;).</b> €203 spend, 4 aankopen. Nog 1.41&times; onder break-even. Verhoog budget voorzichtig met €10/dag per week en meet blended ROAS.</li>
+              <li><b>VIDEO V7 en IMAGE V57: kill-drempel naderen.</b> Samen €46 spend, 0 aankopen. Geef elk nog max €10 extra spend, daarna pauzeren als geen conversie.</li>
+              <li><b>Retargeting heeft nieuw creatief nodig.</b> Warme bezoekers (Add to Cart) kennen het product al. Toon garantie + reviews, geen productintro.</li>
+              <li><b>Broad + sterke hook &gt; niche targeting.</b> ELÛNA's probleem zit in LP-conversie, niet de doelgroep. Fix LP eerst, schaal daarna.</li>
+            </ul>
+            <div class="pov-action" id="sam-action">Schaal V50 voorzichtig op · Watch V7 en V57 · Nieuw retargeting creatief</div>
+            <div class="pov-actions">
+              <a class="pov-btn warn" href="https://adsmanager.facebook.com/adsmanager/manage/ads?act=924352226288770" target="_blank">Open Ad Manager</a>
+              <a class="pov-btn" href="https://adsmanager.facebook.com/adsmanager/manage/ads?act=924352226288770&filter_field=effective_status&filter_value=ACTIVE" target="_blank">Actieve ads</a>
+            </div>
+          </div>
+
+          <div class="pov">
+            <div class="pov-name">Ben Heath</div>
+            <div class="pov-role">Google Ads &middot; Shopping &middot; Performance Max &middot; klant-ID 470-420-6454</div>
+            <ul class="pov-bullets">
+              <li><b>PMax asset groups segmenteren.</b> Maak 3 aparte groups: Branded "ELÛNA waterkoker", Categorie "RVS waterkoker kopen", Competitor "waterkoker zonder plastic". Zo zie je per intentie waar budget heen gaat.</li>
+              <li><b>Target ROAS instellen op 3&times;.</b> Break-even is 2,65&times;. Zonder expliciete target ROAS geeft Google zichzelf ruimte om verlieslatend te bieden.</li>
+              <li><b>Primaire conversie controleren.</b> Alleen "Purchase" mag primaire conversie zijn. Add to Cart of Begin Checkout erin geeft een te hoge ROAS en klopt de bid-strategie niet.</li>
+              <li><b>Search Terms rapport bekijken.</b> Filter op zoektermen met klikken maar geen conversies. Voeg toe als exact-negatief om budgetverspilling te stoppen.</li>
+            </ul>
+            <div class="pov-action">Segmenteer asset groups · Zet target ROAS op 3&times; · Controleer primaire conversie</div>
+            <div class="pov-actions">
+              <a class="pov-btn warn" href="https://ads.google.com/aw/campaigns" target="_blank">Open Campagnes</a>
+              <a class="pov-btn" href="https://ads.google.com/aw/conversions" target="_blank">Conversie-instellingen</a>
+              <a class="pov-btn" href="https://ads.google.com/aw/reports/search-terms" target="_blank">Search Terms</a>
+            </div>
+          </div>
+
+          <div class="pov">
+            <div class="pov-name">Hormozi &times; Davie Fogarty</div>
+            <div class="pov-role">Offer-design &middot; DTC scaling &middot; product-led growth</div>
+            <ul class="pov-bullets">
+              <li><b>ELÛNA offer nu: €69,95 solo, geen upsell, geen bundel.</b> Slechte offer plus goed creatief is duurder falen op schaal. Fix offer economics vóór je budget verhoogt.</li>
+              <li><b>Bundle-test: ELÛNA plus beschermhoes €89,95.</b> Als 20% bundel kiest stijgt AOV met €15 en daalt CAC/stuk met ~€10. Aanmaken in Shopify kost 20 minuten.</li>
+              <li><b>10 micro-influencers (5k-30k NL, food/interieur/lifestyle).</b> Stuur product gratis, €350 COGS, €0 spend. Verwacht 6 posts is ~90k bereik plus UGC hergebruiken als Meta ad.</li>
+              <li><b>"30 dagen retour" staat nu onderaan de LP.</b> Dit is je sterkste conversiehefboom. Zet het boven de fold, grote tekst, boven de koopknop.</li>
+            </ul>
+            <div class="pov-action">Maak bundel in Shopify · Retour-garantie boven de fold · Stuur 10 creators een product</div>
+            <div class="pov-actions">
+              <a class="pov-btn warn" href="https://admin.shopify.com/store/elunahome/products/new" target="_blank">Nieuwe bundel aanmaken</a>
+              <a class="pov-btn" href="https://admin.shopify.com/store/elunahome/themes/current/editor" target="_blank">LP aanpassen</a>
+            </div>
+          </div>
+
+          <div class="richon-card" id="richon-pov">
+            <div class="richon-name">The Operators</div>
+            <div class="richon-role">Sean Frank (Ridge) &middot; Jon Cona &middot; Michael Epstein &middot; unit economics, geen BS</div>
+            <ul class="richon-bullets" id="richon-bullets"><li>Laden&hellip;</li></ul>
+            <div class="richon-action" id="richon-action"></div>
+            <div class="richon-forward" id="richon-forward"></div>
+          </div>
+
         </div>
       </div>
-
-      <div class="pov">
-        <div class="pov-name">Ben Heath</div>
-        <div class="pov-role">Google Ads &middot; Shopping &middot; Performance Max &middot; klant-ID 470-420-6454</div>
-        <ul class="pov-bullets">
-          <li><b>PMax asset groups segmenteren.</b> Maak 3 aparte asset groups: (1) Branded &mdash; "ELÛNA waterkoker", (2) Categorie &mdash; "RVS waterkoker kopen", (3) Competitor &mdash; "waterkoker zonder plastic". Zo zie je per intentie waar budget heen gaat.</li>
-          <li><b>Target ROAS instellen op 3&times;.</b> Break-even is 2,65&times;. Als target ROAS niet expliciet staat, geeft Google zichzelf ruimte om verlieslatend te bieden. Stel in per campagne.</li>
-          <li><b>Primaire conversie controleren.</b> Alleen "Purchase" mag primaire conversie zijn. Als "Add to Cart" of "Begin Checkout" meerekent, rapporteert Google een te hoge ROAS &mdash; en bid-strategie klopt niet.</li>
-          <li><b>Search Terms rapport bekijken.</b> Filter op zoektermen die klikken genereren maar niet converteren. Voeg die toe als exact-negatief om budgetverspilling te stoppen.</li>
-        </ul>
-        <div class="pov-action">Segmenteer asset groups · Zet target ROAS op 3× · Controleer primaire conversie</div>
-        <div class="pov-actions">
-          <a class="pov-btn warn" href="https://ads.google.com/aw/campaigns" target="_blank">Open Campagnes</a>
-          <a class="pov-btn" href="https://ads.google.com/aw/conversions" target="_blank">Conversie-instellingen</a>
-          <a class="pov-btn" href="https://ads.google.com/aw/reports/search-terms" target="_blank">Search Terms</a>
-        </div>
-      </div>
-
-      <div class="pov">
-        <div class="pov-name">Hormozi &times; Davie Fogarty</div>
-        <div class="pov-role">Offer-design &middot; DTC scaling &middot; product-led growth</div>
-        <ul class="pov-bullets">
-          <li><b>ELÛNA offer nu: €69,95 solo, geen upsell, geen bundel.</b> Hormozi: slechte offer + goed creatief = duurder falen op schaal. Fix offer economics vóór je budget verhoogt.</li>
-          <li><b>Bundle-test: ELÛNA + beschermhoes €89,95.</b> Als 20% bundel kiest stijgt AOV met €15 en daalt CAC/stuk met ~€10. Aanmaken in Shopify kost 20 minuten.</li>
-          <li><b>Davie-formule: 10 micro-influencers (5k&ndash;30k NL, food/interieur/lifestyle).</b> Stuur product gratis &mdash; €350 COGS, €0 spend. Verwacht 6 posts = ~90k bereik + UGC hergebruiken als Meta ad.</li>
-          <li><b>"30 dagen retour" staat nu onderaan de LP.</b> Dit is je sterkste conversiehefboom. Zet het boven de fold, grote tekst, boven de koopknop.</li>
-        </ul>
-        <div class="pov-action">Maak bundel in Shopify · Schrijf retour-garantie boven de fold · Stuur 10 creators een product</div>
-        <div class="pov-actions">
-          <a class="pov-btn warn" href="https://admin.shopify.com/store/elunahome/products/new" target="_blank">Nieuwe bundel aanmaken</a>
-          <a class="pov-btn" href="https://admin.shopify.com/store/elunahome/themes/current/editor" target="_blank">LP aanpassen</a>
-        </div>
-      </div>
-
-      <!-- THE OPERATORS — dynamisch via JS -->
-      <div class="richon-card" id="richon-pov">
-        <div class="richon-name">The Operators</div>
-        <div class="richon-role">Sean Frank (Ridge) &middot; Jon Cona &middot; Michael Epstein &middot; unit economics, geen BS</div>
-        <ul class="richon-bullets" id="richon-bullets">
-          <li>Laden&hellip;</li>
-        </ul>
-        <div class="richon-action" id="richon-action"></div>
-        <div class="richon-forward" id="richon-forward"></div>
-      </div>
-
     </div>
 
   </div><!-- /tab-overzicht -->
@@ -2903,6 +2946,14 @@ function initSwipeToDelete(){
 }
 
 // ── chart tooltip ──────────────────────────────────────────────
+function openGuruModal() {
+  const m = document.getElementById('guru-modal');
+  if (m) { m.classList.add('open'); document.body.style.overflow = 'hidden'; }
+}
+function closeGuruModal() {
+  const m = document.getElementById('guru-modal');
+  if (m) { m.classList.remove('open'); document.body.style.overflow = ''; }
+}
 function showChTip(e, el) {
   const tip = document.getElementById('ch-tip');
   tip.textContent = el.dataset.tip;
