@@ -998,6 +998,7 @@ const FIXED_EX  = COGS_EX + LOG_EX + FEES_EX; // 31.15
 let GROSS = LIST_EX - FIXED_EX;  // wordt per render overschreven met werkelijke marge
 let showBTW = false;
 let P = {}, C = {}, GC = {}, KLAVIYO = {}, DATA_META = {}, INVENTORY = {};
+let LIVE_ADS = {}; // live ad-niveau data uit /api/data per periode; leeg = val terug op META_ADS_SNAPSHOT
 let DAILY_MTD = [], DAILY_D7 = [], DAILY_D30 = [];
 let DAILY_PREV_MTD = [], DAILY_PREV_D7 = [], DAILY_PREV_D30 = [];
 let DAILY_CUSTOM = [], DAILY_PREV_CUSTOM = [];
@@ -1067,6 +1068,9 @@ async function loadData(bustCache) {
   P = d.P;
   C = d.C;
   GC = d.GC || {};
+  LIVE_ADS = d.ADS || {};
+  // Als er live ad-data binnenkomt, label de advertentie-analyse als live i.p.v. de snapshotdatum
+  if (Object.values(LIVE_ADS).some(arr => Array.isArray(arr) && arr.length)) META_ADS_DATE = 'live';
   DAILY_MTD      = d.daily_mtd      || [];
   DAILY_D7       = d.daily_d7       || [];
   DAILY_D30      = d.daily_d30      || [];
@@ -1106,7 +1110,19 @@ const pct=n=>n==null?'—':n.toLocaleString('nl-NL',{minimumFractionDigits:2,max
 const xfmt=n=>n==null?'—':n.toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2})+'×';
 const num=n=>Math.round(n).toLocaleString('nl-NL');
 const T=(cls,txt)=>`<span class="ae-tag ${cls}">${txt}</span>`;
-const aeSlug=s=>s.replace(/<[^>]+>/g,'').replace(/&[a-z]+;/g,'').replace(/[^a-z0-9]+/gi,'-').toLowerCase().slice(0,38).replace(/-$/,'');
+// Stabiele id: strip HTML, symbolen EN getallen, zodat een kaart dezelfde id houdt als het live getal verandert
+// (anders kreeg "Retargeting CPM €27,34" elke refresh een nieuwe id en kwam een afgevinkte kaart terug)
+const aeSlug=s=>s
+  .replace(/<[^>]+>/g,'')          // HTML-tags
+  .replace(/&[a-z]+;/g,'')         // HTML-entiteiten (&mdash; &rarr; etc.)
+  .replace(/[€%×]/g,'')                       // valuta/percentage/keer-symbolen
+  .replace(/(^|[^a-z0-9])\d+([.,]\d+)?/gi,'$1') // losse getallen (metrics) strippen, advertentienamen als V57 behouden
+  .replace(/[^a-z0-9]+/gi,'-')                // rest naar koppelteken (cijfers in namen blijven)
+  .toLowerCase()
+  .replace(/-+/g,'-')              // dubbele koppeltekens samenvoegen
+  .replace(/^-|-$/g,'')            // begin/eind koppelteken weg
+  .slice(0,42)
+  .replace(/-$/,'');
 const I=(type,tags,title,body,impact='',prio='')=>{
   const aid=aeSlug(title);
   try{ if(JSON.parse(localStorage.getItem(AE_KEY)||'{}')[aid]) return ''; } catch(e){}
@@ -1125,6 +1141,8 @@ const I=(type,tags,title,body,impact='',prio='')=>{
 };
 
 function generateActions(k){
+  // Live ad-niveau voor deze periode; valt terug op de handmatige snapshot als de API niets leverde
+  const META_ADS = (LIVE_ADS[k] && LIVE_ADS[k].length) ? LIVE_ADS[k] : META_ADS_SNAPSHOT;
   const p=P[k], camps=C[k]||[];
   const tot=(p.spend||0)+(p.gspend||0), roas=tot>0?p.rev/tot:0;
   const cac=p.units>0?tot/p.units:null, net=cac!=null?GROSS-cac:null;
@@ -2508,8 +2526,8 @@ const GROEI_HIST = [
 ];
 
 // Meta advertentie-snapshot — bijwerken via MCP ads_get_ad_entities level=ad (this_month)
-const META_ADS_DATE = '1-20 jun 2026';
-const META_ADS = [
+let META_ADS_DATE = '1-20 jun 2026'; // wordt 'live' zodra /api/data ad-niveau levert
+const META_ADS_SNAPSHOT = [
   // ACTIEF (effective_status=ACTIVE, gesorteerd op spend)
   {n:'IMAGE V50',                spend:203.64, roas:1.24, sales:4, ctr:1.88, status:'ACTIVE'},
   {n:'VIDEO V7 · Whispering',    spend:23.84,  roas:0,    sales:0, ctr:1.65, status:'ACTIVE'},
@@ -2533,9 +2551,10 @@ const META_ADS = [
   {n:'IMAGE V49',                spend:7.24,   roas:0,    sales:0, ctr:3.00, status:'PAUSED'},
 ];
 
-function renderMetaKillScale(){
+function renderMetaKillScale(k){
   const el = document.getElementById('ch-meta-adsets');
   if(!el) return;
+  const META_ADS = (k && LIVE_ADS[k] && LIVE_ADS[k].length) ? LIVE_ADS[k] : META_ADS_SNAPSHOT;
   const BE = 2.65;
 
   function verdict(a){
@@ -2838,13 +2857,13 @@ function render(k){
   renderChannelViews(k);
   renderMarketing(k);
   renderGroei();
-  renderMetaKillScale();
+  renderMetaKillScale(k);
   drpUpdate(k);
   aeUpdateCounts();
 }
 
 // ── dismiss / feedback ──────────────────────────────────────────
-const AE_KEY='eluna_ae_v1';
+const AE_KEY='eluna_ae_v2'; // v2: stabiele id-opzet (zie aeSlug). v1 is bewust verlaten, eenmalige reset van afgevinkte kaarten.
 const aeGet=()=>JSON.parse(localStorage.getItem(AE_KEY)||'{}');
 const aeSet=d=>localStorage.setItem(AE_KEY,JSON.stringify(d));
 let _aePopup=null;

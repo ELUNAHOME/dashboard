@@ -339,6 +339,36 @@ async function metaCampaignInsights(preset) {
     .filter(Boolean);
 }
 
+// Ad-niveau insights, live per periode. Vervangt de handmatige META_ADS-snapshot in index.html.
+async function metaAdInsights(preset) {
+  const fields = [
+    'name', 'effective_status',
+    `insights.date_preset(${preset}){spend,ctr,purchase_roas,actions}`
+  ].join(',');
+  const { data = [] } = await metaFetch('/ads', { fields, limit: '300' });
+  return data
+    .map(a => {
+      const ins = a.insights?.data?.[0];
+      if (!ins) return null;
+      const spend = parseFloat(ins.spend || '0');
+      if (spend === 0) return null;
+      const roasRaw  = ins.purchase_roas?.[0]?.value;
+      const purchase = (ins.actions || []).find(x =>
+        x.action_type === 'purchase' ||
+        x.action_type === 'offsite_conversion.fb_pixel_purchase');
+      return {
+        n:      a.name,
+        status: a.effective_status === 'ACTIVE' ? 'ACTIVE' : 'PAUSED',
+        spend:  r2(spend),
+        roas:   roasRaw ? r2(parseFloat(roasRaw)) : 0,
+        sales:  purchase ? Math.round(parseFloat(purchase.value)) : 0,
+        ctr:    r2(parseFloat(ins.ctr || '0'))
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.spend - a.spend);
+}
+
 // Niet async — geen await nodig (bug fix: was async, werd nooit awaited)
 function metaTotals(campaigns) {
   if (!campaigns.length) return { spend: null, ctr: null, cpc: null, mroas: null };
@@ -356,16 +386,22 @@ async function fetchMeta() {
   const presets = ['today', 'yesterday', 'last_7d', 'this_month', 'last_30d'];
   const keys    = ['today', 'gisteren', 'd7', 'mtd', 'd30'];
 
-  const results = await Promise.all(presets.map(p => metaCampaignInsights(p)));
+  const [results, adResults] = await Promise.all([
+    Promise.all(presets.map(p => metaCampaignInsights(p))),
+    // Ad-niveau faalt soft: bij fout terug naar lege lijst, index.html valt dan terug op snapshot
+    Promise.all(presets.map(p => metaAdInsights(p).catch(() => [])))
+  ]);
 
   const C = {};
   const metaSpend = {};
+  const ADS = {};
   keys.forEach((k, i) => {
     C[k] = results[i];
     metaSpend[k] = metaTotals(results[i]); // niet async, geen await nodig
+    ADS[k] = adResults[i];
   });
 
-  return { C, metaSpend };
+  return { C, metaSpend, ADS };
 }
 
 // ── Klaviyo helpers ───────────────────────────────────────────────────────────
@@ -665,7 +701,7 @@ export default async function handler(req, res) {
     ]);
 
     const { P, daily_mtd, daily_d7, daily_d30, daily_prev_d7, daily_prev_mtd, daily_prev_d30, _dates } = shopify;
-    const { C, metaSpend } = metaResult;
+    const { C, metaSpend, ADS } = metaResult;
     const googleData = googleResult.data;
     const GC = googleResult.GC || {};
 
@@ -696,6 +732,7 @@ export default async function handler(req, res) {
       P,
       C,
       GC,
+      ADS,
       daily_mtd,
       daily_d7,
       daily_d30,
