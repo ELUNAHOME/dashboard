@@ -17,11 +17,31 @@ Nooit direct data in `index.html` aanpassen.
 | Meta Ads | Automatisch via Meta Graph API | Live |
 | Klaviyo metrics | Automatisch via Klaviyo API | Live |
 | Klaviyo flows & campagnes | Automatisch via flow/campaign-values-reports API | Live |
-| Google Ads | Handmatig via `scripts/update-google.sh` | Handmatig |
+| Google Ads | Automatisch via Google Ads API v21 (per campagne) | Live (mits 5 env vars gezet) |
+| Google Ads (fallback) | Handmatig via `scripts/update-google.sh` | Fallback als API-creds ontbreken |
 
 ---
 
-## Google Ads bijwerken (30 seconden)
+## Google Ads via API (primair, automatisch)
+
+Basic Access goedgekeurd 16 jun 2026. De per-campagne breakdown (Shopping/PMAX,
+Brand Search) komt live binnen zodra deze 5 env vars in Vercel staan:
+
+| Var | Waarde / bron |
+|-----|---------------|
+| `GOOGLE_ADS_CLIENT_ID` | OAuth client (zie `scripts/google-ads-oauth.py`) |
+| `GOOGLE_ADS_CLIENT_SECRET` | OAuth client (idem) |
+| `GOOGLE_ADS_REFRESH_TOKEN` | genereren: `python3 scripts/google-ads-oauth.py` |
+| `GOOGLE_ADS_DEVELOPER_TOKEN` | ads.google.com/aw/apicenter onder ELÛNA Beheer |
+| `GOOGLE_ADS_LOGIN_CUSTOMER_ID` | `789-710-2801` (manager ELÛNA Beheer) |
+
+Operating account = `470-420-6454` (env `GOOGLE_ADS_CUSTOMER_ID`, default in code).
+Dev token hoort bij de manager, dus `login-customer-id` header is vereist.
+Check live: `/api/data` → `google_note` moet "live · Google Ads API v21" zijn.
+
+## Google Ads handmatig bijwerken (fallback, 30 seconden)
+
+Alleen nodig als de API-creds ontbreken of falen.
 
 ```bash
 bash scripts/update-google.sh
@@ -77,11 +97,16 @@ Push: `git add data.json && git commit -m "data refresh $(date +%Y-%m-%d)" && gi
 | META_ACCESS_TOKEN | EAA... |
 | META_AD_ACCOUNT | 924352226288770 |
 | KLAVIYO_API_KEY | pk_... |
-| GOOGLE_SPEND_MTD | handmatig (bijv. 503.64) |
-| GOOGLE_GROAS_MTD | handmatig (bijv. 1.42) |
-| GOOGLE_SPEND_D30 | handmatig |
-| GOOGLE_GROAS_D30 | handmatig |
-| GOOGLE_SPEND_D7 | handmatig (optioneel) |
+| GOOGLE_ADS_CLIENT_ID | OAuth client (API, primair) |
+| GOOGLE_ADS_CLIENT_SECRET | OAuth client (API) |
+| GOOGLE_ADS_REFRESH_TOKEN | via google-ads-oauth.py (API) |
+| GOOGLE_ADS_DEVELOPER_TOKEN | API Center ELÛNA Beheer (API) |
+| GOOGLE_ADS_LOGIN_CUSTOMER_ID | 789-710-2801 (API, manager) |
+| GOOGLE_SPEND_MTD | handmatig fallback (bijv. 503.64) |
+| GOOGLE_GROAS_MTD | handmatig fallback (bijv. 1.42) |
+| GOOGLE_SPEND_D30 | handmatig fallback |
+| GOOGLE_GROAS_D30 | handmatig fallback |
+| GOOGLE_SPEND_D7 | handmatig fallback (optioneel) |
 
 ---
 
