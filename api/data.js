@@ -86,6 +86,10 @@ async function googleAdsQuery(accessToken, duringPeriod) {
     'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN,
     'Content-Type':    'application/json'
   };
+  // Developer token hoort bij het beheeraccount (789-710-2801); bij toegang via een
+  // managed account vereist Google Ads de login-customer-id header.
+  const loginCid = (process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID || '').replace(/-/g, '');
+  if (loginCid) headers['login-customer-id'] = loginCid;
   const url = `https://googleads.googleapis.com/v21/customers/${customerId}/googleAds:search`;
 
   const [totalsRes, campsRes] = await Promise.all([
