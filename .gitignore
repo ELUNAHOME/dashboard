@@ -1,2 +1,4 @@
 .DS_Store
 scripts/google-ads-oauth.py
+google-vercel-env.txt
+.env*
