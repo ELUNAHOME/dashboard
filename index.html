@@ -1198,8 +1198,9 @@ function generateActions(k){
     'Shopify → Google Tag: controleer "conversion lag" in Search Terms report. Foute tracking = foute bidstrategie.','','BINNENKORT'));
   google.push(I('playbook',T('google','Google'),'Merk vs generiek splitsen in Shopping',
     'Merkzoekopdrachten converteren 5–10× beter. Apart budgetteren en controleren.','','BINNENKORT'));
-  google.push(I('playbook',T('google','Google'),'Google API live &rarr; per-campagne breakdown',
-    'Basic Access goedgekeurd (16 jun). Code staat klaar: zet 5 env vars in Vercel (CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN, DEVELOPER_TOKEN, LOGIN_CUSTOMER_ID) en de Shopping/PMAX- en Brand Search-rijen vullen automatisch. Waarden staan klaar in google-vercel-env.txt.','','NU'));
+  if(!(GC[k] && GC[k].length))
+    google.push(I('playbook',T('google','Google'),'Google API live &rarr; per-campagne breakdown',
+      'Zet 4 env vars in Vercel (CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN, DEVELOPER_TOKEN) en de Shopping/PMAX- en Brand Search-rijen vullen automatisch. LOGIN_CUSTOMER_ID leeg laten: de MCC beheert het operating-account niet, met die header faalt elke call.','','NU'));
 
   // ── KLAVIYO ───────────────────────────────────────────────────
   const flows = KLAVIYO.flows || [];
@@ -1443,7 +1444,7 @@ function renderGoogleCamp(k){
     </table>
 
     <div style="font-size:11px;color:var(--muted);margin-top:12px">
-      ${(GC[k]||[]).length>0 ? 'Live via Google Ads API v21.' : 'Campagne-uitsplitsing via account-totaal. Voor live campagnedata: stel de 5 GOOGLE_ADS env vars in (CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN, DEVELOPER_TOKEN, LOGIN_CUSTOMER_ID) in Vercel.'}
+      ${(GC[k]||[]).length>0 ? 'Live via Google Ads API v21.' : 'Campagne-uitsplitsing via account-totaal. Voor live campagnedata: stel de 4 GOOGLE_ADS env vars in (CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN, DEVELOPER_TOKEN) in Vercel; LOGIN_CUSTOMER_ID leeg laten.'}
     </div>`;
 }
 
