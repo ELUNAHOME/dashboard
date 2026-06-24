@@ -337,13 +337,15 @@ async function metaCampaignInsights(preset) {
 
 // Niet async — geen await nodig (bug fix: was async, werd nooit awaited)
 function metaTotals(campaigns) {
-  if (!campaigns.length) return { spend: null, ctr: null, cpc: null };
+  if (!campaigns.length) return { spend: null, ctr: null, cpc: null, mroas: null };
   const spend = r2(campaigns.reduce((s, c) => s + c.spend, 0));
   const totalClicks = campaigns.reduce((s, c) => s + c.clicks, 0);
   const totalImp    = campaigns.reduce((s, c) => s + c.imp, 0);
   const ctr  = totalImp > 0 ? r2((totalClicks / totalImp) * 100) : null;
   const cpc  = totalClicks > 0 ? r2(spend / totalClicks) : null;
-  return { spend, ctr, cpc };
+  const totalConvValue = campaigns.reduce((s, c) => s + (c.roas !== null ? c.roas * c.spend : 0), 0);
+  const mroas = spend > 0 && totalConvValue > 0 ? r2(totalConvValue / spend) : null;
+  return { spend, ctr, cpc, mroas };
 }
 
 async function fetchMeta() {
@@ -648,10 +650,12 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Shopify is verplicht (gooit → outer catch → 500 → client valt terug op data.json).
+    // Meta/Klaviyo/Google/Inventory degraderen apart: één hapering blanco't niet het hele dashboard.
     const [shopify, metaResult, klaviyo, inventory, googleResult] = await Promise.all([
       fetchShopify(),
-      fetchMeta(),
-      fetchKlaviyo(mtdStart(), amsDate(0)),
+      fetchMeta().catch(err => { console.error('[/api/data] Meta fout:', err.message); return { C: {}, metaSpend: {} }; }),
+      fetchKlaviyo(mtdStart(), amsDate(0)).catch(err => { console.error('[/api/data] Klaviyo fout:', err.message); return null; }),
       fetchInventory().catch(() => ({ stock: null, location_id: '100691018073' })),
       fetchGoogleAds()
     ]);
@@ -670,7 +674,7 @@ export default async function handler(req, res) {
       P[k].cpc    = meta.cpc    ?? null;
       P[k].gspend = goog.gspend ?? null;
       P[k].groas  = goog.groas  ?? null;
-      P[k].mroas  = null; // in-platform ROAS niet betrouwbaar
+      P[k].mroas  = meta.mroas ?? null;
     }
 
     const googleNote = googleResult.source === 'api'

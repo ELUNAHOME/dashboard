@@ -1032,10 +1032,11 @@ async function loadData(bustCache) {
     srcEl.title = usedLiveApi ? 'Data van live API (Shopify + Meta + Klaviyo)' : 'Statische fallback — live API niet bereikbaar';
   }
 
-  // Google + Klaviyo flows/campaigns fallback uit data.json als live API null teruggeeft
+  // Google + Meta + Klaviyo fallback uit data.json als live API null teruggeeft (bron-hapering)
   const needsGoogleFb = usedLiveApi && Object.values(d.P || {}).every(p => p.gspend === null);
+  const needsMetaFb   = usedLiveApi && Object.values(d.P || {}).every(p => p.spend === null);
   const needsKlavFb   = usedLiveApi && (!d.klaviyo?.flows?.length || !d.klaviyo?.campaigns?.length);
-  if (needsGoogleFb || needsKlavFb) {
+  if (needsGoogleFb || needsMetaFb || needsKlavFb) {
     try {
       const fb = await fetch('./data.json');
       if (fb.ok) {
@@ -1045,6 +1046,15 @@ async function loadData(bustCache) {
             if (fbData.P?.[k]?.gspend != null) d.P[k].gspend = fbData.P[k].gspend;
             if (fbData.P?.[k]?.groas  != null) d.P[k].groas  = fbData.P[k].groas;
           }
+        }
+        if (needsMetaFb) {
+          for (const k of Object.keys(d.P)) {
+            if (fbData.P?.[k]?.spend != null) d.P[k].spend = fbData.P[k].spend;
+            if (fbData.P?.[k]?.ctr   != null) d.P[k].ctr   = fbData.P[k].ctr;
+            if (fbData.P?.[k]?.cpc   != null) d.P[k].cpc   = fbData.P[k].cpc;
+            if (fbData.P?.[k]?.mroas != null) d.P[k].mroas = fbData.P[k].mroas;
+          }
+          if (fbData.C && (!d.C || !Object.keys(d.C).length)) d.C = fbData.C;
         }
         if (needsKlavFb && d.klaviyo) {
           if (!d.klaviyo.flows?.length  && fbData.klaviyo?.flows)     d.klaviyo.flows     = fbData.klaviyo.flows;
@@ -1170,8 +1180,8 @@ function generateActions(k){
     'Shopify → Google Tag: controleer "conversion lag" in Search Terms report. Foute tracking = foute bidstrategie.','','BINNENKORT'));
   google.push(I('playbook',T('google','Google'),'Merk vs generiek splitsen in Shopping',
     'Merkzoekopdrachten converteren 5–10× beter. Apart budgetteren en controleren.','','BINNENKORT'));
-  google.push(I('playbook',T('google','Google'),'Google API live &rarr; volledig automatisch dashboard',
-    'Zodra Basic Access goedgekeurd: dashboard vernieuwt Google-data automatisch. Aanvraag pending.','','LATER'));
+  google.push(I('playbook',T('google','Google'),'Google API live &rarr; per-campagne breakdown',
+    'Basic Access goedgekeurd (16 jun). Code staat klaar: zet 4 env vars in Vercel (CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN, DEVELOPER_TOKEN) en de Shopping/PMAX- en Brand Search-rijen vullen automatisch.','','NU'));
 
   // ── KLAVIYO ───────────────────────────────────────────────────
   const flows = KLAVIYO.flows || [];
@@ -1303,6 +1313,14 @@ function renderAdMix(k){
   if(tot===0){card.style.display='none';return;}
   card.style.display='';
   const mp=Math.round(meta/tot*100), gp=100-mp;
+  const blended=tot>0&&p.rev>0?p.rev/tot:null;
+  const cac=p.units>0?tot/p.units:null;
+  const net=cac!=null?GROSS-cac:null;
+  const mroasColor=p.mroas!=null?(p.mroas>=2.65?'var(--good)':'var(--warn)'):'var(--muted)';
+  const groasColor=p.groas!=null?(p.groas>=2.65?'var(--good)':'var(--warn)'):'var(--muted)';
+  const bColor=blended!=null?(blended>=2.65?'var(--good)':'var(--warn)'):'var(--muted)';
+  const cacColor=cac!=null?(cac>GROSS?'var(--warn)':'var(--good)'):'var(--muted)';
+  const netColor=net!=null?(net<0?'var(--warn)':'var(--good)'):'var(--muted)';
   document.getElementById('admix-content').innerHTML=`
     <div class="admix-tot">${eur(tot)}</div>
     <div class="admix-tot-sub">totale ad-spend ${p.label.toLowerCase()}</div>
@@ -1315,8 +1333,12 @@ function renderAdMix(k){
       <div class="admix-bar-track"><div class="admix-bar-fill" style="width:${gp}%;background:var(--good)"></div></div>
     </div>
     <div class="ps-divider" style="margin-top:16px"></div>
-    <div class="ps-row"><span class="ps-lbl" style="font-size:11px">Meta in-platform ROAS</span><span class="ps-val" style="font-size:12px">${xfmt(p.mroas)}</span></div>
-    <div class="ps-row"><span class="ps-lbl" style="font-size:11px">Google ROAS</span><span class="ps-val" style="font-size:12px">${xfmt(p.groas)}</span></div>`;
+    <div class="ps-row"><span class="ps-lbl" style="font-size:11px">Meta in-platform ROAS</span><span class="ps-val" style="font-size:12px;color:${mroasColor}">${xfmt(p.mroas)}</span></div>
+    <div class="ps-row"><span class="ps-lbl" style="font-size:11px">Google ROAS</span><span class="ps-val" style="font-size:12px;color:${groasColor}">${xfmt(p.groas)}</span></div>
+    <div class="ps-divider" style="margin:10px 0 8px"></div>
+    <div class="ps-row" style="padding:5px 0"><span class="ps-lbl" style="font-weight:600;color:var(--fg)">Blended ROAS</span><span class="ps-val" style="font-size:15px;color:${bColor}">${blended!=null?xfmt(blended):'—'}</span></div>
+    <div class="ps-row"><span class="ps-lbl" style="font-size:11px">CAC / stuk</span><span class="ps-val" style="font-size:12px;color:${cacColor}">${cac?eur(cac):'—'}</span></div>
+    <div class="ps-row"><span class="ps-lbl" style="font-size:11px">Netto / stuk</span><span class="ps-val" style="font-size:12px;color:${netColor}">${net!=null?(net<0?'−':'+')+eur(Math.abs(net)):'—'}</span></div>`;
 }
 
 function renderGoogleCamp(k){
