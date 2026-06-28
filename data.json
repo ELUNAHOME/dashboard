@@ -121,7 +121,7 @@
         "d30_conversions": 1,
         "d30_revenue": 62.96,
         "d30_unsubscribes": 2,
-        "note": "Open rate sterk (44.9%). CTR zwak (0.93%) — CTA of aanbod werkt niet."
+        "note": "Open rate sterk (44.9%). CTR zwak (0.93%), CTA of aanbod werkt niet."
       },
       {
         "name": "Abandoned Check Out Reminder",
@@ -134,7 +134,7 @@
         "d30_conversions": 0,
         "d30_revenue": 0,
         "d30_unsubscribes": 0,
-        "note": "Weinig triggers (8) — mogelijk tracking-probleem."
+        "note": "Weinig triggers (8), mogelijk tracking-probleem."
       },
       {
         "name": "Product Review - A/B Version",
@@ -163,7 +163,7 @@
         "conversions": 0,
         "revenue": 0,
         "unsubscribes": 8,
-        "note": "18 unieke klikken, 0 conversies — coupon of LP werkte niet."
+        "note": "18 unieke klikken, 0 conversies, coupon of LP werkte niet."
       }
     ]
   }

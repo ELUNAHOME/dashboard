@@ -1,4 +1,4 @@
-# ELÛNA Dashboard — CLAUDE.md
+# ELÛNA Dashboard, CLAUDE.md
 
 ## Wat is dit
 Vercel serverless dashboard voor ELÛNA (Calm Beige waterkoker, €69,95).
@@ -33,10 +33,12 @@ Brand Search) komt live binnen zodra deze 5 env vars in Vercel staan:
 | `GOOGLE_ADS_CLIENT_SECRET` | OAuth client (idem) |
 | `GOOGLE_ADS_REFRESH_TOKEN` | genereren: `python3 scripts/google-ads-oauth.py` |
 | `GOOGLE_ADS_DEVELOPER_TOKEN` | ads.google.com/aw/apicenter onder ELÛNA Beheer |
-| `GOOGLE_ADS_LOGIN_CUSTOMER_ID` | `789-710-2801` (manager ELÛNA Beheer) |
+| `GOOGLE_ADS_LOGIN_CUSTOMER_ID` | LEEG LATEN (zie waarschuwing) |
 
 Operating account = `470-420-6454` (env `GOOGLE_ADS_CUSTOMER_ID`, default in code).
-Dev token hoort bij de manager, dus `login-customer-id` header is vereist.
+LET OP: MCC 789-710-2801 beheert 470-420-6454 NIET. support@elunahome.nl heeft
+directe toegang, dus GEEN `login-customer-id` header sturen, anders faalt elke call
+met USER_PERMISSION_DENIED. `GOOGLE_ADS_LOGIN_CUSTOMER_ID` leeg laten in Vercel.
 Check live: `/api/data` → `google_note` moet "live · Google Ads API v21" zijn.
 
 ## Google Ads handmatig bijwerken (fallback, 30 seconden)
@@ -77,8 +79,8 @@ Als de token bijna verloopt:
 
 `data.json` is de statische fallback. Bijwerken via dagelijkse MCP calls:
 
-1. **Shopify** via `shopify_list_orders` — MTD, 7d, 30d orders
-2. **Meta** via `ads_get_ad_entities` — account 924352226288770, campaign niveau
+1. **Shopify** via `shopify_list_orders`, MTD, 7d, 30d orders
+2. **Meta** via `ads_get_ad_entities`, account 924352226288770, campaign niveau
 3. **Klaviyo** via `get_flow_report` + `get_campaign_report` MCP tools
    - Placed Order metric ID: `RP7a8m`
    - Timeframe: `last_30_days`
@@ -101,7 +103,7 @@ Push: `git add data.json && git commit -m "data refresh $(date +%Y-%m-%d)" && gi
 | GOOGLE_ADS_CLIENT_SECRET | OAuth client (API) |
 | GOOGLE_ADS_REFRESH_TOKEN | via google-ads-oauth.py (API) |
 | GOOGLE_ADS_DEVELOPER_TOKEN | API Center ELÛNA Beheer (API) |
-| GOOGLE_ADS_LOGIN_CUSTOMER_ID | 789-710-2801 (API, manager) |
+| GOOGLE_ADS_LOGIN_CUSTOMER_ID | LEEG (MCC beheert operating-account niet) |
 | GOOGLE_SPEND_MTD | handmatig fallback (bijv. 503.64) |
 | GOOGLE_GROAS_MTD | handmatig fallback (bijv. 1.42) |
 | GOOGLE_SPEND_D30 | handmatig fallback |
@@ -120,7 +122,7 @@ break_even_roas = ~2.19× (ex BTW: 57,81/26,35) of ~2.66× (incl BTW: 69,95/26,3
 # Shopify stuurt standaard incl BTW naar Google → gebruik 2.65× als drempel
 ```
 
-Meta in-platform ROAS (`mroas`) is NIET betrouwbaar — altijd blended gebruiken.
+Meta in-platform ROAS (`mroas`) is NIET betrouwbaar, altijd blended gebruiken.
 
 ---
 
@@ -142,10 +144,10 @@ Meta in-platform ROAS (`mroas`) is NIET betrouwbaar — altijd blended gebruiken
 
 ```
 ELÛNA DASHBOARD/
-├── index.html               # Dashboard shell — CSS, HTML, JS logic
-├── data.json                # Statische fallback — bijwerken bij grote data-wijzigingen
+├── index.html               # Dashboard shell, CSS, HTML, JS logic
+├── data.json                # Statische fallback, bijwerken bij grote data-wijzigingen
 ├── api/
-│   ├── data.js              # Vercel serverless — Shopify + Meta + Klaviyo live
+│   ├── data.js              # Vercel serverless, Shopify + Meta + Klaviyo live
 │   └── health.js            # Token check endpoint
 ├── scripts/
 │   └── update-google.sh     # Google Ads handmatige update (30 sec)
@@ -157,5 +159,5 @@ ELÛNA DASHBOARD/
 
 ## Permissions
 
-- Lees altijd, schrijf nooit naar Shopify/Meta/Klaviyo/Google — alleen data ophalen
+- Lees altijd, schrijf nooit naar Shopify/Meta/Klaviyo/Google, alleen data ophalen
 - Google Ads: alleen lezen via UI of API, nooit campagnes aanpassen

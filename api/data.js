@@ -1,5 +1,5 @@
 /**
- * ELÛNA Dashboard — Vercel Serverless API
+ * ELÛNA Dashboard, Vercel Serverless API
  * GET /api/data
  *
  * Aggregeert Shopify + Meta Ads + Klaviyo data naar het dashboard JSON-formaat.
@@ -11,7 +11,7 @@
  *   META_AD_ACCOUNT        924352226288770
  *   KLAVIYO_API_KEY        pk_...
  *
- * Optionele env vars — Google Ads handmatig (update via scripts/update-google.sh):
+ * Optionele env vars, Google Ads handmatig (update via scripts/update-google.sh):
  *   GOOGLE_SPEND_TODAY / GOOGLE_GROAS_TODAY
  *   GOOGLE_SPEND_GISTEREN / GOOGLE_GROAS_GISTEREN
  *   GOOGLE_SPEND_D7 / GOOGLE_GROAS_D7
@@ -370,7 +370,7 @@ async function metaAdInsights(preset) {
     .sort((a, b) => b.spend - a.spend);
 }
 
-// Niet async — geen await nodig (bug fix: was async, werd nooit awaited)
+// Niet async, geen await nodig (bug fix: was async, werd nooit awaited)
 function metaTotals(campaigns) {
   if (!campaigns.length) return { spend: null, ctr: null, cpc: null, mroas: null };
   const spend = r2(campaigns.reduce((s, c) => s + c.spend, 0));
@@ -460,15 +460,15 @@ function flowNote(stats, name) {
 
   if (isReview) {
     // Review flows hebben geen conversies per definitie (product al betaald)
-    if (cr === 0) return `Open rate ${or}% · CTR 0% — review-CTA werkt niet, A/B testen.`;
+    if (cr === 0) return `Open rate ${or}% · CTR 0%, review-CTA werkt niet, A/B testen.`;
     return `Open rate ${or}% · CTR ${cr}% naar Trustpilot.`;
   }
   if (stats.conversions > 0) {
     return `${stats.conversions} conversie${stats.conversions > 1 ? 's' : ''} · €${(stats.conversion_value || 0).toFixed(2)} omzet in 30 dagen.`;
   }
-  if (or > 35 && cr < 2) return `Open rate sterk (${or}%). CTR zwak (${cr}%) — CTA of aanbod werkt niet.`;
-  if (or < 25) return `Open rate laag (${or}%) — onderwerp of afzender testen.`;
-  if ((stats.recipients || 0) < 12) return `Weinig triggers (${stats.recipients}) — mogelijk tracking-probleem.`;
+  if (or > 35 && cr < 2) return `Open rate sterk (${or}%). CTR zwak (${cr}%), CTA of aanbod werkt niet.`;
+  if (or < 25) return `Open rate laag (${or}%), onderwerp of afzender testen.`;
+  if ((stats.recipients || 0) < 12) return `Weinig triggers (${stats.recipients}), mogelijk tracking-probleem.`;
   return `${or}% open · ${cr}% CTR · 0 conversies in 30 dagen.`;
 }
 
@@ -477,7 +477,7 @@ function campaignNote(stats) {
     return `${stats.conversions} conversie${stats.conversions > 1 ? 's' : ''} · €${(stats.conversion_value || 0).toFixed(2)} omzet.`;
   }
   if ((stats.clicks_unique || 0) > 0) {
-    return `${stats.clicks_unique} unieke klikken, 0 conversies — coupon of LP werkte niet.`;
+    return `${stats.clicks_unique} unieke klikken, 0 conversies, coupon of LP werkte niet.`;
   }
   return `${r2((stats.open_rate || 0) * 100)}% open · ${r2((stats.click_rate || 0) * 100)}% CTR · 0 conversies.`;
 }
@@ -638,7 +638,7 @@ async function fetchKlaviyoCampaigns() {
 }
 
 async function fetchKlaviyo(dateStart, dateEnd) {
-  // Stap 1: MTD metrieken (sequentieel — Klaviyo rate limit)
+  // Stap 1: MTD metrieken (sequentieel, Klaviyo rate limit)
   const received   = await klCount(KL_RECEIVED,   dateStart, dateEnd); await sleep(300);
   const opened     = await klCount(KL_OPENED,     dateStart, dateEnd); await sleep(300);
   const clicked    = await klCount(KL_CLICKED,    dateStart, dateEnd); await sleep(300);
@@ -692,7 +692,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Custom date range request (Shopify-only — geen Meta/Klaviyo nodig)
+  // Custom date range request (Shopify-only, geen Meta/Klaviyo nodig)
   const { start, end } = req.query || {};
   if (start && end && /^\d{4}-\d{2}-\d{2}$/.test(start) && /^\d{4}-\d{2}-\d{2}$/.test(end)) {
     try {

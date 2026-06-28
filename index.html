@@ -304,7 +304,7 @@
   .ai-send-btn:hover{background:#222}
   .ai-send-btn:disabled{opacity:.35;cursor:default}
 
-  /* refresh button — icon only, geen border */
+  /* refresh button, icon only, geen border */
   @keyframes warnBorderPulse{0%,100%{border-color:var(--line)}50%{border-color:var(--warn);box-shadow:0 0 0 3px rgba(176,112,63,.1)}}
   .card.roas-warn{animation:warnBorderPulse 3s ease-in-out infinite}
   @keyframes refreshIdle{0%,79%{transform:rotate(0deg)}80%{transform:rotate(360deg)}100%{transform:rotate(360deg)}}
@@ -438,7 +438,7 @@
   border-radius:50%;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .btw-sw.active{background:var(--sage)}
 .btw-sw.active::after{transform:translateX(16px)}
-/* drp trigger in topbar — smaller, borderless */
+/* drp trigger in topbar, smaller, borderless */
 .topbar .drp-trigger{background:none;border-color:transparent;padding:5px 10px;font-size:12px}
 .topbar .drp-trigger:hover{background:var(--bg);border-color:var(--line)}
 /* ── date range picker ── */
@@ -1030,7 +1030,7 @@ async function loadData(bustCache) {
   if (srcEl) {
     srcEl.textContent = usedLiveApi ? '● live' : '○ fallback';
     srcEl.style.color = usedLiveApi ? 'var(--good)' : 'var(--warn)';
-    srcEl.title = usedLiveApi ? 'Data van live API (Shopify + Meta + Klaviyo)' : 'Statische fallback — live API niet bereikbaar';
+    srcEl.title = usedLiveApi ? 'Data van live API (Shopify + Meta + Klaviyo)' : 'Statische fallback, live API niet bereikbaar';
   }
 
   // Google + Meta + Klaviyo fallback uit data.json als live API null teruggeeft (bron-hapering)
@@ -1080,7 +1080,7 @@ async function loadData(bustCache) {
   KLAVIYO = d.klaviyo || {};
   INVENTORY = d.inventory || {};
   DATA_META = d;
-  const lbl = d.updated_label || '—';
+  const lbl = d.updated_label || ',';
   const ulbl = document.getElementById('updated-lbl');
   if (ulbl) ulbl.textContent = lbl;
 }
@@ -1106,15 +1106,15 @@ async function refreshData() {
 
 const eur=(n,d=2)=>'€'+Number(n).toLocaleString('nl-NL',{minimumFractionDigits:d,maximumFractionDigits:d});
 const eur0=n=>'€'+Math.round(n).toLocaleString('nl-NL');
-const pct=n=>n==null?'—':n.toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
-const xfmt=n=>n==null?'—':n.toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2})+'×';
+const pct=n=>n==null?',':n.toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
+const xfmt=n=>n==null?',':n.toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2})+'×';
 const num=n=>Math.round(n).toLocaleString('nl-NL');
 const T=(cls,txt)=>`<span class="ae-tag ${cls}">${txt}</span>`;
 // Stabiele id: strip HTML, symbolen EN getallen, zodat een kaart dezelfde id houdt als het live getal verandert
 // (anders kreeg "Retargeting CPM €27,34" elke refresh een nieuwe id en kwam een afgevinkte kaart terug)
 const aeSlug=s=>s
   .replace(/<[^>]+>/g,'')          // HTML-tags
-  .replace(/&[a-z]+;/g,'')         // HTML-entiteiten (&mdash; &rarr; etc.)
+  .replace(/&[a-z]+;/g,'')         // HTML-entiteiten (, &rarr; etc.)
   .replace(/[€%×]/g,'')                       // valuta/percentage/keer-symbolen
   .replace(/(^|[^a-z0-9])\d+([.,]\d+)?/gi,'$1') // losse getallen (metrics) strippen, advertentienamen als V57 behouden
   .replace(/[^a-z0-9]+/gi,'-')                // rest naar koppelteken (cijfers in namen blijven)
@@ -1153,21 +1153,21 @@ function generateActions(k){
 
   // ── META ──────────────────────────────────────────────────────
   if(cac!=null&&cac>GROSS)
-    meta.unshift(I('data',T('data-tag','Data'),'Budget bevriezen &mdash; CAC verlieslatend',
-      `CAC ${eur(cac)}/stuk vs brutomarge ${eur(GROSS)}. Geen opschaling. Fix CAPI + LP eerst.`,'','NU'));
+    meta.unshift(I('data',T('data-tag','Data'),'Budget bevriezen, CAC verlieslatend',
+      `CAC ${eur(cac)}/stuk vs brutomarge ${eur(GROSS)}. Geen opschaling. Verbeter eerst je conversie en productpagina.`,'','NU'));
   else if(cac!=null){
     const _scaleAd = META_ADS.filter(a=>a.status==='ACTIVE'&&a.roas>0).sort((a,b)=>b.roas-a.roas)[0];
-    meta.unshift(I('data ok',T('data-tag','Data'),'Winstgevend &mdash; voorzichtig opschalen',
-      `Netto +${eur(net)}/stuk. ${_scaleAd?'Focus op '+_scaleAd.n+' ('+_scaleAd.roas.toFixed(2)+'×) — verhoog budget met €10/dag per week.':'Verhoog Meta budget stapsgewijs €10/dag per week.'} Monitor blended ROAS.`,'','NU'));
+    meta.unshift(I('data ok',T('data-tag','Data'),'Winstgevend, voorzichtig opschalen',
+      `Netto +${eur(net)}/stuk. ${_scaleAd?'Focus op '+_scaleAd.n+' ('+_scaleAd.roas.toFixed(2)+'×), verhoog budget met €10/dag per week.':'Verhoog Meta budget stapsgewijs €10/dag per week.'} Monitor blended ROAS.`,'','NU'));
   }
   if(trackGap>=1.7&&roas<2.65)
-    meta.push(I('data',T('data-tag','Data'),'Trackinggat: blended '+xfmt(roas)+' vs Meta '+xfmt(p.mroas),
-      `Meta ziet ${Math.round((1-1/trackGap)*100)}% van je conversies niet. CAPI Maximum Data Sharing activeren.`,'','NU'));
+    meta.push(I('data',T('data-tag','Data'),'Meta attribueert laag: blended '+xfmt(roas)+' vs Meta '+xfmt(p.mroas),
+      `Meta schrijft zichzelf weinig conversies toe. Sinds half juni sluit Meta tegen Shopify last-click, dus dit is vooral echte underperformance, geen meetlek. Stuur op blended, niet op mROAS. CAPI staat bewust op Aanbevolen, niet wijzigen.`,'','NU'));
   if(retC&&retC.spend>20&&retC.roas===null)
-    meta.push(I('data',T('data-tag','Data'),`Retargeting ${eur(retC.spend)} spend &mdash; 0 gemeten conversies`,
-      'Pixel check op thank-you pagina. CAPI verhoogt match rate. Actie vandaag.','','NU'));
+    meta.push(I('data',T('data-tag','Data'),`Retargeting ${eur(retC.spend)} spend, 0 gemeten conversies`,
+      'Controleer de pixel op de thank-you pagina. Klopt die, dan is dit echte underperformance, geen meetfout. Stuur op blended.','','NU'));
   if(p.ctr>2.8&&p.mroas!=null&&p.mroas<0.8)
-    meta.push(I('data',T('data-tag','Data'),'CTR '+pct(p.ctr)+' sterk &mdash; LP converteert niet',
+    meta.push(I('data',T('data-tag','Data'),'CTR '+pct(p.ctr)+' sterk, LP converteert niet',
       'Mensen klikken maar kopen niet. Check LP: laadtijd, reviews, headline, risk reversal.','','NU'));
   // Dynamische kill-tip op basis van META_ADS snapshot
   const _killAds = META_ADS.filter(a=>a.status==='ACTIVE'&&a.spend>25&&(a.roas===0||a.roas<1.0));
@@ -1182,19 +1182,19 @@ function generateActions(k){
   }
   if(_heractief){
     meta.push(I('playbook',T('meta','Meta'),`Heractief: ${_heractief.n} (${_heractief.roas.toFixed(2)}× voor pauzeren)`,
-      `Beste performer van ${META_ADS_DATE} vóór pauzeren. Zet terug actief in eigen CBO, €15/dag, 3 dagen meten. Als ROAS herbevestigd — budget opbouwen.`,'','NU'));
+      `Beste performer van ${META_ADS_DATE} vóór pauzeren. Zet terug actief in eigen CBO, €15/dag, 3 dagen meten. Als ROAS herbevestigd, budget opbouwen.`,'','NU'));
   }
   meta.push(I('research',T('research-tag','Research'),'Ad Library: "zonder plastic" hoek vrij in NL',
     'Scan jun-2026: geen concurrent adverteert op dit onderscheid. Creëer een ad specifiek rondom dit onderscheid.','','BINNENKORT'));
   if(retC&&retC.cpm>22)
-    meta.push(I('data',T('data-tag','Data'),'Retargeting CPM '+eur(retC.cpm)+' &mdash; ad fatigue',
+    meta.push(I('data',T('data-tag','Data'),'Retargeting CPM '+eur(retC.cpm)+', ad fatigue',
       'Verklein audience (90d i.p.v. 180d) + nieuw creatief voor retargeting.','','BINNENKORT'));
 
   // ── GOOGLE ────────────────────────────────────────────────────
   if(p.gspend>50&&p.rev/(p.gspend||1)<2.65)
-    google.push(I('data',T('data-tag','Data'),'Google blended ROAS '+xfmt(p.gspend>0?p.rev/p.gspend:null)+' &mdash; niet kostendekkend',
+    google.push(I('data',T('data-tag','Data'),'Google blended ROAS '+xfmt(p.gspend>0?p.rev/p.gspend:null)+', niet kostendekkend',
       'PMax asset groups segmenteren: merk / categorie / concurrent. Exact-negatief [waterkoker] toevoegen in Shopping.','','NU'));
-  google.push(I('playbook',T('google','Google'),'Conversietracking audit &mdash; dubbele attributie',
+  google.push(I('playbook',T('google','Google'),'Conversietracking audit, dubbele attributie',
     'Shopify → Google Tag: controleer "conversion lag" in Search Terms report. Foute tracking = foute bidstrategie.','','BINNENKORT'));
   google.push(I('playbook',T('google','Google'),'Merk vs generiek splitsen in Shopping',
     'Merkzoekopdrachten converteren 5–10× beter. Apart budgetteren en controleren.','','BINNENKORT'));
@@ -1209,7 +1209,7 @@ function generateActions(k){
   const review = flows.find(f=>f.name.includes('Review'));
   const welcome= flows.find(f=>f.name.includes('Welcome'));
   if(cart&&cart.d30_recipients<15)
-    klaviyo.push(I('data',T('email','Email'),'Abandoned Checkout &mdash; slechts '+cart.d30_recipients+' triggers (30d)',
+    klaviyo.push(I('data',T('email','Email'),'Abandoned Checkout, slechts '+cart.d30_recipients+' triggers (30d)',
       'Mogelijk Shopify/Klaviyo tracking-probleem. Controleer flow-trigger en Checkout Events.','','NU'));
   if(browse&&browse.d30_ctr<1)
     klaviyo.push(I('data',T('email','Email'),'Browse Abandonment: open rate sterk, CTR '+browse.d30_ctr.toFixed(1)+'%',
@@ -1222,8 +1222,8 @@ function generateActions(k){
       `Email 1 werkt (flow genereert €${welcome.d30_revenue.toFixed(0)} in 30d). Email 2 (cadeau-push) verwijderen of vervangen door social proof.`,'','BINNENKORT'));
   const failedCamp=(KLAVIYO.campaigns||[]).find(c=>c.conversions===0&&c.ctr>3);
   if(failedCamp)
-    klaviyo.push(I('data',T('email','Email'),'Campagne "'+failedCamp.name.slice(0,28)+'..." &mdash; 0 conversies',
-      `${failedCamp.recipients} ontvangers, CTR ${failedCamp.ctr.toFixed(1)}% — kliks maar geen aankopen. LP of coupon werkte niet.`,'','BINNENKORT'));
+    klaviyo.push(I('data',T('email','Email'),'Campagne "'+failedCamp.name.slice(0,28)+'...", 0 conversies',
+      `${failedCamp.recipients} ontvangers, CTR ${failedCamp.ctr.toFixed(1)}%, kliks maar geen aankopen. LP of coupon werkte niet.`,'','BINNENKORT'));
 
   // ── STRATEGISCH ───────────────────────────────────────────────
   const FOUR_STOCK = INVENTORY.stock != null ? INVENTORY.stock : 34;
@@ -1232,7 +1232,7 @@ function generateActions(k){
     strat.unshift(I('data',T('product','Product'),'Inventaris: FOUR heeft nog '+FOUR_STOCK+' stuks ('+fourDays+' dgn)',
       `Lead time Windspro: 45–65 dagen. Bestel nú om stockout te voorkomen. PBL heeft nog ${INVENTORY.pbl_stock||185} stuks buffer.`,'','NU'));
   if(aov!=null&&aov<72)
-    strat.push(I('data',T('product','Product'),'AOV '+eur(aov)+' &mdash; geen bundle',
+    strat.push(I('data',T('product','Product'),'AOV '+eur(aov)+', geen bundle',
       'Bijna alle orders single-unit. 2-pack €119,90 of post-checkout upsell. +20% AOV = CAC/stuk daalt €10.','','BINNENKORT'));
   strat.push(I('playbook',T('cro','CRO'),'LP headline: van specs naar ritueel',
     '"1,7L · volledig RVS" → "Zo begint elke ochtend." A/B testen. 7 dagen meten.','','BINNENKORT'));
@@ -1244,7 +1244,7 @@ function generateActions(k){
     '€1.050 COGS, €0 spend. 8 van 15 posten = 120k bereik. Content hergebruiken als UGC in Meta ads.','','LATER'));
   strat.push(I('playbook',T('organic','Organic'),'Organisch: 1× per week Reels/TikTok (Higgsfield)',
     'Algoritme-boost na 8 weken. Verlaagt paid CPM doordat organisch social proof toevoegt.','','LATER'));
-  strat.push(I('playbook',T('pr','PR'),'Seizoensplan: Sinterklaas + Kerst &mdash; start prep september',
+  strat.push(I('playbook',T('pr','PR'),'Seizoensplan: Sinterklaas + Kerst, start prep september',
     'Waterkokers zijn top-cadeau. Q4 is 3–5× hogere ROAS window. Creatieve brief nu starten.','','LATER'));
   strat.push(I('playbook',T('pr','PR'),'PR: Libelle, Margriet, HLN Lifestyle',
     'Gratis product + persbericht "duurzame waterkoker zonder plastic". 1 placement = €5k–€10k omzet + SEO backlinks.','','LATER'));
@@ -1260,18 +1260,18 @@ function generateActions(k){
       `Beste actieve ROAS (${_roasTop.roas.toFixed(2)}×). Zelfde concept omzetten naar 15s video in Higgsfield: ochtendmoment, waterkoker centraal, geen gezicht nodig. Soul: rustig + minimalistisch.`,'','NU'));
   }
   if(_ctrTop&&_ctrTop.sales===0&&_ctrTop.spend>30){
-    creative.push(I('data',T('higgsfield','Higgsfield'),`${_ctrTop.n} — CTR ${_ctrTop.ctr.toFixed(1)}% maar 0 sales`,
-      `Concept trekt clicks (${_ctrTop.ctr.toFixed(1)}% CTR) maar converteert niet op de LP. Pas de CTA aan in beeld: voeg prijs + review toe vóór het einde. Geen nieuw concept nodig — bestaande angle aanscherpen.`,'','NU'));
+    creative.push(I('data',T('higgsfield','Higgsfield'),`${_ctrTop.n}, CTR ${_ctrTop.ctr.toFixed(1)}% maar 0 sales`,
+      `Concept trekt clicks (${_ctrTop.ctr.toFixed(1)}% CTR) maar converteert niet op de LP. Pas de CTA aan in beeld: voeg prijs + review toe vóór het einde. Geen nieuw concept nodig, bestaande angle aanscherpen.`,'','NU'));
   }
   if(_killConc.length>0){
-    creative.push(I('data',T('creative','Concept'),`Stop: ${_killConc.map(a=>a.n).join(', ')} — geen conversies`,
+    creative.push(I('data',T('creative','Concept'),`Stop: ${_killConc.map(a=>a.n).join(', ')}, geen conversies`,
       `${_killConc.length > 1 ? 'Deze concepten leveren' : 'Dit concept levert'} na €${_killConc.reduce((s,a)=>s+a.spend,0).toFixed(0)} spend 0 aankopen. Geen varianten meer maken op deze creatieve hoek.`,'','NU'));
   }
   creative.push(I('creative',T('higgsfield','Higgsfield'),'Hook test: "plastic in je thee" direct response',
     'Open met: "Wist je dat plastic waterkokers giftige stoffen afgeven in je thee?" ELUNA als schoon alternatief. Comparison format. 15 sec, tekst op beeld, geen voiceover nodig.','','BINNENKORT'));
-  creative.push(I('creative',T('higgsfield','Higgsfield'),'Higgsfield: gieten-macro shot — water als held',
+  creative.push(I('creative',T('higgsfield','Higgsfield'),'Higgsfield: gieten-macro shot, water als held',
     'Geen tekst, geen voiceover. Camera volgt het water: inkoken → gieten → stoom. Muziek: rustig, minimalistische piano. 8 seconden. Ideaal als thumb-stopper voor retargeting.','','BINNENKORT'));
-  creative.push(I('creative',T('higgsfield','Higgsfield'),'Seizoen Q4: Kerst-angle in Higgsfield — start augustus',
+  creative.push(I('creative',T('higgsfield','Higgsfield'),'Seizoen Q4: Kerst-angle in Higgsfield, start augustus',
     'Waterkoker als cadeau. Warme belichting, cadeaulint, "voor iemand die het verdient." Q4 is historisch 3–5× hogere ROAS. Brief nu klaarzetten zodat in aug productie kan starten.','','LATER'));
   creative.push(I('playbook',T('creative','UGC'),'3 klantvideo\'s verzamelen voor UGC ads',
     'Email top-kopers (>€69,95 eenmalig, geen retour). Vraag 30-sec video: "hoe gebruik je ELÛNA elke ochtend?" Stuur Higgsfield-brief mee. UGC halveert doorgaans CPP vs branded content.','','LATER'));
@@ -1315,13 +1315,13 @@ function renderPerfStats(k, grossEx, cac, net){
     <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:4px">
       <div class="ps-total">${eur0(p.rev*bF)}</div>${deltaHtml}
     </div>
-    <div class="ps-sub">${p.orders} orders · ${p.units} stuks · AOV ${aov?eur(aov*bF):'—'} <span style="font-size:10px;text-transform:uppercase;letter-spacing:.06em">${showBTW?'incl':'ex'} btw</span></div>
+    <div class="ps-sub">${p.orders} orders · ${p.units} stuks · AOV ${aov?eur(aov*bF):','} <span style="font-size:10px;text-transform:uppercase;letter-spacing:.06em">${showBTW?'incl':'ex'} btw</span></div>
     ${pacingHtml}
     ${attrBadge}
     <div class="ps-divider"></div>
-    <div class="ps-row"><span class="ps-lbl">Blended ROAS</span><span class="ps-val ${roas>=2.65?'good':'warn'}">${roas>0?xfmt(roas):'—'}</span></div>
-    <div class="ps-row"><span class="ps-lbl">CAC / stuk</span><span class="ps-val ${cac&&cac>grossEx?'warn':'good'}">${cac?eur(cac):'—'}</span></div>
-    <div class="ps-row"><span class="ps-lbl">Netto / stuk</span><span class="ps-val ${net&&net<0?'warn':'good'}">${net?(net<0?'−':'+')+eur(Math.abs(net)):'—'}</span></div>
+    <div class="ps-row"><span class="ps-lbl">Blended ROAS</span><span class="ps-val ${roas>=2.65?'good':'warn'}">${roas>0?xfmt(roas):','}</span></div>
+    <div class="ps-row"><span class="ps-lbl">CAC / stuk</span><span class="ps-val ${cac&&cac>grossEx?'warn':'good'}">${cac?eur(cac):','}</span></div>
+    <div class="ps-row"><span class="ps-lbl">Netto / stuk</span><span class="ps-val ${net&&net<0?'warn':'good'}">${net?(net<0?'−':'+')+eur(Math.abs(net)):','}</span></div>
     <div class="ps-row"><span class="ps-lbl">Ad-spend totaal</span><span class="ps-val">${eur(tot)}</span></div>`;
 }
 
@@ -1355,9 +1355,9 @@ function renderAdMix(k){
     <div class="ps-row"><span class="ps-lbl" style="font-size:11px">Meta in-platform ROAS</span><span class="ps-val" style="font-size:12px;color:${mroasColor}">${xfmt(p.mroas)}</span></div>
     <div class="ps-row"><span class="ps-lbl" style="font-size:11px">Google ROAS</span><span class="ps-val" style="font-size:12px;color:${groasColor}">${xfmt(p.groas)}</span></div>
     <div class="ps-divider" style="margin:10px 0 8px"></div>
-    <div class="ps-row" style="padding:5px 0"><span class="ps-lbl" style="font-weight:600;color:var(--fg)">Blended ROAS</span><span class="ps-val" style="font-size:15px;color:${bColor}">${blended!=null?xfmt(blended):'—'}</span></div>
-    <div class="ps-row"><span class="ps-lbl" style="font-size:11px">CAC / stuk</span><span class="ps-val" style="font-size:12px;color:${cacColor}">${cac?eur(cac):'—'}</span></div>
-    <div class="ps-row"><span class="ps-lbl" style="font-size:11px">Netto / stuk</span><span class="ps-val" style="font-size:12px;color:${netColor}">${net!=null?(net<0?'−':'+')+eur(Math.abs(net)):'—'}</span></div>`;
+    <div class="ps-row" style="padding:5px 0"><span class="ps-lbl" style="font-weight:600;color:var(--fg)">Blended ROAS</span><span class="ps-val" style="font-size:15px;color:${bColor}">${blended!=null?xfmt(blended):','}</span></div>
+    <div class="ps-row"><span class="ps-lbl" style="font-size:11px">CAC / stuk</span><span class="ps-val" style="font-size:12px;color:${cacColor}">${cac?eur(cac):','}</span></div>
+    <div class="ps-row"><span class="ps-lbl" style="font-size:11px">Netto / stuk</span><span class="ps-val" style="font-size:12px;color:${netColor}">${net!=null?(net<0?'−':'+')+eur(Math.abs(net)):','}</span></div>`;
 }
 
 function renderGoogleCamp(k){
@@ -1415,21 +1415,21 @@ function renderGoogleCamp(k){
               <td><div style="font-weight:600">${c.name}</div><div style="font-size:11px;color:var(--muted);margin-top:1px">${c.type}</div></td>
               <td style="text-align:right">${eur(c.spend)}</td>
               ${dailyAvg!=null?`<td style="text-align:right;color:var(--muted)">${days?eur(c.spend/days):'-'}/dag</td>`:''}
-              <td style="text-align:right;font-weight:600;color:${c.roas!=null&&c.roas>=2.65?'var(--good)':'var(--warn)'}">${c.roas!=null?xfmt(c.roas):'—'}</td>
+              <td style="text-align:right;font-weight:600;color:${c.roas!=null&&c.roas>=2.65?'var(--good)':'var(--warn)'}">${c.roas!=null?xfmt(c.roas):','}</td>
               <td style="text-align:right"><span style="font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 7px">${c.type}</span></td>
             </tr>`).join('');
           return `<tr>
             <td><div style="font-weight:600">Shopping / PMAX</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Performance Max · acquisitie</div></td>
-            <td style="text-align:right;color:var(--muted)">—</td>
-            ${dailyAvg!=null?`<td style="text-align:right;color:var(--muted)">—</td>`:''}
-            <td style="text-align:right;color:var(--muted)">—</td>
+            <td style="text-align:right;color:var(--muted)">,</td>
+            ${dailyAvg!=null?`<td style="text-align:right;color:var(--muted)">,</td>`:''}
+            <td style="text-align:right;color:var(--muted)">,</td>
             <td style="text-align:right"><span style="font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 7px">Handmatig</span></td>
           </tr>
           <tr>
             <td><div style="font-weight:600">Brand Search</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Search · merkbescherming</div></td>
-            <td style="text-align:right;color:var(--muted)">—</td>
-            ${dailyAvg!=null?`<td style="text-align:right;color:var(--muted)">—</td>`:''}
-            <td style="text-align:right;color:var(--muted)">—</td>
+            <td style="text-align:right;color:var(--muted)">,</td>
+            ${dailyAvg!=null?`<td style="text-align:right;color:var(--muted)">,</td>`:''}
+            <td style="text-align:right;color:var(--muted)">,</td>
             <td style="text-align:right"><span style="font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 7px">Handmatig</span></td>
           </tr>`;
         })()}
@@ -1438,7 +1438,7 @@ function renderGoogleCamp(k){
         <td style="font-weight:700">Totaal Google</td>
         <td style="text-align:right;font-weight:700">${eur(gspend)}</td>
         ${dailyAvg!=null?`<td style="text-align:right;color:var(--muted)">${eur(dailyAvg)}/dag</td>`:''}
-        <td style="text-align:right;font-weight:700;color:${gRoasColor}">${groas?xfmt(groas):'—'}</td>
+        <td style="text-align:right;font-weight:700;color:${gRoasColor}">${groas?xfmt(groas):','}</td>
         <td style="text-align:right"><span style="font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 7px">Account</span></td>
       </tr></tfoot>
     </table>
@@ -1494,17 +1494,17 @@ function renderBlendedCamp(k){
       </div>
       <div>
         <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Blended ROAS</div>
-        <div style="font-size:24px;font-weight:700;letter-spacing:-.025em;color:${bRoasClr};line-height:1">${bRoas ? xfmt(bRoas) : '—'}</div>
+        <div style="font-size:24px;font-weight:700;letter-spacing:-.025em;color:${bRoasClr};line-height:1">${bRoas ? xfmt(bRoas) : ','}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:4px">break-even ${beRoas}× ${bDeltaHtml}</div>
       </div>
       <div>
         <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">CAC / unit</div>
-        <div style="font-size:24px;font-weight:700;letter-spacing:-.025em;color:${cacClr};line-height:1">${cac ? eur(cac) : '—'}</div>
+        <div style="font-size:24px;font-weight:700;letter-spacing:-.025em;color:${cacClr};line-height:1">${cac ? eur(cac) : ','}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:4px">doel ≤ €14,45</div>
       </div>
       <div>
         <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Netto / unit</div>
-        <div style="font-size:24px;font-weight:700;letter-spacing:-.025em;color:${netClr};line-height:1">${net != null ? (net >= 0 ? '+' : '') + eur(net) : '—'}</div>
+        <div style="font-size:24px;font-weight:700;letter-spacing:-.025em;color:${netClr};line-height:1">${net != null ? (net >= 0 ? '+' : '') + eur(net) : ','}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:4px">doel €10,89</div>
       </div>
     </div>`;
@@ -1538,22 +1538,22 @@ function renderChannelViews(k){
         </div>
         <div>
           <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">CPM</div>
-          <div style="font-size:26px;font-weight:700;color:var(--ink);line-height:1">${avgCpm!=null?eur(avgCpm):'—'}</div>
+          <div style="font-size:26px;font-weight:700;color:var(--ink);line-height:1">${avgCpm!=null?eur(avgCpm):','}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:3px">${num(tI)} impressies</div>
         </div>
         <div>
           <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">CTR</div>
-          <div style="font-size:26px;font-weight:700;color:var(--ink);line-height:1">${avgCtr!=null?pct(avgCtr):'—'}</div>
+          <div style="font-size:26px;font-weight:700;color:var(--ink);line-height:1">${avgCtr!=null?pct(avgCtr):','}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:3px">${num(tCl)} klikken</div>
         </div>
         <div>
           <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">CPC</div>
-          <div style="font-size:26px;font-weight:700;color:var(--ink);line-height:1">${avgCpc!=null?eur(avgCpc):'—'}</div>
+          <div style="font-size:26px;font-weight:700;color:var(--ink);line-height:1">${avgCpc!=null?eur(avgCpc):','}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:3px">gemiddeld</div>
         </div>
         <div>
           <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Blended ROAS</div>
-          <div style="font-size:26px;font-weight:700;line-height:1;color:${bRoas!=null&&bRoas>=2.65?'var(--good)':'var(--warn)'}">${bRoas!=null?xfmt(bRoas):'—'}</div>
+          <div style="font-size:26px;font-weight:700;line-height:1;color:${bRoas!=null&&bRoas>=2.65?'var(--good)':'var(--warn)'}">${bRoas!=null?xfmt(bRoas):','}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:3px">break-even 2,65×</div>
         </div>
       </div>`;
@@ -1589,21 +1589,21 @@ function renderChannelViews(k){
           <div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Spend</div>
             <div style="font-size:26px;font-weight:700;color:var(--ink);line-height:1">${eur(gspend)}</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:3px">${dailyG?eur(dailyG)+'/dag':'—'}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">${dailyG?eur(dailyG)+'/dag':','}</div>
           </div>
           <div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Google ROAS</div>
-            <div style="font-size:26px;font-weight:700;line-height:1;color:${gRoas!=null&&gRoas>=2.65?'var(--good)':'var(--warn)'}">${gRoas!=null?xfmt(gRoas):'—'}</div>
+            <div style="font-size:26px;font-weight:700;line-height:1;color:${gRoas!=null&&gRoas>=2.65?'var(--good)':'var(--warn)'}">${gRoas!=null?xfmt(gRoas):','}</div>
             <div style="font-size:11px;color:var(--muted);margin-top:3px">break-even 2,65×</div>
           </div>
           <div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Blended ROAS</div>
-            <div style="font-size:26px;font-weight:700;line-height:1;color:${bRoas!=null&&bRoas>=2.65?'var(--good)':'var(--warn)'}">${bRoas!=null?xfmt(bRoas):'—'}</div>
+            <div style="font-size:26px;font-weight:700;line-height:1;color:${bRoas!=null&&bRoas>=2.65?'var(--good)':'var(--warn)'}">${bRoas!=null?xfmt(bRoas):','}</div>
             <div style="font-size:11px;color:var(--muted);margin-top:3px">Meta + Google</div>
           </div>
           <div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Campagnes</div>
-            <div style="font-size:26px;font-weight:700;color:var(--ink);line-height:1">${gc.length||'—'}</div>
+            <div style="font-size:26px;font-weight:700;color:var(--ink);line-height:1">${gc.length||','}</div>
             <div style="font-size:11px;color:var(--muted);margin-top:3px">actief met spend</div>
           </div>
         </div>`;
@@ -1631,9 +1631,9 @@ function renderChannelViews(k){
 
 function renderEmail(){
   const k = KLAVIYO;
-  const fmtN = n => n == null ? '—' : Number(n).toLocaleString('nl-NL');
-  const fmtPct = n => n == null ? '—' : Number(n).toLocaleString('nl-NL',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
-  const fmtEur = n => n == null || n === 0 ? '—' : '€'+Number(n).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtN = n => n == null ? ',' : Number(n).toLocaleString('nl-NL');
+  const fmtPct = n => n == null ? ',' : Number(n).toLocaleString('nl-NL',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
+  const fmtEur = n => n == null || n === 0 ? ',' : '€'+Number(n).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2});
 
   // ── KPI bar ──────────────────────────────────────────────────────
   if(!k || !k.mtd_received) {
@@ -1671,7 +1671,7 @@ function renderEmail(){
     const rows = flows.map(f => {
       const rph = f.d30_recipients > 0 && f.d30_revenue > 0
         ? '€'+(f.d30_revenue/f.d30_recipients).toFixed(2).replace('.',',')
-        : '—';
+        : ',';
       const orClass = f.d30_open_rate >= 40 ? 'val-good' : f.d30_open_rate >= 25 ? '' : 'val-warn';
       const ctrClass = f.d30_ctr >= 3 ? 'val-good' : f.d30_ctr >= 1 ? '' : 'val-warn';
       const convClass = f.d30_conversions > 0 ? 'val-good' : 'val-muted';
@@ -1720,8 +1720,8 @@ function renderEmail(){
         : `<td>${fmtN(c.recipients)}</td>
            <td class="${orClass}">${fmtPct(c.open_rate)}</td>
            <td>${fmtPct(c.ctr)}</td>
-           <td class="${convClass}">${c.conversions != null ? c.conversions : '—'}</td>
-           <td>${c.unsubscribes != null ? c.unsubscribes : '—'} unsubs</td>`;
+           <td class="${convClass}">${c.conversions != null ? c.conversions : ','}</td>
+           <td>${c.unsubscribes != null ? c.unsubscribes : ','} unsubs</td>`;
       return `<tr>
         <td>
           <div class="flow-name">${c.name}</div>
@@ -1753,13 +1753,13 @@ function renderEmail(){
   const browse = flows.find(f=>f.name==='Browse Abandonment');
   const review = flows.find(f=>f.name==='Product Review');
   const bullets = [];
-  if(welcome) bullets.push(`Welcome Series genereert <strong>${fmtEur(welcome.d30_revenue)}</strong> in 30d — beste flow. Email 2 (cadeau) converteert niet; overweeg hem te verwijderen of te vervangen.`);
-  if(cart && cart.d30_recipients < 15) bullets.push(`Abandoned Checkout heeft maar <strong>${cart.d30_recipients} triggers</strong> in 30d — mogelijk tracking-probleem in Shopify/Klaviyo. Controleer de flow-trigger.`);
-  if(browse && browse.d30_ctr < 1) bullets.push(`Browse Abandonment: open rate ${fmtPct(browse.d30_open_rate)}, maar CTR ${fmtPct(browse.d30_ctr)} — CTA of aanbod werkt niet. Test een kortingsaanbieding.`);
-  if(review && review.d30_ctr === 0) bullets.push(`Product Review flow: 0 clicks op review-CTA — knop of onderwerpregel werkt niet. A/B testen met ander CTA-format.`);
+  if(welcome) bullets.push(`Welcome Series genereert <strong>${fmtEur(welcome.d30_revenue)}</strong> in 30d, beste flow. Email 2 (cadeau) converteert niet; overweeg hem te verwijderen of te vervangen.`);
+  if(cart && cart.d30_recipients < 15) bullets.push(`Abandoned Checkout heeft maar <strong>${cart.d30_recipients} triggers</strong> in 30d, mogelijk tracking-probleem in Shopify/Klaviyo. Controleer de flow-trigger.`);
+  if(browse && browse.d30_ctr < 1) bullets.push(`Browse Abandonment: open rate ${fmtPct(browse.d30_open_rate)}, maar CTR ${fmtPct(browse.d30_ctr)}, CTA of aanbod werkt niet. Test een kortingsaanbieding.`);
+  if(review && review.d30_ctr === 0) bullets.push(`Product Review flow: 0 clicks op review-CTA, knop of onderwerpregel werkt niet. A/B testen met ander CTA-format.`);
   const mailCamp = camps.find(c=>c.name&&c.name.includes('25 Korting'));
-  if(mailCamp && mailCamp.conversions === 0 && mailCamp.ctr > 0) bullets.push(`Campagne €25 korting: 18 klikken, 0 conversies — controleer of de couponcode actief was en of de landingspagina werkte.`);
-  bullets.push(`Totale email-omzet flows 30d: <strong>${fmtEur(totalRevFlows)}</strong> (${totalConvFlows} conversies). Email is nog onderbenut — Abandoned Checkout fixen is quick win.`);
+  if(mailCamp && mailCamp.conversions === 0 && mailCamp.ctr > 0) bullets.push(`Campagne €25 korting: 18 klikken, 0 conversies, controleer of de couponcode actief was en of de landingspagina werkte.`);
+  bullets.push(`Totale email-omzet flows 30d: <strong>${fmtEur(totalRevFlows)}</strong> (${totalConvFlows} conversies). Email is nog onderbenut, Abandoned Checkout fixen is quick win.`);
 
   document.getElementById('email-analyse').innerHTML = `
     <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8FA68A;margin-bottom:12px">Analyse</div>
@@ -1809,12 +1809,12 @@ function renderMargesTable(){
     const roasCls = roas==null ? '' : roas>=2.65 ? 'good' : 'warn';
     rows += `<tr>
       <td style="font-weight:600">${lbl}</td>
-      <td>${eur(tot)||'—'}</td>
-      <td style="text-align:center">${p.units||'—'}</td>
-      <td class="${cac&&cac>grossEx?'warn':''}">${cac?eur(cac):'—'}</td>
+      <td>${eur(tot)||','}</td>
+      <td style="text-align:center">${p.units||','}</td>
+      <td class="${cac&&cac>grossEx?'warn':''}">${cac?eur(cac):','}</td>
       <td>${eur(grossEx)}</td>
-      <td class="${netCls}" style="font-weight:600">${net!=null?(net<0?'−':'')+eur(Math.abs(net)):'—'}</td>
-      <td class="${roasCls}">${roas!=null?xfmt(roas)+'×':'—'}</td>
+      <td class="${netCls}" style="font-weight:600">${net!=null?(net<0?'−':'')+eur(Math.abs(net)):','}</td>
+      <td class="${roasCls}">${roas!=null?xfmt(roas)+'×':','}</td>
     </tr>`;
   });
   el.innerHTML = `<table class="ctable" style="width:100%">
@@ -2027,7 +2027,7 @@ function toggleBTW(){
   render(currentK);
 }
 
-// toggleChartType verwijderd — chart is altijd bar + vergelijkingsperiode
+// toggleChartType verwijderd, chart is altijd bar + vergelijkingsperiode
 
 function switchTab(tabId){
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
@@ -2059,17 +2059,17 @@ function renderRichon(k){
     if(net < 0){
       bullets.push(`Contribution margin is negatief: −${eur(Math.abs(net))} per stuk. CAC ${eur(cac)} > brutomarge ${eur(grossEx)}. Sean: "Fix je unit economics vóór je een euro extra uitgeeft."`);
     } else {
-      bullets.push(`Contribution margin: +${eur(net)} per stuk. Marge ${eur(grossEx)} minus CAC ${eur(cac)}. Dit is de maatstaf — niet ROAS.`);
+      bullets.push(`Contribution margin: +${eur(net)} per stuk. Marge ${eur(grossEx)} minus CAC ${eur(cac)}. Dit is de maatstaf, niet ROAS.`);
     }
   }
 
   // 2. Blended ROAS vs break-even
   if(roas > 0 && roas < 2.65){
-    bullets.push(`Blended ROAS ${xfmt(roas)} — onder break-even van 2,65×. Per €100 spend verlies je ${eur((2.65 - roas) * 100)} aan marge. Geen schaal zolang dit rood staat.`);
+    bullets.push(`Blended ROAS ${xfmt(roas)}, onder break-even van 2,65×. Per €100 spend verlies je ${eur((2.65 - roas) * 100)} aan marge. Geen schaal zolang dit rood staat.`);
   } else if(roas >= 2.65){
-    bullets.push(`Blended ROAS ${xfmt(roas)} — boven break-even. Unit economics werken. Schaal voorzichtig: +20% budget, 48u monitoren, niet dubbelslaan.`);
+    bullets.push(`Blended ROAS ${xfmt(roas)}, boven break-even. Unit economics werken. Schaal voorzichtig: +20% budget, 48u monitoren, niet dubbelslaan.`);
   } else {
-    bullets.push(`Geen spend geregistreerd — geen ROAS of margin berekening mogelijk voor deze periode.`);
+    bullets.push(`Geen spend geregistreerd, geen ROAS of margin berekening mogelijk voor deze periode.`);
   }
 
   // 3. Inventory: two-location view (Sean Frank obsesses over inventory efficiency)
@@ -2083,7 +2083,7 @@ function renderRichon(k){
     const breakEvenRev = 2.65 * tot;
     const delta = breakEvenRev - p.rev;
     if(delta > 0){
-      bullets.push(`€${Math.round(dailyBurn)}/dag burn. Break-even vereist ${eur(breakEvenRev)} omzet deze periode — delta ${eur(delta)}. Geen budgetverhoging voor dit gat gedicht is.`);
+      bullets.push(`€${Math.round(dailyBurn)}/dag burn. Break-even vereist ${eur(breakEvenRev)} omzet deze periode, delta ${eur(delta)}. Geen budgetverhoging voor dit gat gedicht is.`);
     } else {
       bullets.push(`€${Math.round(dailyBurn)}/dag burn bij positieve contribution. Schaalbaar als ROAS stabiel blijft over 3+ dagen.`);
     }
@@ -2103,7 +2103,7 @@ function renderRichon(k){
   bEl.innerHTML = bullets.map(b => `<li>${b}</li>`).join('');
 
   const action = net != null && net < 0
-    ? `Fix eerst: contribution margin positief krijgen. Dat betekent CAC omlaag (offer, CAPI, creatief) — niet budget omlaag.`
+    ? `Fix eerst: contribution margin positief krijgen. Dat betekent CAC omlaag (offer, CAPI, creatief), niet budget omlaag.`
     : roas < 2.65
     ? `ROAS onder break-even: focus op CVR-verbeteringen en CAPI. Geen budgetverhoging.`
     : `Unit economics werken. Schaal in stappen van +20%. Monitor dagelijks, niet wekelijks.`;
@@ -2117,7 +2117,7 @@ function renderStockBar(k){
   const el = document.getElementById('stock-bar');
   if(!el) return;
   const stock = INVENTORY.stock != null ? INVENTORY.stock : 34;         // FOUR
-  const pblStock = INVENTORY.pbl_stock != null ? INVENTORY.pbl_stock : 185; // PBL — fallback op MOQ-berekening
+  const pblStock = INVENTORY.pbl_stock != null ? INVENTORY.pbl_stock : 185; // PBL, fallback op MOQ-berekening
   const moq = INVENTORY.moq || 500;
   const realSold = INVENTORY.real_sold || null;
   const giveaways = INVENTORY.giveaways || null;
@@ -2207,7 +2207,7 @@ function renderStockBar(k){
           </tr>
           <tr>
             <td style="padding:5px 0;color:var(--ink)"><span style="color:#D4DCC4;margin-right:6px">■</span>PBL warehouse</td>
-            <td style="text-align:right;padding:5px 16px;font-weight:600;color:var(--ink)">${pblStock != null ? pblStock : '—'}</td>
+            <td style="text-align:right;padding:5px 16px;font-weight:600;color:var(--ink)">${pblStock != null ? pblStock : ','}</td>
             <td style="color:var(--muted)">500 − ${moq - (pblStock||0)} naar FOUR</td>
           </tr>
           <tr style="border-top:1px solid var(--line)">
@@ -2232,7 +2232,7 @@ function renderStockBar(k){
         <div>
           <div style="font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;margin-bottom:2px">PBL · Hoofdmagazijn</div>
           <div style="font-size:10px;color:var(--muted);margin-bottom:6px">Buffer</div>
-          <div class="stock-val" style="font-size:22px;margin-bottom:0;color:var(--ink)">${pblStock != null ? pblStock : '—'}</div>
+          <div class="stock-val" style="font-size:22px;margin-bottom:0;color:var(--ink)">${pblStock != null ? pblStock : ','}</div>
           <div class="stock-sub">stuks</div>
         </div>
         <div>
@@ -2243,21 +2243,21 @@ function renderStockBar(k){
         </div>
         <div style="text-align:right">
           <div class="stock-lbl">Runway (FOUR)</div>
-          <div class="stock-val ${runwayCls}" style="font-size:20px">${runway != null ? runway + ' dgn' : '—'}</div>
-          <div class="stock-sub">stockout ${stockout || '—'} · ${dailyUnits ? dailyUnits.toFixed(1)+'/dag' : '—'}</div>
+          <div class="stock-val ${runwayCls}" style="font-size:20px">${runway != null ? runway + ' dgn' : ','}</div>
+          <div class="stock-sub">stockout ${stockout || ','} · ${dailyUnits ? dailyUnits.toFixed(1)+'/dag' : ','}</div>
         </div>
       </div>
       ${moqHtml}
     </div>
     <div class="stock-tile ${runwayCls}" style="grid-column: span 2">
       <div class="stock-lbl">Stockout FOUR</div>
-      <div class="stock-val ${runwayCls}" style="font-size:18px">${stockout || '—'}</div>
+      <div class="stock-val ${runwayCls}" style="font-size:18px">${stockout || ','}</div>
       <div class="stock-sub">aanvullen vanuit PBL &middot; 2-3 dgn</div>
     </div>
     <div class="stock-tile ${totalTileCls}" style="grid-column: span 2">
       <div class="stock-lbl">Stockout PBL</div>
-      <div class="stock-val ${totalRunwayCls}" style="font-size:18px">${totalStockout || '—'}</div>
-      <div class="stock-sub">${totalRunway != null && totalRunway <= 65 ? 'bestel nu bij Windspro' : 'lead time 45-65d'} &middot; ${totalRunway != null ? totalRunway + ' dgn' : '—'}</div>
+      <div class="stock-val ${totalRunwayCls}" style="font-size:18px">${totalStockout || ','}</div>
+      <div class="stock-sub">${totalRunway != null && totalRunway <= 65 ? 'bestel nu bij Windspro' : 'lead time 45-65d'} &middot; ${totalRunway != null ? totalRunway + ' dgn' : ','}</div>
     </div>`;
 }
 
@@ -2290,8 +2290,8 @@ function renderMarketing(k){
   const googImp   = googCamps.reduce((s, c) => s + (c.imp    || 0), 0);
   const googClk   = googCamps.reduce((s, c) => s + (c.clicks || 0), 0);
 
-  const fmt0 = n => n == null ? '—' : Math.round(n).toLocaleString('nl-NL');
-  const fmtPct = n => n == null ? '—' : n.toFixed(1).replace('.',',') + '%';
+  const fmt0 = n => n == null ? ',' : Math.round(n).toLocaleString('nl-NL');
+  const fmtPct = n => n == null ? ',' : n.toFixed(1).replace('.',',') + '%';
 
   // ── SUMMARY BAR ────────────────────────────────────────────────
   const summEl = document.getElementById('mktg-summary');
@@ -2304,11 +2304,11 @@ function renderMarketing(k){
         <div class="mktg-metric-sub">${sub}</div>
       </div>`;
     summEl.innerHTML = `<div class="mktg-grid5">
-      ${mkM('Omzet', rev > 0 ? eur(rev * bF) : '—', p.label)}
-      ${mkM('Bestellingen', orders || '—', (p.units||0) + ' stuks')}
-      ${mkM('Gem. orderwaarde', aov ? eur(aov * bF) : '—', 'per bestelling')}
-      ${mkM('Blended ROAS', bRoas ? xfmt(bRoas) : '—', 'break-even 2,65×', bRoasClr)}
-      ${mkM('Ad-spend', totSpend > 0 ? eur(totSpend) : '—', 'Meta + Google')}
+      ${mkM('Omzet', rev > 0 ? eur(rev * bF) : ',', p.label)}
+      ${mkM('Bestellingen', orders || ',', (p.units||0) + ' stuks')}
+      ${mkM('Gem. orderwaarde', aov ? eur(aov * bF) : ',', 'per bestelling')}
+      ${mkM('Blended ROAS', bRoas ? xfmt(bRoas) : ',', 'break-even 2,65×', bRoasClr)}
+      ${mkM('Ad-spend', totSpend > 0 ? eur(totSpend) : ',', 'Meta + Google')}
     </div>`;
   }
 
@@ -2400,18 +2400,18 @@ function renderMarketing(k){
   const chEl = document.getElementById('mktg-ch-table');
   if(chEl){
     const chRow = (dot, name, spend, imp, clicks, attrRev, roas, pct, extraCols) => {
-      const cpc = spend > 0 && clicks > 0 ? eur(spend/clicks) : '—';
-      const cpm = spend > 0 && imp > 0    ? eur(spend/imp*1000) : '—';
+      const cpc = spend > 0 && clicks > 0 ? eur(spend/clicks) : ',';
+      const cpm = spend > 0 && imp > 0    ? eur(spend/imp*1000) : ',';
       return `<tr>
         <td><span class="mktg-ch-badge"><span class="mktg-ch-dot" style="background:${dot}"></span>${name}</span></td>
-        <td>${spend > 0 ? eur(spend) : '—'}</td>
-        <td>${imp > 0 ? fmt0(imp) : '—'}</td>
-        <td>${clicks > 0 ? fmt0(clicks) : '—'}</td>
+        <td>${spend > 0 ? eur(spend) : ','}</td>
+        <td>${imp > 0 ? fmt0(imp) : ','}</td>
+        <td>${clicks > 0 ? fmt0(clicks) : ','}</td>
         <td>${cpm}</td>
         <td>${cpc}</td>
-        <td style="font-weight:600">${attrRev > 0 ? eur(attrRev * bF) : '—'}</td>
-        <td>${roas ? xfmt(roas) : '—'}</td>
-        <td>${pct > 0 ? `<span style="font-weight:600">${pct.toFixed(0)}%</span>` : '—'}</td>
+        <td style="font-weight:600">${attrRev > 0 ? eur(attrRev * bF) : ','}</td>
+        <td>${roas ? xfmt(roas) : ','}</td>
+        <td>${pct > 0 ? `<span style="font-weight:600">${pct.toFixed(0)}%</span>` : ','}</td>
       </tr>`;
     };
     const totRev = rev > 0 ? rev : 1;
@@ -2441,32 +2441,32 @@ function renderMarketing(k){
           ${chRow('#34A853','Google Ads', gspend, googImp, googClk, googAttr, googRoasEff, googAttr/totRev*100)}
           <tr>
             <td><span class="mktg-ch-badge"><span class="mktg-ch-dot" style="background:#AEB893"></span>Email (Klaviyo)</span></td>
-            <td style="color:var(--muted)">—</td>
-            <td>${klSends ? fmt0(klSends) + ' <span style="color:var(--muted);font-size:10px">vznd</span>' : '—'}</td>
-            <td>${klOpen ? fmtPct(klOpen) + ' <span style="color:var(--muted);font-size:10px">open</span>' : '—'}</td>
-            <td style="color:var(--muted)">—</td>
-            <td>${klClick ? fmtPct(klClick) + ' <span style="color:var(--muted);font-size:10px">CTR</span>' : '—'}</td>
-            <td style="font-weight:600">${emailRev > 0 ? eur(emailRev * bF) : '—'}</td>
-            <td style="color:var(--muted)">—</td>
-            <td>${emailRev > 0 ? `<span style="font-weight:600">${(emailRev/totRev*100).toFixed(0)}%</span>` : '—'}</td>
+            <td style="color:var(--muted)">,</td>
+            <td>${klSends ? fmt0(klSends) + ' <span style="color:var(--muted);font-size:10px">vznd</span>' : ','}</td>
+            <td>${klOpen ? fmtPct(klOpen) + ' <span style="color:var(--muted);font-size:10px">open</span>' : ','}</td>
+            <td style="color:var(--muted)">,</td>
+            <td>${klClick ? fmtPct(klClick) + ' <span style="color:var(--muted);font-size:10px">CTR</span>' : ','}</td>
+            <td style="font-weight:600">${emailRev > 0 ? eur(emailRev * bF) : ','}</td>
+            <td style="color:var(--muted)">,</td>
+            <td>${emailRev > 0 ? `<span style="font-weight:600">${(emailRev/totRev*100).toFixed(0)}%</span>` : ','}</td>
           </tr>
           <tr>
             <td><span class="mktg-ch-badge"><span class="mktg-ch-dot" style="background:var(--line)"></span>Organisch / Direct</span></td>
-            <td style="color:var(--muted)">—</td>
-            <td style="color:var(--muted)">—</td>
-            <td style="color:var(--muted)">—</td>
-            <td style="color:var(--muted)">—</td>
-            <td style="color:var(--muted)">—</td>
-            <td style="font-weight:600">${orgAttr > 0 ? eur(orgAttr * bF) : '—'}</td>
-            <td style="color:var(--muted)">—</td>
-            <td>${orgAttr > 0 ? `<span style="font-weight:600">${(orgAttr/totRev*100).toFixed(0)}%</span>` : '—'}</td>
+            <td style="color:var(--muted)">,</td>
+            <td style="color:var(--muted)">,</td>
+            <td style="color:var(--muted)">,</td>
+            <td style="color:var(--muted)">,</td>
+            <td style="color:var(--muted)">,</td>
+            <td style="font-weight:600">${orgAttr > 0 ? eur(orgAttr * bF) : ','}</td>
+            <td style="color:var(--muted)">,</td>
+            <td>${orgAttr > 0 ? `<span style="font-weight:600">${(orgAttr/totRev*100).toFixed(0)}%</span>` : ','}</td>
           </tr>
           <tr class="total">
             <td>Totaal</td>
-            <td>${totSpend > 0 ? eur(totSpend) : '—'}</td>
+            <td>${totSpend > 0 ? eur(totSpend) : ','}</td>
             <td></td><td></td><td></td><td></td>
             <td>${eur(rev * bF)}</td>
-            <td>${bRoas ? xfmt(bRoas) : '—'}</td>
+            <td>${bRoas ? xfmt(bRoas) : ','}</td>
             <td>100%</td>
           </tr>
         </tbody>
@@ -2499,7 +2499,7 @@ function renderMarketing(k){
           </div>
         </div>
         <div style="text-align:right;font-weight:600;color:${s.clr}">${eur(projRev * bF)}</div>
-        <div style="text-align:right;color:var(--muted);font-size:12px">${projUnits} st. · ${projNetto != null && projNetto >= 0 ? '+' : ''}${projNetto != null ? eur(projNetto) : '—'}/st</div>
+        <div style="text-align:right;color:var(--muted);font-size:12px">${projUnits} st. · ${projNetto != null && projNetto >= 0 ? '+' : ''}${projNetto != null ? eur(projNetto) : ','}/st</div>
       </div>`;
     }).join('');
     const gap = bRoas ? (beRoas - bRoas) * totSpend : null;
@@ -2526,7 +2526,7 @@ const GROEI_HIST = [
   {ym:'2026-05', label:'Mei', rev:3077.95, orders:46, days:31},
 ];
 
-// Meta advertentie-snapshot — bijwerken via MCP ads_get_ad_entities level=ad (this_month)
+// Meta advertentie-snapshot, bijwerken via MCP ads_get_ad_entities level=ad (this_month)
 let META_ADS_DATE = '1-20 jun 2026'; // wordt 'live' zodra /api/data ad-niveau levert
 const META_ADS_SNAPSHOT = [
   // ACTIEF (effective_status=ACTIVE, gesorteerd op spend)
@@ -2574,7 +2574,7 @@ function renderMetaKillScale(k){
 
   const rows = activeAds.map(a=>{
     const v = verdict(a);
-    const roasTxt = a.roas>0 ? a.roas.toFixed(2)+'×' : '—';
+    const roasTxt = a.roas>0 ? a.roas.toFixed(2)+'×' : ',';
     const roasClr = a.roas>=BE?'var(--good)':a.roas>=1?'var(--warn)':'#C8705A';
     const barW = a.roas>0 ? Math.min(100,(a.roas/BE)*100) : 0;
     const barClr = a.roas>=BE?'var(--good)':a.roas>0?'var(--warn)':'var(--line)';
@@ -2616,7 +2616,7 @@ function renderMetaKillScale(k){
     <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:flex;gap:20px;flex-wrap:wrap">
       <span>Spend actief: <b>${eur(actSpend,0)}</b></span>
       ${killSpend>0?`<span>Stop deze ads: <b style="color:#C8705A">${eur(killSpend,0)} vrij</b></span>`:''}
-      <span>CPP: <b>${actSales>0?eur(actSpend/actSales,0):'—'}</b></span>
+      <span>CPP: <b>${actSales>0?eur(actSpend/actSales,0):','}</b></span>
     </div>`;
 }
 
@@ -2743,13 +2743,13 @@ function renderGroei(){
     } else if(growthPct<-5){
       s+=`<div class="signal"><span class="dot flag" style="margin-top:5px"></span><span><b>Groeitempo achter op mei</b>Daggemiddelde ${eur(dailyCurr,0)}/dag vs ${eur(dailyMei,0)}/dag. Actie nodig.</span></div>`;
     } else {
-      s+=`<div class="signal neutral"><span class="dot idle" style="margin-top:5px"></span><span><b>Groeitempo stabiel</b>Daggemiddelde ${eur(dailyCurr,0)}/dag — in lijn met mei (${eur(dailyMei,0)}/dag).</span></div>`;
+      s+=`<div class="signal neutral"><span class="dot idle" style="margin-top:5px"></span><span><b>Groeitempo stabiel</b>Daggemiddelde ${eur(dailyCurr,0)}/dag, in lijn met mei (${eur(dailyMei,0)}/dag).</span></div>`;
     }
     const aovMei=lastHist.rev/lastHist.orders;
     if(aovMtd>0&&aovMtd<aovMei-1.5){
       s+=`<div class="signal"><span class="dot flag" style="margin-top:5px"></span><span><b>AOV licht gedaald</b>Gem. orderwaarde ${eur(aovMtd)} vs ${eur(aovMei)} in mei.</span></div>`;
     } else if(aovMtd>0){
-      s+=`<div class="signal good"><span class="dot live" style="margin-top:5px"></span><span><b>AOV stabiel</b>Gem. orderwaarde ${eur(aovMtd)} — historisch gemiddelde €65–67.</span></div>`;
+      s+=`<div class="signal good"><span class="dot live" style="margin-top:5px"></span><span><b>AOV stabiel</b>Gem. orderwaarde ${eur(aovMtd)}, historisch gemiddelde €65–67.</span></div>`;
     }
     const opMei=lastHist.orders/lastHist.days,opCurr=ordMtd/dayOfMon;
     const opG=opMei>0?(opCurr-opMei)/opMei*100:0;
@@ -2783,7 +2783,7 @@ function render(k){
   const net=cac!=null?grossEx-cac:null;
   const netNeg=net!=null&&net<0;
 
-  // rangelbl removed — DRP trigger now shows range directly in topbar
+  // rangelbl removed, DRP trigger now shows range directly in topbar
   document.getElementById('wf-btw-lbl').textContent=showBTW?'incl. btw':'ex btw';
 
   renderPerfStats(k, grossEx, cac, net);
@@ -2803,7 +2803,7 @@ function render(k){
     }
   }
 
-  // Waterfall — barbreedtes altijd relatief aan lijstprijs ex BTW
+  // Waterfall, barbreedtes altijd relatief aan lijstprijs ex BTW
   const BASE=LIST_EX, cacW=cac?Math.min(100,cac/BASE*100):0;
   let wfHtml=`
     <div class="row"><span class="name">Lijstprijs</span><div class="bar" style="width:100%"></div><span class="amt">${eur(LIST_EX*wF)}</span></div>`;
@@ -2815,8 +2815,8 @@ function render(k){
     <div class="row"><span class="name">− Logistiek</span><div class="bar cost" style="width:${Math.round(LOG_EX/BASE*100)}%"></div><span class="amt">${eur(LOG_EX*wF)}</span></div>
     <div class="row"><span class="name">− Fees + retouren</span><div class="bar cost" style="width:${Math.round(FEES_EX/BASE*100)}%"></div><span class="amt">${eur(FEES_EX*wF)}</span></div>
     <div class="row"><span class="name">= Brutomarge</span><div class="bar ${grossEx<0?'neg':''}" style="width:${Math.round(Math.max(2,grossEx/BASE*100))}%"></div><span class="amt ${grossEx<0?'warn':''}"><b>${eur(grossEx*wF)}</b></span></div>
-    <div class="row"><span class="name">− CAC (${p.label.toLowerCase()})</span><div class="bar ${netNeg?'neg':'net'}" style="width:${cacW}%"></div><span class="amt ${netNeg?'warn':''}">${cac?eur(cac):'—'}</span></div>
-    <div class="row"><span class="name">= Netto / stuk</span><div class="bar ${netNeg?'neg':'net'}" style="width:${net?Math.max(2,Math.abs(net)/BASE*100):2}%"></div><span class="amt ${netNeg?'warn':'good'}"><b>${net?(net<0?'−':'')+eur(Math.abs(net)):'—'}</b></span></div>`;
+    <div class="row"><span class="name">− CAC (${p.label.toLowerCase()})</span><div class="bar ${netNeg?'neg':'net'}" style="width:${cacW}%"></div><span class="amt ${netNeg?'warn':''}">${cac?eur(cac):','}</span></div>
+    <div class="row"><span class="name">= Netto / stuk</span><div class="bar ${netNeg?'neg':'net'}" style="width:${net?Math.max(2,Math.abs(net)/BASE*100):2}%"></div><span class="amt ${netNeg?'warn':'good'}"><b>${net?(net<0?'−':'')+eur(Math.abs(net)):','}</b></span></div>`;
   document.getElementById('wf').innerHTML=wfHtml;
   renderRichon(k);
   // sync wf2 (marges tab)
@@ -2829,7 +2829,7 @@ function render(k){
   if(net!=null&&net<0) s+=`<div class="signal"><span class="dot flag" style="margin-top:6px"></span><span><b>Verlieslatend (${p.label})</b>CAC ${eur(cac)} &gt; brutomarge ${eur(grossEx)} &rarr; netto ${eur(net)}/stuk.</span></div>`;
   else if(net!=null) s+=`<div class="signal good"><span class="dot live" style="margin-top:6px"></span><span><b>Winstgevend (${p.label})</b>Netto +${eur(net)}/stuk. Voorzichtig opschalen.</span></div>`;
   s+=`<div class="signal neutral"><span class="dot idle" style="margin-top:6px"></span><span><b>Meta in-platform: ${xfmt(p.mroas)} vs blended: ${xfmt(roas)}</b>Alleen blended (omzet ÷ ${eur(tot)} totale spend) is de waarheid.</span></div>`;
-  if(roas<2.65) s+=`<div class="signal"><span class="dot flag" style="margin-top:6px"></span><span><b>Blended ROAS onder break-even</b>Break-even ~2,65×. Nu ${xfmt(roas)}. CAPI + LP-fix vóór opschalen.</span></div>`;
+  if(roas<2.65) s+=`<div class="signal"><span class="dot flag" style="margin-top:6px"></span><span><b>Blended ROAS onder break-even</b>Break-even ~2,65×. Nu ${xfmt(roas)}. CVR en LP verbeteren vóór opschalen.</span></div>`;
   document.getElementById('signals').innerHTML=s;
 
   const {meta,google,klaviyo,strat,creative}=generateActions(k);
@@ -2844,11 +2844,11 @@ function render(k){
   const mtdGrossEx=P.mtd.units>0?(P.mtd.rev/P.mtd.units)/BTW-FIXED_EX:LIST_EX-FIXED_EX;
   const _s=id=>document.getElementById(id);
   if(_s('fc-current'))_s('fc-current').textContent=eur((P.mtd.spend+P.mtd.gspend)/13);
-  if(_s('fc-cac'))_s('fc-cac').textContent=isFinite(mtdCac)?mtdCac.toFixed(0):'—';
+  if(_s('fc-cac'))_s('fc-cac').textContent=isFinite(mtdCac)?mtdCac.toFixed(0):',';
   if(_s('fc-gross'))_s('fc-gross').textContent=mtdGrossEx.toFixed(2).replace('.',',');
   if(_s('fc-gap')&&isFinite(mtdCac))_s('fc-gap').textContent=(mtdCac-mtdGrossEx).toFixed(0)+' ('+Math.round((1-mtdGrossEx/mtdCac)*100)+'% daling nodig)';
   const fcGspend = document.getElementById('fc-gspend');
-  if(fcGspend) fcGspend.textContent = P.mtd.gspend ? (P.mtd.gspend/13).toFixed(0) : '—';
+  if(fcGspend) fcGspend.textContent = P.mtd.gspend ? (P.mtd.gspend/13).toFixed(0) : ',';
 
   renderChart(k);
   renderMeta(k);
@@ -2929,7 +2929,7 @@ function aeUpdateCounts(){
   const total=Object.keys(aeGet()).length;
   document.querySelectorAll('.ae-footer').forEach(f=>{
     f.style.display=total>0?'block':'none';
-    f.textContent=`${total} gedaan — toon alles`;
+    f.textContent=`${total} gedaan, toon alles`;
   });
 }
 
@@ -3065,7 +3065,7 @@ async function drpPickDay(dateStr) {
   if (!_drpPickStart) {
     _drpPickStart = dateStr;
     const hint = document.getElementById('drp-pick-hint');
-    if (hint) hint.textContent = `Start: ${dateStr} — klik nu op de einddatum`;
+    if (hint) hint.textContent = `Start: ${dateStr}, klik nu op de einddatum`;
     renderDrpCalendar('_pick');
   } else {
     const start = _drpPickStart < dateStr ? _drpPickStart : dateStr;
