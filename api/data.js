@@ -565,7 +565,7 @@ async function fetchKlaviyoCampaigns() {
   const listRes = await fetch(
     `${KL_BASE}/campaigns/?filter=and(equals(messages.channel,'email'),equals(status,'Sent'))` +
     `&include=campaign-messages&fields[campaign]=id,name,status,send_time` +
-    `&fields[campaign-message]=definition.content.subject&sort=-scheduled_at&page[size]=20`,
+    `&fields[campaign-message]=definition.content.subject&sort=-scheduled_at`,
     { headers: klHeaders() }
   );
   if (!listRes.ok) throw new Error(`Klaviyo campaign list ${listRes.status}: ${await listRes.text()}`);
