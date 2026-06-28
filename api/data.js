@@ -86,8 +86,9 @@ async function googleAdsQuery(accessToken, duringPeriod) {
     'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN,
     'Content-Type':    'application/json'
   };
-  // Developer token hoort bij het beheeraccount (789-710-2801); bij toegang via een
-  // managed account vereist Google Ads de login-customer-id header.
+  // LET OP: MCC 789-710-2801 beheert operating-account 470-420-6454 NIET.
+  // support@elunahome.nl heeft directe toegang, dus GEEN login-customer-id sturen
+  // (anders USER_PERMISSION_DENIED). GOOGLE_ADS_LOGIN_CUSTOMER_ID hoort leeg te zijn.
   const loginCid = (process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID || '').replace(/-/g, '');
   if (loginCid) headers['login-customer-id'] = loginCid;
   const url = `https://googleads.googleapis.com/v21/customers/${customerId}/googleAds:search`;
@@ -482,6 +483,22 @@ function campaignNote(stats) {
 }
 
 async function fetchKlaviyoFlows() {
+  // 1) Live flows ophalen voor naam/status/trigger. Het values-report geeft alleen
+  //    flow-IDs terug (geen namen), dus die joinen we hieraan.
+  const flowsRes = await fetch(
+    `${KL_BASE}/flows/?filter=equals(status,"live")&fields[flow]=name,status,trigger_type&page[size]=50`,
+    { headers: klHeaders() }
+  );
+  if (!flowsRes.ok) throw new Error(`Klaviyo flows list ${flowsRes.status}: ${await flowsRes.text()}`);
+  const flowsData = await flowsRes.json();
+  const flowMeta = {};
+  for (const f of (flowsData.data || [])) flowMeta[f.id] = f.attributes || {};
+
+  await sleep(300);
+
+  // 2) Flow-values-report. LET OP: `statistics` is een VERPLICHT veld, anders 400
+  //    ("'statistics' is a required field"). Response = data.attributes.results[]
+  //    met groupings (flow_id, flow_message_id) en statistics. Geen flow_details.
   const res = await fetch(`${KL_BASE}/flow-values-reports/`, {
     method: 'POST',
     headers: { ...klHeaders(), 'Content-Type': 'application/vnd.api+json' },
@@ -491,43 +508,56 @@ async function fetchKlaviyoFlows() {
         attributes: {
           timeframe: { key: 'last_30_days' },
           conversion_metric_id: KL_PLACED_ORDER,
-          filter: 'equals(send_channel,"email")'
+          statistics: ['recipients', 'open_rate', 'click_rate', 'conversions', 'conversion_value', 'unsubscribes']
         }
       }
     })
   });
   if (!res.ok) throw new Error(`Klaviyo flow report ${res.status}: ${await res.text()}`);
   const { data } = await res.json();
+  const results = data?.attributes?.results || [];
 
-  const aggregation = data?.attributes?.flow_aggregation || [];
-  const results     = data?.attributes?.results || [];
-
-  // Aantal berichten per flow tellen vanuit results
-  const msgCount = {};
+  // 3) Resultaten staan per flow-bericht; aggregeren per flow_id.
+  //    open_rate/click_rate zijn fracties per bericht, dus recipient-gewogen middelen.
+  const agg = {};
   for (const r of results) {
     const fid = r.groupings?.flow_id;
-    if (fid) msgCount[fid] = (msgCount[fid] || 0) + 1;
+    if (!fid) continue;
+    const s = r.statistics || {};
+    const a = agg[fid] || (agg[fid] = { recipients: 0, conversions: 0, conversion_value: 0, unsubscribes: 0, orw: 0, crw: 0, messages: 0 });
+    const rec = s.recipients || 0;
+    a.recipients += rec;
+    a.conversions += s.conversions || 0;
+    a.conversion_value += s.conversion_value || 0;
+    a.unsubscribes += s.unsubscribes || 0;
+    a.orw += (s.open_rate || 0) * rec;
+    a.crw += (s.click_rate || 0) * rec;
+    a.messages += 1;
   }
 
-  return aggregation
-    .filter(f => f.flow_details?.attributes?.status === 'live')
-    .map(f => {
-      const attr = f.flow_details?.attributes || {};
-      const s    = f.statistics || {};
+  // 4) Alle live flows tonen, ook die zonder activiteit. 0 triggers is zelf een
+  //    signaal (bijv. Abandoned Checkout die niets verstuurt = tracking-aandacht).
+  return Object.entries(flowMeta)
+    .map(([fid, meta]) => {
+      const a = agg[fid] || { recipients: 0, conversions: 0, conversion_value: 0, unsubscribes: 0, orw: 0, crw: 0, messages: 0 };
+      const openFrac  = a.recipients > 0 ? a.orw / a.recipients : 0;
+      const clickFrac = a.recipients > 0 ? a.crw / a.recipients : 0;
+      const s = { recipients: a.recipients, open_rate: openFrac, click_rate: clickFrac, conversions: a.conversions, conversion_value: a.conversion_value, unsubscribes: a.unsubscribes };
       return {
-        name:             cleanFlowName(attr.name || ''),
-        trigger:          flowTrigger(attr.name, attr.trigger_type),
-        status:           attr.status,
-        messages:         msgCount[f.flow_id] || 1,
-        d30_recipients:   s.recipients || 0,
-        d30_open_rate:    r2((s.open_rate || 0) * 100),
-        d30_ctr:          r2((s.click_rate || 0) * 100),
-        d30_conversions:  s.conversions || 0,
-        d30_revenue:      r2(s.conversion_value || 0),
-        d30_unsubscribes: s.unsubscribes || 0,
-        note:             flowNote(s, attr.name || '')
+        name:             cleanFlowName(meta.name || ''),
+        trigger:          flowTrigger(meta.name, meta.trigger_type),
+        status:           meta.status,
+        messages:         a.messages,
+        d30_recipients:   a.recipients,
+        d30_open_rate:    r2(openFrac * 100),
+        d30_ctr:          r2(clickFrac * 100),
+        d30_conversions:  a.conversions,
+        d30_revenue:      r2(a.conversion_value),
+        d30_unsubscribes: a.unsubscribes,
+        note:             flowNote(s, meta.name || '')
       };
-    });
+    })
+    .sort((x, y) => y.d30_revenue - x.d30_revenue || y.d30_recipients - x.d30_recipients);
 }
 
 async function fetchKlaviyoCampaigns() {
@@ -541,7 +571,8 @@ async function fetchKlaviyoCampaigns() {
   if (!listRes.ok) throw new Error(`Klaviyo campaign list ${listRes.status}: ${await listRes.text()}`);
   const listData = await listRes.json();
 
-  // subject per campaign_id
+  // subject + meta (naam/status/verzenddatum) per campaign_id. Het values-report
+  // geeft alleen campaign-IDs terug, dus die joinen we aan deze lijst.
   const subjects = {};
   for (const item of (listData.included || [])) {
     if (item.type === 'campaign-message') {
@@ -550,10 +581,13 @@ async function fetchKlaviyoCampaigns() {
       if (cid && subj) subjects[cid] = subj;
     }
   }
+  const campMeta = {};
+  for (const c of (listData.data || [])) campMeta[c.id] = c.attributes || {};
 
   await sleep(300);
 
-  // Campagne rapport (laatste 30 dagen)
+  // Campagne-rapport (laatste 30 dagen). `statistics` is VERPLICHT (anders 400).
+  // Response = results[] met groupings.campaign_id + statistics, geen campaign_details.
   const reportRes = await fetch(`${KL_BASE}/campaign-values-reports/`, {
     method: 'POST',
     headers: { ...klHeaders(), 'Content-Type': 'application/vnd.api+json' },
@@ -563,7 +597,7 @@ async function fetchKlaviyoCampaigns() {
         attributes: {
           timeframe: { key: 'last_30_days' },
           conversion_metric_id: KL_PLACED_ORDER,
-          filter: 'equals(send_channel,"email")'
+          statistics: ['recipients', 'open_rate', 'click_rate', 'clicks_unique', 'conversions', 'conversion_value', 'unsubscribes']
         }
       }
     })
@@ -573,15 +607,15 @@ async function fetchKlaviyoCampaigns() {
   const results = data?.attributes?.results || [];
 
   return results.map(r => {
-    const det = r.campaign_details?.attributes || {};
-    const s   = r.statistics || {};
-    const cid = r.groupings?.campaign_id;
+    const cid  = r.groupings?.campaign_id;
+    const s    = r.statistics || {};
+    const meta = campMeta[cid] || {};
     return {
-      name:        cleanFlowName(det.name || ''),
+      name:        cleanFlowName(meta.name || ''),
       subject:     subjects[cid] || null,
-      status:      (det.status || '').toLowerCase(),
-      send_date:   det.send_time || null,
-      segment:     det.audiences?.included?.[0]?.name || null,
+      status:      (meta.status || '').toLowerCase(),
+      send_date:   meta.send_time || null,
+      segment:     null,
       recipients:  s.recipients || 0,
       open_rate:   r2((s.open_rate || 0) * 100),
       ctr:         r2((s.click_rate || 0) * 100),
@@ -590,7 +624,7 @@ async function fetchKlaviyoCampaigns() {
       unsubscribes: s.unsubscribes || 0,
       note:        campaignNote(s)
     };
-  });
+  }).sort((x, y) => y.revenue - x.revenue || (new Date(y.send_date || 0)) - (new Date(x.send_date || 0)));
 }
 
 async function fetchKlaviyo(dateStart, dateEnd) {
