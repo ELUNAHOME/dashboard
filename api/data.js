@@ -575,7 +575,7 @@ async function fetchKlaviyoCampaigns() {
   const listRes = await klFetch(
     `${KL_BASE}/campaigns/?filter=and(equals(messages.channel,'email'),equals(status,'Sent'))` +
     `&include=campaign-messages&fields[campaign]=id,name,status,send_time` +
-    `&fields[campaign-message]=definition.content.subject&sort=-scheduled_at`,
+    `&sort=-scheduled_at`,
     { headers: klHeaders() }
   );
   if (!listRes.ok) throw new Error(`Klaviyo campaign list ${listRes.status}: ${await listRes.text()}`);
@@ -587,7 +587,7 @@ async function fetchKlaviyoCampaigns() {
   for (const item of (listData.included || [])) {
     if (item.type === 'campaign-message') {
       const cid  = item.relationships?.campaign?.data?.id;
-      const subj = item.attributes?.definition?.content?.subject;
+      const subj = item.attributes?.content?.subject;
       if (cid && subj) subjects[cid] = subj;
     }
   }
