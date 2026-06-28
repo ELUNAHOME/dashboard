@@ -482,10 +482,20 @@ function campaignNote(stats) {
   return `${r2((stats.open_rate || 0) * 100)}% open · ${r2((stats.click_rate || 0) * 100)}% CTR · 0 conversies.`;
 }
 
+// Klaviyo rate-limits de reporting-endpoints streng; retry op 429 met backoff.
+async function klFetch(url, opts = {}, tries = 4) {
+  for (let i = 0; i < tries; i++) {
+    const res = await fetch(url, opts);
+    if (res.status !== 429) return res;
+    await sleep(1200 * (i + 1));
+  }
+  return fetch(url, opts);
+}
+
 async function fetchKlaviyoFlows() {
   // 1) Live flows ophalen voor naam/status/trigger. Het values-report geeft alleen
   //    flow-IDs terug (geen namen), dus die joinen we hieraan.
-  const flowsRes = await fetch(
+  const flowsRes = await klFetch(
     `${KL_BASE}/flows/?filter=equals(status,"live")&fields[flow]=name,status,trigger_type&page[size]=50`,
     { headers: klHeaders() }
   );
@@ -499,7 +509,7 @@ async function fetchKlaviyoFlows() {
   // 2) Flow-values-report. LET OP: `statistics` is een VERPLICHT veld, anders 400
   //    ("'statistics' is a required field"). Response = data.attributes.results[]
   //    met groupings (flow_id, flow_message_id) en statistics. Geen flow_details.
-  const res = await fetch(`${KL_BASE}/flow-values-reports/`, {
+  const res = await klFetch(`${KL_BASE}/flow-values-reports/`, {
     method: 'POST',
     headers: { ...klHeaders(), 'Content-Type': 'application/vnd.api+json' },
     body: JSON.stringify({
@@ -562,7 +572,7 @@ async function fetchKlaviyoFlows() {
 
 async function fetchKlaviyoCampaigns() {
   // Campagnelijst ophalen voor onderwerpregel
-  const listRes = await fetch(
+  const listRes = await klFetch(
     `${KL_BASE}/campaigns/?filter=and(equals(messages.channel,'email'),equals(status,'Sent'))` +
     `&include=campaign-messages&fields[campaign]=id,name,status,send_time` +
     `&fields[campaign-message]=definition.content.subject&sort=-scheduled_at`,
@@ -588,7 +598,7 @@ async function fetchKlaviyoCampaigns() {
 
   // Campagne-rapport (laatste 30 dagen). `statistics` is VERPLICHT (anders 400).
   // Response = results[] met groupings.campaign_id + statistics, geen campaign_details.
-  const reportRes = await fetch(`${KL_BASE}/campaign-values-reports/`, {
+  const reportRes = await klFetch(`${KL_BASE}/campaign-values-reports/`, {
     method: 'POST',
     headers: { ...klHeaders(), 'Content-Type': 'application/vnd.api+json' },
     body: JSON.stringify({
@@ -637,11 +647,11 @@ async function fetchKlaviyo(dateStart, dateEnd) {
   const openRate  = received > 0 ? r2((opened  / received) * 100) : 0;
   const clickRate = received > 0 ? r2((clicked / received) * 100) : 0;
 
-  // Stap 2: Flows + campagnes parallel (aparte rapport-endpoints)
-  const [flows, campaigns] = await Promise.all([
-    fetchKlaviyoFlows().catch(err => { console.error('Klaviyo flows fout:', err.message); return null; }),
-    fetchKlaviyoCampaigns().catch(err => { console.error('Klaviyo campaigns fout:', err.message); return null; })
-  ]);
+  // Stap 2: Flows en campagnes SEQUENTIEEL (niet parallel). Elk doet 2 calls;
+  // parallel gaf een burst van 4 tegelijk waardoor campagnes een 429 ving en null werd.
+  const flows = await fetchKlaviyoFlows().catch(err => { console.error('Klaviyo flows fout:', err.message); return null; });
+  await sleep(400);
+  const campaigns = await fetchKlaviyoCampaigns().catch(err => { console.error('Klaviyo campaigns fout:', err.message); return null; });
 
   return {
     list_id:             KL_LIST_ID,
