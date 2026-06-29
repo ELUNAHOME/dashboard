@@ -159,5 +159,6 @@ ELÛNA DASHBOARD/
 
 ## Permissions
 
-- Lees altijd, schrijf nooit naar Shopify/Meta/Klaviyo/Google, alleen data ophalen
+- Lees standaard, schrijf niet naar Shopify/Klaviyo/Google, alleen data ophalen
+- Meta Ads: lezen standaard. Ad-beheer (ads pauzeren, budget verlagen) mag na expliciet akkoord van Kevin, per actie. Nooit budget verhogen, ads/campagnes aanmaken of geld uitgeven zonder bevestiging. Tool toegestaan sinds 2026-06-29.
 - Google Ads: alleen lezen via UI of API, nooit campagnes aanpassen
