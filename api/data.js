@@ -673,7 +673,10 @@ async function fetchInventory() {
     `/inventory_levels.json?location_ids=${LOC}&limit=250`
   );
   const stock = inventory_levels.reduce((s, i) => s + (i.available || 0), 0);
-  return { stock, location_id: LOC };
+  // PBL is een externe voorraad (niet in Shopify), handmatig bijgehouden via env var.
+  // Default 0: PBL is leeg tenzij PBL_STOCK expliciet is gezet in Vercel.
+  const pbl_stock = parseInt(process.env.PBL_STOCK || '0', 10) || 0;
+  return { stock, pbl_stock, location_id: LOC };
 }
 
 // ── main handler ──────────────────────────────────────────────────────────────
@@ -740,7 +743,7 @@ export default async function handler(req, res) {
       fetchShopify(),
       fetchMeta().catch(err => { console.error('[/api/data] Meta fout:', err.message); return { C: {}, metaSpend: {} }; }),
       fetchKlaviyo(mtdStart(), amsDate(0)).catch(err => { console.error('[/api/data] Klaviyo fout:', err.message); return null; }),
-      fetchInventory().catch(() => ({ stock: null, location_id: '100691018073' })),
+      fetchInventory().catch(() => ({ stock: null, pbl_stock: 0, location_id: '100691018073' })),
       fetchGoogleAds()
     ]);
 

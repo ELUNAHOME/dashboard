@@ -664,6 +664,9 @@
     </div>
   </div>
 
+  <!-- URGENT: RETOUREN-PANEEL (data uit retouren.json, geschreven door de eluna-retour skill) -->
+  <div id="retouren-panel"></div>
+
   <!-- OVERVIEW GRID: Performance card + Ad-mix card -->
   <div class="overview-grid">
     <div class="card" id="perf-card">
@@ -1096,6 +1099,7 @@ async function refreshData() {
     render(currentK);
     flashCards();
     markStockUrgency();
+    renderRetouren();
   } catch(e) {
     console.error(e);
   }
@@ -1230,7 +1234,7 @@ function generateActions(k){
   const fourDays = p.units>0 ? Math.round(FOUR_STOCK / (p.units / (k==='today'||k==='gisteren'?1:k==='d7'?7:k==='d30'?30:14))) : null;
   if(fourDays!=null&&fourDays<30)
     strat.unshift(I('data',T('product','Product'),'Inventaris: FOUR heeft nog '+FOUR_STOCK+' stuks ('+fourDays+' dgn)',
-      `Lead time Windspro: 45–65 dagen. Bestel nú om stockout te voorkomen. PBL heeft nog ${INVENTORY.pbl_stock||185} stuks buffer.`,'','NU'));
+      `Lead time Windspro: 45-65 dagen. Bestel op tijd om stockout te voorkomen. PBL heeft nog ${INVENTORY.pbl_stock ?? 0} stuks buffer.`,'','NU'));
   if(aov!=null&&aov<72)
     strat.push(I('data',T('product','Product'),'AOV '+eur(aov)+', geen bundle',
       'Bijna alle orders single-unit. 2-pack €119,90 of post-checkout upsell. +20% AOV = CAC/stuk daalt €10.','','BINNENKORT'));
@@ -2043,7 +2047,7 @@ function renderRichon(k){
   const cac = p.units > 0 ? tot / p.units : null;
   const net = cac != null ? grossEx - cac : null;
   const FOUR_STOCK = INVENTORY.stock != null ? INVENTORY.stock : 34;
-  const PBL_STOCK = INVENTORY.pbl_stock != null ? INVENTORY.pbl_stock : 185;
+  const PBL_STOCK = INVENTORY.pbl_stock != null ? INVENTORY.pbl_stock : 0;
   const totalStock = FOUR_STOCK + PBL_STOCK;
   const days = k==='mtd'?14:k==='d7'?7:k==='d30'?30:1;
   const dailyUnits = p.units / days;
@@ -2117,7 +2121,7 @@ function renderStockBar(k){
   const el = document.getElementById('stock-bar');
   if(!el) return;
   const stock = INVENTORY.stock != null ? INVENTORY.stock : 34;         // FOUR
-  const pblStock = INVENTORY.pbl_stock != null ? INVENTORY.pbl_stock : 185; // PBL, fallback op MOQ-berekening
+  const pblStock = INVENTORY.pbl_stock != null ? INVENTORY.pbl_stock : 0; // PBL nu leeg (0), tenzij PBL_STOCK env var gezet
   const moq = INVENTORY.moq || 500;
   const realSold = INVENTORY.real_sold || null;
   const giveaways = INVENTORY.giveaways || null;
@@ -3233,6 +3237,50 @@ function markStockUrgency(){
 }
 // ───────────────────────────────────────────────────────────────────
 
+// Urgent retouren-paneel: leest retouren.json (geschreven door de eluna-retour skill, 2x/dag).
+// Onafhankelijk van /api/data, zodat retouren altijd zichtbaar zijn ook als de ad-API faalt.
+async function renderRetouren(){
+  const el = document.getElementById('retouren-panel');
+  if(!el) return;
+  let d;
+  try {
+    const res = await fetch('retouren.json?t=' + Date.now());
+    if(!res.ok) throw new Error('geen feed');
+    d = await res.json();
+  } catch(e){ el.innerHTML=''; return; }
+  const returns = (d && d.returns) || [];
+  if(!returns.length){ el.innerHTML=''; return; }
+  const caseLabel = c => c==='A'?'Nieuwe aanvraag':c==='B'?'Label werkt niet':c==='C'?'Overig / refund':(c||'');
+  const sla = r => r==='over' ? {bg:'#FAEAE6',fg:'#B23B1E',txt:'SLA over'}
+                 : r==='soon' ? {bg:'#FBF1E3',fg:'#B5791F',txt:'SLA bijna'}
+                 :              {bg:'#EEF1EC',fg:'#5B6B57',txt:'op tijd'};
+  const rows = returns.map(r=>{
+    const s = sla(r.sla_risk);
+    return `<div style="display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-top:1px solid var(--line)">
+      <span style="flex-shrink:0;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:${s.bg};color:${s.fg}">${s.txt}</span>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap">
+          <span style="font-weight:700">${r.customer||'Onbekend'}</span>
+          <span style="color:var(--muted);font-size:13px">${r.order||''}</span>
+          <span style="font-size:11px;padding:2px 7px;border-radius:999px;background:#EDEAE3;color:var(--ink)">${caseLabel(r.case)}</span>
+          <span style="font-size:12px;color:var(--muted)">${r.status||''}</span>
+        </div>
+        <div style="margin-top:4px;font-size:13px;line-height:1.45">${r.action||''}</div>
+        <div style="margin-top:4px;font-size:12px;color:var(--muted)">${r.age_days} dag${r.age_days===1?'':'en'} open${r.draft_ready?' · concept klaar':' · nog geen concept'}</div>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="card" style="border-left:4px solid #B23B1E;padding:0;overflow:hidden;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:12px;padding:16px 16px 14px">
+      <h2 style="margin:0">Retouren</h2>
+      <span style="font-size:13px;font-weight:800;padding:3px 11px;border-radius:999px;background:#B23B1E;color:#fff">${d.open_count} open</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--muted)">oudste ${d.oldest_age_days} dgn · bijgewerkt ${d.updated}</span>
+    </div>
+    ${rows}
+  </div>`;
+}
+renderRetouren();
+
 loadData().then(()=>{
   render('mtd');
   hideLoader();
@@ -3270,7 +3318,7 @@ function aiGetContext(){
     blended_roas: (p.spend||0)+(p.gspend||0)>0 ? Math.round(p.rev/((p.spend||0)+(p.gspend||0))*100)/100 : null,
     campagnes_meta: camps,
     voorraad_four: INVENTORY.stock,
-    voorraad_pbl: INVENTORY.pbl_stock||185,
+    voorraad_pbl: INVENTORY.pbl_stock ?? 0,
     klaviyo: KLAVIYO,
     alle_periodes: Object.fromEntries(Object.entries(P).map(([k,v])=>[k,{rev:v.rev,units:v.units,spend:(v.spend||0)+(v.gspend||0)}]))
   };
