@@ -782,7 +782,7 @@
             <div class="pov-name">Ben Heath</div>
             <div class="pov-role">Google Ads &middot; Shopping &middot; Performance Max &middot; klant-ID 470-420-6454</div>
             <ul class="pov-bullets">
-              <li><b>PMax asset groups segmenteren.</b> Maak 3 aparte groups: Branded "ELÛNA waterkoker", Categorie "RVS waterkoker kopen", Competitor "waterkoker zonder plastic". Zo zie je per intentie waar budget heen gaat.</li>
+              <li><b>PMax asset groups segmenteren.</b> Maak 3 aparte groups: Branded "ELÛNA waterkoker", Categorie "RVS waterkoker kopen", Competitor "design waterkoker". Zo zie je per intentie waar budget heen gaat.</li>
               <li><b>Target ROAS instellen op 3&times;.</b> Break-even is 2,65&times;. Zonder expliciete target ROAS geeft Google zichzelf ruimte om verlieslatend te bieden.</li>
               <li><b>Primaire conversie controleren.</b> Alleen "Purchase" mag primaire conversie zijn. Add to Cart of Begin Checkout erin geeft een te hoge ROAS en klopt de bid-strategie niet.</li>
               <li><b>Search Terms rapport bekijken.</b> Filter op zoektermen met klikken maar geen conversies. Voeg toe als exact-negatief om budgetverspilling te stoppen.</li>
@@ -1188,8 +1188,8 @@ function generateActions(k){
     meta.push(I('playbook',T('meta','Meta'),`Heractief: ${_heractief.n} (${_heractief.roas.toFixed(2)}× voor pauzeren)`,
       `Beste performer van ${META_ADS_DATE} vóór pauzeren. Zet terug actief in eigen CBO, €15/dag, 3 dagen meten. Als ROAS herbevestigd, budget opbouwen.`,'','NU'));
   }
-  meta.push(I('research',T('research-tag','Research'),'Ad Library: "zonder plastic" hoek vrij in NL',
-    'Scan jun-2026: geen concurrent adverteert op dit onderscheid. Creëer een ad specifiek rondom dit onderscheid.','','BINNENKORT'));
+  meta.push(I('research',T('research-tag','Research'),'Differentieer op RVS en design, niet op plastic-vrij',
+    'Plastic-vrij als claim gaf een 2-sterren review (overclaim, product heeft wel plastic onderdelen). Bouw je hoek op de echte sterkte: volledig RVS/SS304 binnen en buiten, premium Scandinavisch design, stil. Verdedigbaar en niet te weerleggen door een klant.','','BINNENKORT'));
   if(retC&&retC.cpm>22)
     meta.push(I('data',T('data-tag','Data'),'Retargeting CPM '+eur(retC.cpm)+', ad fatigue',
       'Verklein audience (90d i.p.v. 180d) + nieuw creatief voor retargeting.','','BINNENKORT'));
@@ -1251,7 +1251,7 @@ function generateActions(k){
   strat.push(I('playbook',T('pr','PR'),'Seizoensplan: Sinterklaas + Kerst, start prep september',
     'Waterkokers zijn top-cadeau. Q4 is 3–5× hogere ROAS window. Creatieve brief nu starten.','','LATER'));
   strat.push(I('playbook',T('pr','PR'),'PR: Libelle, Margriet, HLN Lifestyle',
-    'Gratis product + persbericht "duurzame waterkoker zonder plastic". 1 placement = €5k–€10k omzet + SEO backlinks.','','LATER'));
+    'Gratis product + persbericht "premium RVS waterkoker die 20+ jaar meegaat". 1 placement = €5k-€10k omzet + SEO backlinks.','','LATER'));
 
   // ── CREATIVES / HIGGSFIELD ────────────────────────────────────
   // Analyse op basis van META_ADS snapshot
@@ -1271,8 +1271,8 @@ function generateActions(k){
     creative.push(I('data',T('creative','Concept'),`Stop: ${_killConc.map(a=>a.n).join(', ')}, geen conversies`,
       `${_killConc.length > 1 ? 'Deze concepten leveren' : 'Dit concept levert'} na €${_killConc.reduce((s,a)=>s+a.spend,0).toFixed(0)} spend 0 aankopen. Geen varianten meer maken op deze creatieve hoek.`,'','NU'));
   }
-  creative.push(I('creative',T('higgsfield','Higgsfield'),'Hook test: "plastic in je thee" direct response',
-    'Open met: "Wist je dat plastic waterkokers giftige stoffen afgeven in je thee?" ELUNA als schoon alternatief. Comparison format. 15 sec, tekst op beeld, geen voiceover nodig.','','BINNENKORT'));
+  creative.push(I('creative',T('higgsfield','Higgsfield'),'Hook test: ochtendritueel + design',
+    'Leun op het rustige ochtendmoment en de RVS-bouw: water dat opwarmt, stoom, gieten. GEEN plastic- of gezondheidsclaim (die gaf een 2-sterren review). 15 sec, tekst op beeld, geen voiceover nodig.','','BINNENKORT'));
   creative.push(I('creative',T('higgsfield','Higgsfield'),'Higgsfield: gieten-macro shot, water als held',
     'Geen tekst, geen voiceover. Camera volgt het water: inkoken → gieten → stoom. Muziek: rustig, minimalistische piano. 8 seconden. Ideaal als thumb-stopper voor retargeting.','','BINNENKORT'));
   creative.push(I('creative',T('higgsfield','Higgsfield'),'Seizoen Q4: Kerst-angle in Higgsfield, start augustus',
