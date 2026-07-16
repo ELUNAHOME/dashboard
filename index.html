@@ -1031,9 +1031,21 @@ async function loadData(bustCache) {
   DATA_SOURCE = usedLiveApi ? 'live' : 'fallback';
   const srcEl = document.getElementById('data-source-badge');
   if (srcEl) {
-    srcEl.textContent = usedLiveApi ? '● live' : '○ fallback';
-    srcEl.style.color = usedLiveApi ? 'var(--good)' : 'var(--warn)';
-    srcEl.title = usedLiveApi ? 'Data van live API (Shopify + Meta + Klaviyo)' : 'Statische fallback, live API niet bereikbaar';
+    if (usedLiveApi) {
+      srcEl.textContent = '● live';
+      srcEl.style.color = 'var(--good)';
+      srcEl.title = 'Data van live API (Shopify + Meta + Klaviyo + Google)';
+    } else {
+      // Versheids-check: fallback ouder dan 3 dagen is niet te vertrouwen, toon dat hard
+      const ageDays = d.updated ? Math.floor((Date.now() - new Date(d.updated).getTime()) / 86400000) : null;
+      const stale = ageDays != null && ageDays > 3;
+      srcEl.textContent = stale ? `○ fallback · ${ageDays}d oud` : '○ fallback';
+      srcEl.style.color = stale ? '#C8705A' : 'var(--warn)';
+      srcEl.style.fontWeight = stale ? '700' : '';
+      srcEl.title = stale
+        ? `LET OP: live API onbereikbaar en deze fallback-data is ${ageDays} dagen oud (${d.updated_label||''}). Cijfers niet vertrouwen voor beslissingen.`
+        : 'Statische fallback, live API niet bereikbaar';
+    }
   }
 
   // Google + Meta + Klaviyo fallback uit data.json als live API null teruggeeft (bron-hapering)
