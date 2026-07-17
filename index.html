@@ -568,6 +568,30 @@
 /* ── voorraad banner ── */
 .stock-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
 @media(max-width:700px){.stock-bar{grid-template-columns:repeat(2,1fr)}}
+
+/* ── mobiel (≤640px): scrollbare tabs en tabellen, gestapelde grids, compactere padding ── */
+@media(max-width:640px){
+  .wrap{padding:20px 14px 48px}
+  .kpis{grid-template-columns:repeat(2,1fr);gap:10px}
+  .tab-nav{overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;display:flex}
+  .tab-nav::-webkit-scrollbar{display:none}
+  .tab-btn{padding:10px 12px;font-size:12.5px;flex-shrink:0}
+  .ctable,.flow-table,.mktg-ch-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .mktg-grid5{grid-template-columns:repeat(2,1fr)}
+  .klav-grid{grid-template-columns:repeat(2,1fr)}
+  .drp-months{grid-template-columns:1fr}
+  .fc-row{grid-template-columns:100px 1fr 64px;font-size:12px;gap:6px}
+  .wf .row{grid-template-columns:1fr 72px;font-size:12px}
+  .wf .row > :first-child{grid-column:1 / -1;font-weight:600}
+  .stock-bar{grid-template-columns:1fr}
+  .stock-tile > div[style*="grid-template-columns:1fr 1fr 1fr auto"]{grid-template-columns:repeat(2,1fr)!important;row-gap:16px!important}
+  .kpi .val{font-size:24px}
+  .card{padding:16px 14px}
+}
+@media(max-width:400px){
+  .kpis{gap:8px}
+  .kpi .val{font-size:21px}
+}
 .stock-tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;gap:2px}
 .stock-tile.warn{border-color:#E4C9B5;background:#FAF3EE}
 .stock-tile.crit{border-color:#C8705A;background:#FAF0EE}
@@ -686,6 +710,9 @@
 
   <!-- VOORRAAD BANNER -->
   <div class="stock-bar" id="stock-bar"></div>
+
+  <!-- ROUTE NAAR 10K -->
+  <div id="route10k"></div>
 
   <!-- TAB NAVIGATION -->
   <div class="tab-nav" id="tab-nav">
@@ -2129,6 +2156,65 @@ function renderRichon(k){
   fEl.textContent = `Break-even target: ${eur(Number(revTarget))} omzet op deze spend. Huidige delta: ${eur(Math.abs(2.65 * tot - p.rev))} ${2.65 * tot > p.rev ? 'te kort' : 'surplus'}.`;
 }
 
+// Route naar €10k/maand: live pace, gap in stuks/dag, en de eerlijke voorwaarde (eerst boven break-even).
+function renderRoute10k(){
+  const el = document.getElementById('route10k');
+  if(!el) return;
+  const GOAL = 10000, BE = 2.65;
+  const m = P.mtd || {};
+  const now = new Date();
+  const dom = Math.max(1, now.getDate());
+  const dim = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const rev = m.rev || 0;
+  const proj = rev / dom * dim;
+  const projPct = Math.min(100, Math.round(proj / GOAL * 100));
+  const aov = m.orders > 0 ? rev / m.orders : 66;
+  const updDay = (m.units || 0) / dom;                 // stuks/dag nu
+  const updNeed = GOAL / dim / aov;                    // stuks/dag nodig voor 10k
+  const tot = (m.spend||0)+(m.gspend||0);
+  const roas = tot > 0 ? rev / tot : 0;
+  const roasOk = roas >= BE;
+  const totalStock = (INVENTORY.stock ?? 0) + (INVENTORY.pbl_stock ?? 0);
+  const unitsMonth10k = Math.round(GOAL / aov);        // ~stuks/maand op 10k
+  const stockMonths = unitsMonth10k > 0 ? (totalStock / unitsMonth10k) : null;
+
+  const stap = !roasOk
+    ? `Eerste horde: blended ROAS is ${xfmt(roas)}, onder break-even ${BE}×. Op dit rendement is elke extra euro spend verlies, dus eerst ROAS boven ${BE}× (email oogsten, Google-efficiëntie, sterkere creatives), daarna pas schalen.`
+    : `Blended ROAS ${xfmt(roas)} is boven break-even: schalen mag. Voor €10k/maand is ~${eur0(GOAL/BE)} ad-spend/maand nodig bij ${BE}× (netto ~0) of ${eur0(GOAL/3.5)} bij 3,5×.`;
+  const voorraadNote = stockMonths != null && stockMonths < 2
+    ? ` Let op voorraad: 10k/maand = ~${unitsMonth10k} stuks/maand; huidige ${totalStock} stuks dekt ~${stockMonths.toFixed(1)} maand op dat tempo, herbevoorrading (45-65d lead) hoort bij dit plan.`
+    : '';
+
+  el.innerHTML = `
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">
+      <h2 style="margin:0">Route naar €10k / maand</h2>
+      <span style="font-size:11px;color:var(--muted)">projectie op ${dom} van ${dim} dagen</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin:14px 0 12px">
+      <div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Maand-projectie</div>
+        <div style="font-size:24px;font-weight:700;color:var(--ink)">${eur0(proj)}</div>
+        <div style="font-size:11px;color:var(--muted)">nu ${eur0(rev)} MTD</div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Stuks / dag</div>
+        <div style="font-size:24px;font-weight:700;color:${updDay>=updNeed?'var(--good)':'var(--ink)'}">${updDay.toFixed(1)} <span style="font-size:13px;font-weight:500;color:var(--muted)">van ${updNeed.toFixed(1)} nodig</span></div>
+        <div style="font-size:11px;color:var(--muted)">AOV ${eur(aov)}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Blended ROAS</div>
+        <div style="font-size:24px;font-weight:700;color:${roasOk?'var(--good)':'var(--warn)'}">${xfmt(roas)}</div>
+        <div style="font-size:11px;color:var(--muted)">break-even ${BE}×</div>
+      </div>
+    </div>
+    <div style="height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-bottom:10px">
+      <div style="width:${projPct}%;height:100%;border-radius:4px;background:${projPct>=100?'var(--good)':projPct>=50?'var(--sage)':'#D4C87A'}"></div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.55">${projPct}% van het doel op huidige pace. ${stap}${voorraadNote}</div>
+  </div>`;
+}
+
 function renderStockBar(k){
   const el = document.getElementById('stock-bar');
   if(!el) return;
@@ -2805,6 +2891,7 @@ function render(k){
   renderPerfStats(k, grossEx, cac, net);
   renderAdMix(k);
   renderStockBar(k);
+  renderRoute10k();
 
   // ROAS-puls animatie op perf-card
   const perfCard = document.getElementById('perf-card');
