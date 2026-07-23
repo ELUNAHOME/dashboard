@@ -587,6 +587,10 @@
   .stock-tile > div[style*="grid-template-columns:1fr 1fr 1fr auto"]{grid-template-columns:repeat(2,1fr)!important;row-gap:16px!important}
   .kpi .val{font-size:24px}
   .card{padding:16px 14px}
+  /* AI-opener: op mobiel geen verticale balk over de rechter cijfers, maar een compacte knop rechtsonder */
+  .ai-rail{top:auto;bottom:18px;right:14px;transform:none;flex-direction:row;
+    border-radius:50%;padding:7px;gap:0;box-shadow:0 4px 16px rgba(43,46,38,.30)}
+  .ai-rail-label,.ai-rail-divider{display:none}
 }
 @media(max-width:400px){
   .kpis{gap:8px}

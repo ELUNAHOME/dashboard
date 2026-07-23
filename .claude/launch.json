@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "ELÛNA Dashboard",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["/Users/kneauk/Documents/Claude/Projects/ELÛNA/ELÛNA DASHBOARD/serve.py"],
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["-e", "const http=require('http'),fs=require('fs'),path=require('path');http.createServer((req,res)=>{const f=path.join('/Users/kneauk/Documents/Claude/Projects/ELÛNA/ELÛNA DASHBOARD',req.url==='/'?'index.html':req.url.split('?')[0]);try{const d=fs.readFileSync(f);const ext=path.extname(f);const m={html:'text/html',svg:'image/svg+xml',js:'application/javascript',json:'application/json',ico:'image/x-icon',png:'image/png',css:'text/css'}[ext.slice(1)]||'text/plain';res.writeHead(200,{'Content-Type':m});res.end(d)}catch(e){res.writeHead(404);res.end('not found')}}).listen(4444)"],
       "port": 4444
     }
   ]
