@@ -4,8 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ELÛNA · Dashboard</title>
-<link rel="icon" type="image/svg+xml" href="favicon.svg?v=2" />
-<link rel="apple-touch-icon" sizes="180x180" href="favicon.svg?v=2" />
+<!-- Favicon: exact dezelfde bron als de webshop (Shopify ELUNA_-_BRANDNAME_LOGO_-_SQUARE_1.jpg) -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=3" />
+<link rel="icon" type="image/png" sizes="512x512" href="favicon-512.png?v=3" />
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3" />
 <style>
   :root{
     --bg:#EEF0E4;--card:#FAFBF4;--line:#DDE0CC;--sage:#AEB893;
@@ -2021,6 +2023,11 @@ function renderChart(k){
 
   const last = days[days.length-1]?.d;
 
+  // Is er überhaupt een vergelijkingsperiode? Zo niet, dan geen lege spacer naast elke
+  // balk: die at de helft van elk slot op, waardoor de balken bij Maximaal dunne
+  // streepjes werden op mobiel.
+  const hasPrev = prevDays && prevDays.some(d=>d.rev>0);
+
   const barsHtml = days.map((d, i) => {
     const currPct = Math.max(2, Math.round(d.rev/niceMax*100));
     const prev    = prevDays?.[i];
@@ -2029,7 +2036,7 @@ function renderChart(k){
     const currLbl = useWeekly ? `week v/a ${d.d}: ${eur(d.rev)}` : `${d.d}: ${eur(d.rev)}`;
     const prevBar = prevPct
       ? `<div class="chart-bar-prev" style="height:${prevPct}%" data-tip="${prevLbl}" onmouseenter="showChTip(event,this)" onmouseleave="hideChTip()"></div>`
-      : `<div style="flex:1"></div>`;
+      : (hasPrev ? `<div style="flex:1"></div>` : '');
     return `<div class="chart-day">${prevBar}<div class="chart-bar-curr${d.d===last?' today':''}" style="height:${currPct}%" data-tip="${currLbl}" onmouseenter="showChTip(event,this)" onmouseleave="hideChTip()"></div></div>`;
   }).join('');
 
@@ -2047,7 +2054,27 @@ function renderChart(k){
     const edge = i === firstShown ? ' lbl-first' : i === lastShown ? ' lbl-last' : '';
     return `<span class="chart-label lbl-show${edge}">${d.d}</span>`;
   }).join('');
-  const hasPrev = prevDays && prevDays.some(d=>d.rev>0);
+
+  // Bij Maximaal verdwenen alle cijfers omdat de statistiek-kolom verborgen wordt.
+  // Deze voettekst zet de all-time totalen terug en vult de lege ruimte in de kaart.
+  const totRev    = days.reduce((s,d)=>s+(d.rev||0),0);
+  const totOrders = days.reduce((s,d)=>s+(d.orders||0),0);
+  const maxFooter = !isMax ? '' : `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+                margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+      <div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">All-time omzet</div>
+        <div style="font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--ink);line-height:1.1">${eur(totRev,0)}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Orders</div>
+        <div style="font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--ink);line-height:1.1">${totOrders}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Gem. orderwaarde</div>
+        <div style="font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--ink);line-height:1.1">${totOrders>0?eur(totRev/totOrders,0):'-'}</div>
+      </div>
+    </div>`;
 
   chartCol.innerHTML = `
     <div class="chart-wrap">
@@ -2066,7 +2093,8 @@ function renderChart(k){
     <div class="chart-legend">
       <span><span class="leg-sw" style="background:var(--sage)"></span>Deze periode</span>
       ${hasPrev?`<span><span class="leg-sw" style="background:#D4DDD2"></span>Vorige periode</span>`:''}
-    </div>`;
+    </div>
+    ${maxFooter}`;
 }
 
 let metaFilter = 'actief'; // 'alle' | 'actief'
