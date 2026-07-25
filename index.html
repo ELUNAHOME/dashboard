@@ -598,6 +598,27 @@
 /* ── mobiel (≤640px): scrollbare tabs en tabellen, gestapelde grids, compactere padding ── */
 @media(max-width:640px){
   .wrap{padding:20px 14px 48px}
+  /* De topbar trekt zichzelf met negatieve marges over de padding van .wrap heen.
+     Die marges stonden op de bureaublad-padding (40/28) terwijl .wrap op mobiel
+     20/14 gebruikt: de balk werd daardoor 403px breed in een kolom van 375px,
+     stak links 14px buiten beeld en werd 20px te ver omhoog getrokken. Hier
+     gelijkgetrokken met de mobiele padding. */
+  /* De onderdelen vragen samen 407px terwijl er 347px is, dus omslaan is onvermijdelijk.
+     In plaats van het toevallig te laten gebeuren: een vaste indeling. Rij 1 logo links
+     en de knoppen rechts, rij 2 de periodekiezer over de volle breedte (meteen een
+     ruimere raakzone op een telefoon). */
+  .topbar{margin:-20px -14px 20px;padding:10px 14px;
+    display:grid;grid-template-columns:auto 1fr;grid-template-areas:"logo acties" "datum datum";
+    gap:10px 12px;align-items:center}
+  .topbar-left{display:contents}
+  .topbar-logo{grid-area:logo;height:26px}
+  .topbar-left > div:not(.drp-wrap){display:none}
+  .topbar .drp-wrap{grid-area:datum}
+  .topbar .drp-trigger{width:100%;justify-content:flex-start}
+  /* !important is hier nodig: de pijl heeft een inline margin-left in de HTML,
+     die het van een gewone regel wint. Inline blijft staan voor het bureaublad. */
+  .topbar .drp-trigger > svg:last-child{margin-left:auto !important}
+  .topbar-right{grid-area:acties;justify-self:end;gap:14px;flex-wrap:nowrap}
   .kpis{grid-template-columns:repeat(2,1fr);gap:10px}
   .tab-nav{overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;display:flex}
   .tab-nav::-webkit-scrollbar{display:none}
@@ -609,8 +630,24 @@
   .fc-row{grid-template-columns:100px 1fr 64px;font-size:12px;gap:6px}
   .wf .row{grid-template-columns:1fr 72px;font-size:12px}
   .wf .row > :first-child{grid-column:1 / -1;font-weight:600}
+  /* Vaste kolommen 120+80+90 plus gaps vragen 332px; op een kaart van 292px viel de
+     laatste kolom eraf. Label en balk op een eigen regel, de twee cijfers eronder. */
+  .mktg-pot-row{grid-template-columns:1fr auto;gap:4px 10px;font-size:12px}
+  .mktg-pot-row > :nth-child(1){grid-column:1 / -1;font-weight:600}
+  .mktg-pot-row > :nth-child(2){grid-column:1 / -1}
+  .mktg-pot-row > :nth-child(4){text-align:right}
+  /* Legenda-items pasten net niet naast elkaar op 320px, 4px eraf via een kleinere gap. */
+  /* Legenda: gap kleiner, en de items mogen krimpen en afbreken. Zonder min-width:0
+     kon "Google Ads €760,99 · 70%" niet inkorten en viel het op 320px net buiten de kaart. */
+  .mktg-mix-legend{gap:8px;row-gap:6px}
+  .mktg-mix-leg{min-width:0;flex-wrap:wrap}
   .stock-bar{grid-template-columns:1fr}
   .stock-tile > div[style*="grid-template-columns:1fr 1fr 1fr auto"]{grid-template-columns:repeat(2,1fr)!important;row-gap:16px!important}
+  /* Vast rooster van 5 kolommen in de Meta- en Google-kaarten: op een kaart van 347px
+     kreeg elke kolom ~50px, waardoor Blended ROAS en CPC werden afgeknipt en dus
+     onzichtbaar waren. Twee kolommen past wel. !important omdat het inline staat. */
+  div[style*="grid-template-columns:repeat(5,1fr)"],
+  div[style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr)!important;gap:16px!important}
   .kpi .val{font-size:24px}
   .card{padding:16px 14px}
   /* AI-opener: op mobiel geen verticale balk over de rechter cijfers, maar een compacte knop rechtsonder */
