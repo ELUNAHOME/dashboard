@@ -662,6 +662,45 @@
   .kpis{gap:8px}
   .kpi .val{font-size:21px}
 }
+/* ── winst-overzicht ── */
+.pf-kop{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;
+  padding-bottom:16px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+.pf-kop-lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.pf-kop-val{font-size:17px;font-weight:700;color:var(--ink);letter-spacing:-.01em;line-height:1.25}
+.pf-kop-val.warn{color:#C8705A}.pf-kop-val.good{color:var(--good)}
+.pf-tabel{display:flex;flex-direction:column;gap:2px;margin:14px 0 4px}
+.pf-row{display:grid;grid-template-columns:230px 1fr 62px 104px;align-items:center;gap:14px;
+  font-size:13px;padding:7px 0}
+.pf-row.pf-total{border-top:1px solid var(--line);margin-top:6px;padding-top:11px;font-weight:700}
+.pf-naam{color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-baan{display:block;height:12px;background:var(--line);border-radius:4px;overflow:hidden;min-width:0}
+.pf-balk{display:block;height:100%;border-radius:4px;background:var(--sage);transition:width .45s cubic-bezier(.22,1,.36,1)}
+.pf-balk.omzet{background:var(--ink)}
+.pf-balk.kost{background:#CFD6B8}
+.pf-balk.bruto{background:var(--sage)}
+.pf-balk.ads{background:#B8C4D6}
+.pf-balk.net{background:var(--good)}
+.pf-balk.neg{background:#C8705A}
+.pf-pct{font-size:11px;color:var(--muted);text-align:right}
+.pf-bedrag{text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
+.pf-bedrag.warn{color:#C8705A}
+.pf-voet{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.pf-kaartjes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.pf-kaart{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.pf-kaart-lbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.pf-kaart-val{font-size:21px;font-weight:700;letter-spacing:-.02em;line-height:1.3}
+.pf-kaart-val.warn{color:#C8705A}.pf-kaart-val.good{color:var(--good)}
+.pf-kaart-sub{font-size:11px;color:var(--muted)}
+.pf-note{font-size:11px;color:var(--muted);line-height:1.5}
+@media(max-width:640px){
+  .pf-row{grid-template-columns:1fr 92px;gap:4px 10px;padding:6px 0}
+  .pf-naam{grid-column:1 / -1;font-weight:600;white-space:normal}
+  .pf-baan{grid-column:1}
+  .pf-bedrag{grid-column:2;grid-row:2}
+  .pf-pct{display:none}
+  .pf-kaartjes{grid-template-columns:1fr}
+}
+
 .stock-tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;gap:2px}
 .stock-tile.warn{border-color:#E4C9B5;background:#FAF3EE}
 .stock-tile.crit{border-color:#C8705A;background:#FAF0EE}
@@ -784,6 +823,7 @@
   <!-- TAB NAVIGATION -->
   <div class="tab-nav" id="tab-nav">
     <button class="tab-btn active" data-tab="overzicht">Overzicht</button>
+    <button class="tab-btn" data-tab="winst">Winst</button>
     <button class="tab-btn" data-tab="marges">Marges</button>
     <button class="tab-btn" data-tab="marketing">Marketing</button>
     <button class="tab-btn" data-tab="groei">Groei</button>
@@ -934,6 +974,13 @@
   </div><!-- /tab-campagnes -->
 
   <!-- TAB: MARGES -->
+  <div class="tab-pane" id="tab-winst">
+    <div class="card">
+      <h2>Winst &middot; van omzet naar netto</h2>
+      <div id="winst-body"></div>
+    </div>
+  </div>
+
   <div class="tab-pane" id="tab-marges">
 
     <div class="card" style="margin-bottom:20px">
@@ -1387,6 +1434,93 @@ function generateActions(k){
     'Email top-kopers (>€69,95 eenmalig, geen retour). Vraag 30-sec video: "hoe gebruik je ELÛNA elke ochtend?" Stuur Higgsfield-brief mee. UGC halveert doorgaans CPP vs branded content.','','LATER'));
 
   return {meta, google, klaviyo, strat, creative};
+}
+
+// Winst-overzicht: de hele weg van omzet naar netto voor de gekozen periode.
+// Alle posten komen uit het vaste marge-model maal het werkelijke aantal stuks uit
+// Shopify; ad-spend uit Meta en Google. Niets hier is handmatig ingetypt.
+function renderWinst(k){
+  const el = document.getElementById('winst-body');
+  if(!el) return;
+  const p = P[k];
+  if(!p){ el.innerHTML = '<div style="color:var(--muted);font-size:13px">Periode nog niet beschikbaar.</div>'; return; }
+
+  const geenSpend = p.spend == null && p.gspend == null;
+  const units   = p.units || 0;
+  const revEx   = (p.rev || 0) / BTW;
+  const cogs    = units * COGS_EX;
+  const log     = units * LOG_EX;
+  const fees    = units * FEES_EX;
+  const bruto   = revEx - cogs - log - fees;
+  const ads     = geenSpend ? null : (p.spend || 0) + (p.gspend || 0);
+  const netto   = ads == null ? null : bruto - ads;
+  const marge   = (v) => revEx > 0 ? (v / revEx * 100) : null;
+  const pctTxt  = (v) => v == null ? '' : `${v >= 0 ? '' : '−'}${Math.abs(v).toFixed(1).replace('.',',')}%`;
+
+  // Break-even: hoeveel ad-spend kan er maximaal in voordat netto onder nul zakt.
+  const beSpend = bruto;
+  const beRoas  = ads != null && ads > 0 ? revEx / ads : null;
+
+  const rij = (naam, bedrag, opts={}) => {
+    const w = revEx > 0 ? Math.max(1.5, Math.min(100, Math.abs(bedrag) / revEx * 100)) : 1.5;
+    return `<div class="pf-row${opts.totaal ? ' pf-total' : ''}">
+      <span class="pf-naam">${naam}</span>
+      <span class="pf-baan"><span class="pf-balk ${opts.kleur||''}" style="width:${w}%"></span></span>
+      <span class="pf-pct">${opts.pct == null ? '' : pctTxt(opts.pct)}</span>
+      <span class="pf-bedrag ${opts.warn ? 'warn' : ''}">${bedrag == null ? '—' : (bedrag < 0 ? '−' : '') + eur(Math.abs(bedrag), 0)}</span>
+    </div>`;
+  };
+
+  el.innerHTML = `
+    <div class="pf-kop">
+      <div>
+        <div class="pf-kop-lbl">Periode</div>
+        <div class="pf-kop-val">${p.label || ''}${p.range ? ` <span style="font-weight:400;color:var(--muted);font-size:13px">${p.range}</span>` : ''}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="pf-kop-lbl">Nettowinst</div>
+        <div class="pf-kop-val ${netto != null && netto < 0 ? 'warn' : 'good'}" style="font-size:30px">
+          ${netto == null ? '—' : (netto < 0 ? '−' : '') + eur(Math.abs(netto), 0)}
+        </div>
+        <div style="font-size:11px;color:var(--muted)">${netto == null ? 'ad-spend onbekend' : pctTxt(marge(netto)) + ' van de omzet'}</div>
+      </div>
+    </div>
+
+    <div class="pf-tabel">
+      ${rij('Omzet ex btw', revEx, {pct:100, kleur:'omzet'})}
+      ${rij(`− Inkoop · ${units} × ${eur(COGS_EX)}`, -cogs, {pct:marge(-cogs), kleur:'kost'})}
+      ${rij(`− Logistiek · ${units} × ${eur(LOG_EX)}`, -log, {pct:marge(-log), kleur:'kost'})}
+      ${rij(`− Fees en retouren · ${units} × ${eur(FEES_EX)}`, -fees, {pct:marge(-fees), kleur:'kost'})}
+      ${rij('= Brutomarge', bruto, {pct:marge(bruto), kleur:'bruto', totaal:true, warn:bruto<0})}
+      ${rij('− Ad-spend Meta en Google', ads == null ? null : -ads, {pct: ads==null?null:marge(-ads), kleur:'ads'})}
+      ${rij('= Nettowinst', netto, {pct: netto==null?null:marge(netto), kleur: netto!=null&&netto<0?'neg':'net', totaal:true, warn: netto!=null&&netto<0})}
+    </div>
+
+    <div class="pf-voet">
+      ${geenSpend
+        ? `<div class="pf-note">Geen ad-spend beschikbaar voor dit bereik, dus de nettowinst is hier niet te berekenen. Bewust leeg gelaten in plaats van op nul gezet.</div>`
+        : `<div class="pf-kaartjes">
+             <div class="pf-kaart">
+               <div class="pf-kaart-lbl">Ruimte tot break-even</div>
+               <div class="pf-kaart-val ${netto<0?'warn':'good'}">${eur(Math.abs(beSpend - ads), 0)}</div>
+               <div class="pf-kaart-sub">${netto<0 ? 'te veel uitgegeven aan ads' : 'ad-spend die er nog bij kan'}</div>
+             </div>
+             <div class="pf-kaart">
+               <div class="pf-kaart-lbl">Blended ROAS</div>
+               <div class="pf-kaart-val ${beRoas && beRoas >= 2.19 ? 'good' : 'warn'}">${beRoas ? xfmt(beRoas) : '—'}</div>
+               <div class="pf-kaart-sub">break-even ligt op 2,19× ex btw</div>
+             </div>
+             <div class="pf-kaart">
+               <div class="pf-kaart-lbl">Netto per stuk</div>
+               <div class="pf-kaart-val ${netto<0?'warn':'good'}">${units>0 ? (netto<0?'−':'')+eur(Math.abs(netto/units)) : '—'}</div>
+               <div class="pf-kaart-sub">${units} stuks verkocht</div>
+             </div>
+           </div>`}
+      <div class="pf-note" style="margin-top:10px">
+        Omzet komt uit Shopify, ad-spend uit Meta en Google. Inkoop, logistiek en fees zijn het
+        vaste marge-model (${eur(COGS_EX)} + ${eur(LOG_EX)} + ${eur(FEES_EX)} = ${eur(FIXED_EX)} per stuk).
+      </div>
+    </div>`;
 }
 
 function renderPerfStats(k, grossEx, cac, net){
@@ -3019,6 +3153,7 @@ function render(k){
     <div class="row"><span class="name">= Netto / stuk</span><div class="bar ${netNeg?'neg':'net'}" style="width:${net?Math.max(2,Math.abs(net)/BASE*100):2}%"></div><span class="amt ${netNeg?'warn':'good'}"><b>${net?(net<0?'−':'')+eur(Math.abs(net)):','}</b></span></div>`;
   document.getElementById('wf').innerHTML=wfHtml;
   renderRichon(k);
+  renderWinst(k);
   // sync wf2 (marges tab)
   const wf2 = document.getElementById('wf2');
   if(wf2) wf2.innerHTML = document.getElementById('wf').innerHTML;
