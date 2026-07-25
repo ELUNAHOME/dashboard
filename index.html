@@ -2036,21 +2036,15 @@ function renderChart(k){
   const perfCardEl  = document.getElementById('perf-card');
   const admixCardEl = document.getElementById('admix-card');
   const statsColEl  = document.getElementById('perf-stats');
-  if (isMax) {
-    if (perfCardEl)  perfCardEl.style.gridColumn   = '1 / -1';
-    if (admixCardEl) admixCardEl.style.display     = 'none';
-    inner.style.gridTemplateColumns                = '1fr';
-    if (statsColEl)  statsColEl.style.display      = 'none';
-    chartCol.style.borderRight  = 'none';
-    chartCol.style.paddingRight = '0';
-  } else {
-    if (perfCardEl)  perfCardEl.style.gridColumn   = '';
-    if (admixCardEl) admixCardEl.style.display     = '';
-    inner.style.gridTemplateColumns                = '';
-    if (statsColEl)  statsColEl.style.display      = '';
-    chartCol.style.borderRight  = '';
-    chartCol.style.paddingRight = '';
-  }
+  // Maximaal krijgt dezelfde opzet als elke andere periode: grafiek links, cijferkolom
+  // rechts, ad-spend mix ernaast. Eerder werd bij Maximaal de hele cijferkolom en de
+  // ad-spend-kaart verborgen, waardoor je alleen een grafiek zonder getallen overhield.
+  if (perfCardEl)  perfCardEl.style.gridColumn   = '';
+  if (admixCardEl) admixCardEl.style.display     = '';
+  inner.style.gridTemplateColumns                = '';
+  if (statsColEl)  statsColEl.style.display      = '';
+  chartCol.style.borderRight  = '';
+  chartCol.style.paddingRight = '';
 
   const labelMap = {d7:'7 dagen', d30:'30 dagen', mtd:'MTD', custom: isMax ? 'Maximaal' : 'Aangepast'};
   document.getElementById('perf-title').textContent = 'Omzetprestatie · ' + (labelMap[k]||'');
@@ -2097,24 +2091,6 @@ function renderChart(k){
 
   // Bij Maximaal verdwenen alle cijfers omdat de statistiek-kolom verborgen wordt.
   // Deze voettekst zet de all-time totalen terug en vult de lege ruimte in de kaart.
-  const totRev    = days.reduce((s,d)=>s+(d.rev||0),0);
-  const totOrders = days.reduce((s,d)=>s+(d.orders||0),0);
-  const maxFooter = !isMax ? '' : `
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
-                margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
-      <div>
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">All-time omzet</div>
-        <div style="font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--ink);line-height:1.1">${eur(totRev,0)}</div>
-      </div>
-      <div>
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Orders</div>
-        <div style="font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--ink);line-height:1.1">${totOrders}</div>
-      </div>
-      <div>
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Gem. orderwaarde</div>
-        <div style="font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--ink);line-height:1.1">${totOrders>0?eur(totRev/totOrders,0):'-'}</div>
-      </div>
-    </div>`;
 
   chartCol.innerHTML = `
     <div class="chart-wrap">
@@ -2133,8 +2109,7 @@ function renderChart(k){
     <div class="chart-legend">
       <span><span class="leg-sw" style="background:var(--sage)"></span>Deze periode</span>
       ${hasPrev?`<span><span class="leg-sw" style="background:#D4DDD2"></span>Vorige periode</span>`:''}
-    </div>
-    ${maxFooter}`;
+    </div>`;
 }
 
 let metaFilter = 'actief'; // 'alle' | 'actief'

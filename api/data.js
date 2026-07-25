@@ -192,6 +192,22 @@ async function shopifyFetch(path) {
   return res.json();
 }
 
+// Zelfde als shopifyFetch, maar geeft ook de Link-header terug voor paginering.
+async function shopifyFetchPaged(pathOrUrl) {
+  const store = process.env.SHOPIFY_STORE;
+  const token = process.env.SHOPIFY_ACCESS_TOKEN;
+  const url = pathOrUrl.startsWith('http')
+    ? pathOrUrl
+    : `https://${store}/admin/api/${SHOPIFY_API}${pathOrUrl}`;
+  const res = await fetch(url, {
+    headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' }
+  });
+  if (!res.ok) throw new Error(`Shopify ${res.status}: ${await res.text()}`);
+  const link = res.headers.get('link') || '';
+  const m = link.match(/<([^>]+)>;\s*rel="next"/);
+  return { json: await res.json(), next: m ? m[1] : null };
+}
+
 async function shopifyOrders(dateMin, dateMax) {
   const qs = new URLSearchParams({
     created_at_min: dateMin + 'T00:00:00+02:00',
@@ -201,8 +217,17 @@ async function shopifyOrders(dateMin, dateMax) {
     limit: '250',
     fields: 'id,total_price,line_items,created_at'
   });
-  const { orders = [] } = await shopifyFetch(`/orders.json?${qs}`);
-  return orders;
+  // Shopify levert maximaal 250 orders per pagina. Zonder doorbladeren viel alles
+  // daarboven stil weg en klopten de totalen over een lang bereik simpelweg niet.
+  // Nu doorbladeren via de Link-header, met een harde bovengrens als noodrem.
+  let url = `/orders.json?${qs}`;
+  const alle = [];
+  for (let pagina = 0; pagina < 40 && url; pagina++) {
+    const { json, next } = await shopifyFetchPaged(url);
+    alle.push(...(json.orders || []));
+    url = next;
+  }
+  return alle;
 }
 
 function aggregateOrders(orders) {
@@ -214,6 +239,12 @@ function aggregateOrders(orders) {
   return { rev: r2(rev), orders: orders.length, units };
 }
 
+// De sleutel was "dag/maand" zonder jaartal. Bij een bereik over meerdere jaren viel
+// 1 april 2025 dus in dezelfde bak als 1 april 2026: omzet uit twee jaren werd bij
+// elkaar opgeteld op één balk, en de reeks liep rond als een kalenderwiel (1/4 t/m
+// 31/3) in plaats van als een tijdlijn. Nu op ISO-datum gesleuteld; het label krijgt
+// er een jaartal bij zodra het bereik meer dan één jaar raakt.
+// Per dag wordt nu ook het aantal orders geteld, zodat afnemers niet zelf hoeven te schatten.
 function dailyBreakdown(orders, dateMin, dateMax) {
   const map = {};
   const addDay = s => {
@@ -221,24 +252,31 @@ function dailyBreakdown(orders, dateMin, dateMax) {
     d.setUTCDate(d.getUTCDate() + 1);
     return d.toISOString().slice(0, 10);
   };
-  const toKey = s => {
-    const [, m, day] = s.split('-');
-    return `${parseInt(day)}/${parseInt(m)}`;
+  const meerdereJaren = dateMin.slice(0, 4) !== dateMax.slice(0, 4);
+  const toLabel = iso => {
+    const [y, m, day] = iso.split('-');
+    return meerdereJaren
+      ? `${parseInt(day)}/${parseInt(m)}/${y.slice(2)}`
+      : `${parseInt(day)}/${parseInt(m)}`;
   };
   let cur = dateMin;
   while (cur <= dateMax) {
-    map[toKey(cur)] = 0;
+    map[cur] = { rev: 0, orders: 0 };
     cur = addDay(cur);
   }
   for (const o of orders) {
-    const ad = new Intl.DateTimeFormat('en-CA', {
+    const iso = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Europe/Amsterdam',
       year: 'numeric', month: '2-digit', day: '2-digit'
     }).format(new Date(o.created_at));
-    const key = toKey(ad);
-    if (key in map) map[key] += parseFloat(o.total_price);
+    if (iso in map) {
+      map[iso].rev += parseFloat(o.total_price);
+      map[iso].orders += 1;
+    }
   }
-  return Object.entries(map).map(([d, rev]) => ({ d, rev: r2(rev) }));
+  return Object.entries(map).map(([iso, v]) => ({
+    d: toLabel(iso), iso, rev: r2(v.rev), orders: v.orders
+  }));
 }
 
 async function fetchShopify() {
