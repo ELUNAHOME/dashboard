@@ -1392,6 +1392,10 @@ function generateActions(k){
 function renderPerfStats(k, grossEx, cac, net){
   const p=P[k];
   const tot=(p.spend||0)+(p.gspend||0), roas=tot>0?p.rev/tot:0;
+  // Voor een aangepast bereik (o.a. Maximaal) levert de API geen ad-spend. Dat is iets
+  // anders dan nul spend: met nul zou het dashboard een netto van +€24 per stuk tonen,
+  // oftewel winst die er niet is. Daarom hier expliciet als "onbekend" behandelen.
+  const geenSpendData = p.spend == null && p.gspend == null;
   const bF=showBTW?1:1/BTW;
   const aov=p.orders>0?p.rev/p.orders:null;
   const isDay = k==='today'||k==='gisteren';
@@ -1429,10 +1433,13 @@ function renderPerfStats(k, grossEx, cac, net){
     ${pacingHtml}
     ${attrBadge}
     <div class="ps-divider"></div>
-    <div class="ps-row"><span class="ps-lbl">Blended ROAS</span><span class="ps-val ${roas>=2.65?'good':'warn'}">${roas>0?xfmt(roas):','}</span></div>
-    <div class="ps-row"><span class="ps-lbl">CAC / stuk</span><span class="ps-val ${cac&&cac>grossEx?'warn':'good'}">${cac?eur(cac):','}</span></div>
-    <div class="ps-row"><span class="ps-lbl">Netto / stuk</span><span class="ps-val ${net&&net<0?'warn':'good'}">${net?(net<0?'−':'+')+eur(Math.abs(net)):','}</span></div>
-    <div class="ps-row"><span class="ps-lbl">Ad-spend totaal</span><span class="ps-val">${eur(tot)}</span></div>`;
+    <div class="ps-row"><span class="ps-lbl">Blended ROAS</span><span class="ps-val ${geenSpendData?'':(roas>=2.65?'good':'warn')}">${geenSpendData?'—':(roas>0?xfmt(roas):',')}</span></div>
+    <div class="ps-row"><span class="ps-lbl">CAC / stuk</span><span class="ps-val ${geenSpendData?'':(cac&&cac>grossEx?'warn':'good')}">${geenSpendData?'—':(cac?eur(cac):',')}</span></div>
+    <div class="ps-row"><span class="ps-lbl">Netto / stuk</span><span class="ps-val ${geenSpendData?'':(net&&net<0?'warn':'good')}">${geenSpendData?'—':(net?(net<0?'−':'+')+eur(Math.abs(net)):',')}</span></div>
+    <div class="ps-row"><span class="ps-lbl">Ad-spend totaal</span><span class="ps-val">${geenSpendData?'—':eur(tot)}</span></div>
+    ${geenSpendData?`<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45">
+      Geen ad-spend beschikbaar voor dit bereik, dus ROAS, CAC en netto zijn hier niet te berekenen.
+      Ze zijn bewust leeggelaten in plaats van op nul gezet, anders lees je winst die er niet is.</div>`:''}`;
 }
 
 function renderAdMix(k){
