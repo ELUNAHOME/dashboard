@@ -377,11 +377,14 @@
     transition:opacity .35s ease, visibility .35s ease;
   }
   #load-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
+  /* Merkteken uit dezelfde bron als de favicon en de webshop; achtergrond gelijk aan
+     de creme in dat beeld (#F4F3EF) zodat de tegel naadloos oogt. */
   .load-logo{
-    width:56px;height:56px;border-radius:14px;background:#F0EDE8;
-    display:flex;align-items:center;justify-content:center;
+    width:56px;height:56px;border-radius:14px;background:#F4F3EF;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
     box-shadow:0 2px 12px rgba(43,46,38,.10);
   }
+  .load-logo img{width:100%;height:100%;object-fit:cover;display:block}
   .load-label{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
   .load-bar-track{width:120px;height:2px;background:var(--line);border-radius:1px;overflow:hidden}
   .load-bar-fill{
@@ -665,10 +668,7 @@
 <!-- loading overlay -->
 <div id="load-overlay">
   <div class="load-logo">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="36" height="36">
-      <path d="M 8 58 L 50 14 L 92 58 L 82 58 L 82 86 Q 82 91 77 91 L 23 91 Q 18 91 18 86 L 18 58 Z" fill="#1C1C1C"/>
-      <path d="M 43 91 L 43 73 Q 43 63 50 63 Q 57 63 57 73 L 57 91 Z" fill="#F0EDE8"/>
-    </svg>
+    <img src="favicon-512.png?v=3" alt="ELÛNA" width="56" height="56" />
   </div>
   <div class="load-bar-track"><div class="load-bar-fill"></div></div>
   <div class="load-label">Laden&hellip;</div>
