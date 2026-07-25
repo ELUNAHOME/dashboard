@@ -282,7 +282,10 @@
     text-orientation:mixed;transform:rotate(180deg);margin-top:4px;line-height:1}
   .ai-overlay{position:fixed;inset:0;background:rgba(0,0,0,.22);z-index:8950;opacity:0;pointer-events:none;transition:opacity .25s}
   .ai-overlay.show{opacity:1;pointer-events:auto}
-  .ai-panel{position:fixed;top:0;right:-440px;width:420px;height:100vh;background:var(--card);
+  /* 100dvh in plaats van 100vh: op iOS telt 100vh het gebied achter de browserbalk mee,
+     waardoor de invoerregel onder de zichtbare rand valt en je niets kunt typen.
+     De 100vh-regel blijft ervoor staan als terugval voor oudere browsers. */
+  .ai-panel{position:fixed;top:0;right:-440px;width:420px;height:100vh;height:100dvh;background:var(--card);
     border-left:1px solid var(--line);z-index:9000;display:flex;flex-direction:column;
     transition:right .25s ease;box-shadow:-8px 0 40px rgba(0,0,0,.12)}
   .ai-panel.open{right:0}
