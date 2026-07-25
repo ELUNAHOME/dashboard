@@ -56,9 +56,9 @@
   .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
   .dot.live{background:var(--good)} .dot.flag{background:var(--warn)} .dot.idle{background:var(--line)}
 
-  .chart-wrap{display:flex;gap:8px;align-items:stretch}
+  .chart-wrap{display:flex;gap:8px;align-items:stretch;min-width:0}
   .chart-y{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;font-size:9px;color:var(--muted);min-width:34px;padding-bottom:20px}
-  .chart-plot{position:relative;flex:1;display:flex;flex-direction:column}
+  .chart-plot{position:relative;flex:1;display:flex;flex-direction:column;min-width:0}
   .chart-gline{position:absolute;left:0;right:0;border-top:1px dashed var(--line);pointer-events:none;opacity:.55}
   .chart-days{display:flex;align-items:flex-end;gap:6px;height:108px}
   .chart-day{display:flex;align-items:flex-end;gap:3px;flex:1;min-width:0;height:100%}
@@ -66,8 +66,13 @@
   .chart-bar-curr.today{background:var(--good)}
   .chart-bar-curr:hover,.chart-bar-prev:hover{opacity:.55}
   .chart-bar-prev{flex:1;min-height:3px;border-radius:4px 4px 0 0;background:#D4DDD2;cursor:default;transition:opacity .15s}
-  .chart-labels{display:flex;gap:2px;margin-top:4px}
-  .chart-label{flex:1;font-size:9px;color:var(--muted);text-align:center;min-width:0;overflow:hidden;white-space:nowrap}
+  .chart-labels{display:flex;gap:2px;margin-top:4px;min-width:0}
+  .chart-label{flex:1 1 0;font-size:9px;color:var(--muted);text-align:center;min-width:0;width:0;overflow:hidden;white-space:nowrap;text-overflow:clip}
+  /* Een getoond label mag buiten zijn eigen slot tekenen: de buren zijn leeg na uitdunnen.
+     Zonder dit werd "22/4" op mobiel aan beide kanten afgeknipt. */
+  .chart-label.lbl-show{overflow:visible}
+  .chart-label.lbl-first{text-align:left}
+  .chart-label.lbl-last{text-align:right}
   .chart-legend{display:flex;align-items:center;gap:12px;font-size:10px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
   .leg-sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:middle}
 
@@ -467,13 +472,29 @@
 .drp-day.today-marker{outline:1.5px solid var(--sage);outline-offset:-1px}
 .drp-day.other-month{opacity:.3;cursor:default}
 .drp-pick-hint{font-size:11px;color:var(--muted);padding:0 0 10px;font-style:italic}
+/* Mobiel: het paneel stond op min-width:560px en liep dus ver buiten een 375px-scherm.
+   Hier wordt het een sheet over de volle breedte, presets boven de kalender. */
+@media(max-width:640px){
+  .drp-panel{position:fixed;top:auto;bottom:0;left:0;right:0;width:100%;min-width:0;
+    flex-direction:column;border-radius:16px 16px 0 0;max-height:82vh;overflow-y:auto;
+    box-shadow:0 -6px 32px rgba(0,0,0,.18)}
+  .drp-presets{width:100%;border-right:none;border-bottom:1px solid var(--line);
+    display:grid;grid-template-columns:1fr 1fr;padding:8px;gap:2px}
+  .drp-preset{padding:11px 12px;border-left:none;border-radius:8px;text-align:center}
+  .drp-preset.active{background:var(--pist)}
+  .drp-cal-wrap{padding:14px 16px 22px}
+  .drp-months{gap:18px}
+}
 /* overview grid */
 .overview-grid{display:grid;grid-template-columns:1.65fr 1fr;gap:16px;margin-bottom:16px}
 @media(max-width:820px){.overview-grid{grid-template-columns:1fr}}
 /* performance card inner */
-.perf-inner{display:grid;grid-template-columns:1.5fr 1fr;gap:0}
+.perf-inner{display:grid;grid-template-columns:1.5fr 1fr;gap:0;min-width:0}
 .perf-inner.no-chart{grid-template-columns:1fr}
 @media(max-width:640px){.perf-inner{grid-template-columns:1fr}}
+/* Grid-tracks mogen nooit opblazen door de min-content van de labelrij:
+   bij Maximaal (17 buckets) duwde dat de grafiek 33px buiten de kaart op mobiel. */
+.perf-chart-col,.perf-stats-col{min-width:0}
 .perf-chart-col{border-right:1px solid var(--line);padding-right:20px}
 .perf-stats-col{padding-left:22px;display:flex;flex-direction:column;justify-content:center;gap:0}
 @media(max-width:640px){.perf-chart-col{border-right:none;border-bottom:1px solid var(--line);padding-right:0;padding-bottom:14px;margin-bottom:14px}.perf-stats-col{padding-left:0}}
@@ -2012,7 +2033,20 @@ function renderChart(k){
     return `<div class="chart-day">${prevBar}<div class="chart-bar-curr${d.d===last?' today':''}" style="height:${currPct}%" data-tip="${currLbl}" onmouseenter="showChTip(event,this)" onmouseleave="hideChTip()"></div></div>`;
   }).join('');
 
-  const labelsHtml = days.map(d=>`<span class="chart-label">${d.d}</span>`).join('');
+  // Labels uitdunnen: een datum heeft ~22px nodig bij 9px font. Bij Maximaal (17 buckets)
+  // is er op mobiel ~16px per slot, dus tonen we er hooguit 6 en altijd de laatste.
+  const slotPx   = (chartCol.clientWidth || window.innerWidth) / Math.max(days.length, 1);
+  const labelStep = slotPx >= 22 ? 1 : Math.ceil(days.length / 6);
+  // Vanaf de laatste bucket terugtellen, zo staat de reeks altijd gelijkmatig
+  // en botst de laatste datum nooit met zijn buur.
+  const shownIdx = new Set();
+  for (let i = days.length - 1; i >= 0; i -= labelStep) shownIdx.add(i);
+  const lastShown = days.length - 1, firstShown = Math.min(...shownIdx);
+  const labelsHtml = days.map((d,i)=>{
+    if (!shownIdx.has(i)) return `<span class="chart-label">&nbsp;</span>`;
+    const edge = i === firstShown ? ' lbl-first' : i === lastShown ? ' lbl-last' : '';
+    return `<span class="chart-label lbl-show${edge}">${d.d}</span>`;
+  }).join('');
   const hasPrev = prevDays && prevDays.some(d=>d.rev>0);
 
   chartCol.innerHTML = `
@@ -2865,6 +2899,15 @@ function renderGroei(){
     sigEl.innerHTML=s;
   }
 }
+
+// Bij draaien of resizen verandert het aantal labels dat past; opnieuw tekenen na 200ms rust.
+let _rsTimer = null, _rsLastW = window.innerWidth;
+window.addEventListener('resize', () => {
+  if (Math.abs(window.innerWidth - _rsLastW) < 24) return;
+  _rsLastW = window.innerWidth;
+  clearTimeout(_rsTimer);
+  _rsTimer = setTimeout(() => { if (P[currentK]) render(currentK); }, 200);
+});
 
 function render(k){
   currentK = k;
