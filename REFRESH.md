@@ -1,6 +1,39 @@
-# ELÛNA dashboard — dagelijkse refresh-recept
+# ELÛNA dashboard — refresh-recept
 
-Doel: `index.html` (in deze map, ELÛNA/ELÛNA DASHBOARD) elke ochtend bijwerken met verse cijfers.
+Doel: het dashboard elke ochtend van verse cijfers voorzien. De dagelijkse cijfers komen
+live uit `/api/data`; de maandhistorie en de P&L komen uit `history.json` en moeten
+maandelijks met de hand ververst worden.
+
+## HARDE BEPERKING: 60 dagen (lees dit eerst)
+
+De Shopify-app achter `SHOPIFY_ACCESS_TOKEN` mist de scope **`read_all_orders`**. Shopify
+geeft zo'n app alleen orders van de **laatste 60 dagen**. Alles daarbuiten komt terug als
+nul, zonder foutmelding. Gevolg (gemeten 26 jul 2026): `/api/data?start=2025-12-01&end=2026-01-31`
+gaf 0 orders terwijl er in werkelijkheid 76 orders en €4.283 omzet waren, en de knop
+"Maximaal" toonde €3.881 over 70 orders in plaats van €15.322 netto over 316 orders.
+
+Daarom leest het dashboard alle maand- en all-time-weergaven uit `history.json`, niet uit
+de API. Wil je dit wél live: vraag in de Shopify-admin bij de custom app de scope
+`read_all_orders` aan (Instellingen → Apps → app → API-scopes), en zet daarna de
+maandaggregatie in `api/data.js`. Tot die tijd geldt: **elke all-time-weergave die niet
+uit `history.json` komt, is te laag.**
+
+## history.json bijwerken (maandelijks, na afsluiten van de maand)
+
+Voeg één regel per afgesloten maand toe. Alle bedragen ex btw:
+
+1. **Shopify** (via de Shopify-connector, die ziet wél de hele historie):
+   `FROM sales SHOW orders, gross_sales, discounts, returns, net_sales, taxes, net_items_sold TIMESERIES month SINCE <maand> UNTIL <maand-eind>`
+   → `orders`, `bruto_omzet`, `kortingen`, `retouren` (positief noteren), `netto_omzet`, `btw`, `stuks` (= net_items_sold).
+2. **Retour-orders**: GraphQL `orders(query:"created_at:>=… financial_status:refunded,partially_refunded")`, tel de nodes → `retour_orders`.
+3. **Meta**: `ads_get_ad_entities`, account 924352226288770, `level: ad_account`, `time_increment: monthly` → `meta_spend`.
+4. **Google**: `python3 google-ads/2026-06-13-google-ads-client.py account 2026-08-01,2026-08-31` → `costEur` = `google_spend`.
+
+Verifieer daarna in het dashboard, tab Winst: de regel "Totaal" van de maandtabel moet
+optellen tot dezelfde netto omzet als de som van de maanden. Niets anders aanpassen:
+`index.html` rekent alles zelf uit `history.json`.
+
+## Dagelijkse cijfers
 
 ## Databronnen (MCP-connectors, al gekoppeld)
 1. **Shopify** — `shopify_list_orders` met `created_at_min` = 1e van de maand, `financial_status: paid`, `limit: 250`, `fields: id,created_at,total_price,subtotal_price,currency,financial_status`.

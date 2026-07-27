@@ -979,6 +979,15 @@
       <h2>Winst &middot; van omzet naar netto</h2>
       <div id="winst-body"></div>
     </div>
+
+    <div class="card" style="margin-top:20px">
+      <h2>Maand-P&amp;L &middot; sinds de eerste verkoop</h2>
+      <div style="font-size:13px;color:var(--muted);margin:-6px 0 16px">
+        Alles ex btw. Dit is de enige plek met de volledige historie: /api/data ziet
+        niets ouder dan 60 dagen.
+      </div>
+      <div id="maand-pnl"></div>
+    </div>
   </div>
 
   <div class="tab-pane" id="tab-marges">
@@ -1114,7 +1123,7 @@
     <div class="grid kpis" id="groei-kpis" style="margin-bottom:16px"></div>
     <div class="grid" style="grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px">
       <div class="card" id="groei-trend-card">
-        <h2 style="margin-bottom:18px">Maandomzet · 3 maanden</h2>
+        <h2 style="margin-bottom:18px">Maandomzet <span id="groei-trend-sub" style="font-weight:400;color:var(--muted)"></span></h2>
         <div id="groei-trend"></div>
         <div id="groei-orders-row" style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line);display:flex;gap:0"></div>
       </div>
@@ -1148,6 +1157,10 @@ let DAILY_PREV_MTD = [], DAILY_PREV_D7 = [], DAILY_PREV_D30 = [];
 let DAILY_CUSTOM = [], DAILY_PREV_CUSTOM = [];
 let DATA_SOURCE = 'fallback'; // 'live' | 'fallback'
 let currentK = 'mtd';
+// Maandhistorie + P&L. Komt uit history.json, niet uit /api/data: de Shopify-app mist
+// de scope read_all_orders en ziet daardoor NIETS ouder dan 60 dagen. Alles vóór dat
+// venster (en dus elke all-time-weergave) moet uit dit bestand komen.
+let HIST = null;
 
 // ── data loading ────────────────────────────────────────────────
 // Probeert eerst de live Vercel API; valt terug op statisch data.json.
@@ -1220,6 +1233,13 @@ async function loadData(bustCache) {
       }
     } catch(_) {}
   }
+
+  // Maandhistorie los ophalen. Faalt dit, dan blijft HIST null en vallen de
+  // all-time-weergaven terug op GROEI_HIST_FALLBACK.
+  try {
+    const hres = await fetch('./history.json' + cacheBust);
+    if (hres.ok) HIST = await hres.json();
+  } catch(_) {}
 
   P = d.P;
   C = d.C;
@@ -2099,7 +2119,7 @@ function renderChart(k){
   inner.classList.remove('no-chart');
   chartCol.style.removeProperty('display');
 
-  // ── Maximaal: maandgrafiek op basis van GROEI_HIST + lopende maand ──
+  // ── Maximaal: maandgrafiek uit history.json + lopende maand ──
   if(k==='max'){
     document.getElementById('perf-title').textContent = 'Omzetgroei · since launch';
     if(perfCard) perfCard.style.gridColumn = '1 / -1';
@@ -2108,10 +2128,15 @@ function renderChart(k){
     const p = P.mtd||{};
     const revMtd = p.rev||0;
     const today = new Date(), dom = today.getDate();
-    const daysInJun = 30;
+    // Afgeronde maanden uit history.json (netto omzet ex btw, dus vergelijkbaar met
+    // de omgerekende MTD hieronder). Fallback alleen als history.json niet laadde.
+    const nuYm = new Date().toLocaleDateString('en-CA', {timeZone:'Europe/Amsterdam'}).slice(0,7);
+    const histRows = (HIST?.maanden || GROEI_HIST_FALLBACK)
+      .filter(m => m.ym < nuYm)
+      .map(m => ({ym:m.ym, label:m.label, rev:(m.netto_omzet ?? m.rev), orders:m.orders, note:m.note}));
     const months = [
-      ...GROEI_HIST,
-      {label:'Jun', rev:revMtd, proj:true, orders:(p.orders||0)},
+      ...histRows,
+      {label:'Nu', rev:revMtd/BTW, proj:true, orders:(p.orders||0)},
     ];
     const maxRev = Math.max(...months.map(m=>m.rev),1);
     const niceMax = Math.ceil(maxRev/500)*500;
@@ -2143,7 +2168,7 @@ function renderChart(k){
         ${barsHtml}
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
-        <div style="font-size:10px;color:var(--muted)">* jun prognose obv ${dom} dagen &middot; ${eur(revMtd/dom,0)}/dag</div>
+        <div style="font-size:10px;color:var(--muted)">* lopende maand, prognose obv ${dom} dagen &middot; ${eur(revMtd/dom,0)}/dag</div>
         <div style="display:flex;gap:20px">
           <div style="text-align:right"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">All-time omzet</div><div style="font-size:16px;font-weight:700;color:var(--ink)">${eur(totalRev,0)}</div></div>
           <div style="text-align:right"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">All-time orders</div><div style="font-size:16px;font-weight:700;color:var(--ink)">${totalOrders}</div></div>
@@ -2841,14 +2866,164 @@ function renderMarketing(k){
 }
 
 // Shopify historische maanden (MCP: 2025-12 t/m 2026-05)
-const GROEI_HIST = [
-  {ym:'2025-12', label:'Dec', rev:470.01,  orders:9,  days:13, note:'launch'},
-  {ym:'2026-01', label:'Jan', rev:2512.31, orders:48, days:31},
-  {ym:'2026-02', label:'Feb', rev:1585.68, orders:26, days:28},
-  {ym:'2026-03', label:'Mar', rev:1931.18, orders:30, days:31},
-  {ym:'2026-04', label:'Apr', rev:2525.34, orders:39, days:30},
-  {ym:'2026-05', label:'Mei', rev:3077.95, orders:46, days:31},
+// Noodfallback als history.json niet laadt. Bewust NIET de bron van waarheid:
+// deze reeks was maandenlang stil te laag omdat hij alleen betaalde, niet-geretourneerde
+// orders telde. De echte reeks staat in history.json.
+const GROEI_HIST_FALLBACK = [
+  {ym:'2025-12', label:'Dec', rev:749.76,  orders:18, days:31, note:'launch'},
+  {ym:'2026-01', label:'Jan', rev:2238.15, orders:58, days:31},
+  {ym:'2026-02', label:'Feb', rev:1700.61, orders:32, days:28},
+  {ym:'2026-03', label:'Mrt', rev:2096.07, orders:37, days:31},
+  {ym:'2026-04', label:'Apr', rev:2574.32, orders:53, days:30},
+  {ym:'2026-05', label:'Mei', rev:2730.20, orders:48, days:31},
 ];
+
+// Afgeronde maanden, genormaliseerd naar {ym,label,rev(netto ex btw),orders,days}.
+// Eén bron voor elke all-time-weergave, zodat er nooit meer een maandnaam of bedrag
+// hardgecodeerd in een view staat.
+function histAfgerond(){
+  const nuYm = new Date().toLocaleDateString('en-CA', {timeZone:'Europe/Amsterdam'}).slice(0,7);
+  const bron = HIST?.maanden?.length ? HIST.maanden : GROEI_HIST_FALLBACK;
+  return bron
+    .filter(m => m.ym < nuYm)
+    .map(m => ({ym:m.ym, label:m.label, rev:(m.netto_omzet ?? m.rev), orders:m.orders||0, days:(m.dagen ?? m.days ?? 30), note:m.note}));
+}
+
+// ── Maand-P&L ────────────────────────────────────────────────────────────────
+// Eén rekenplek voor alle winstweergaven, zodat grafiek, tabel en totaalregel
+// nooit uit elkaar kunnen lopen. Alle bedragen ex btw.
+function pnlMaanden(){
+  if(!HIST?.maanden?.length) return null;
+  const m = HIST.model || {};
+  const VAR    = m.variabel_per_stuk ?? 31.46;
+  const RETK   = m.retour_afhandeling_per_stuk ?? 17.63;
+  const OVH    = HIST.overhead_per_maand_schatting ?? 0;
+  return HIST.maanden.map(x => {
+    const ads        = (x.meta_spend||0) + (x.google_spend||0);
+    const stuks      = x.stuks || 0;
+    // Retourstuks: orders minus behouden stuks. Wijkt af van retour_orders doordat
+    // Shopify de refund op de refunddatum boekt en de order op de besteldatum.
+    const retStuks   = Math.max(0, (x.orders||0) - stuks);
+    const varkost    = stuks * VAR;
+    const retkost    = retStuks * RETK;
+    const bruto      = (x.netto_omzet||0) - varkost - retkost;
+    const contributie= bruto - ads;
+    return {
+      ...x,
+      ads, retStuks, varkost, retkost, bruto, contributie,
+      resultaat : contributie - OVH,
+      retourPct : x.bruto_omzet > 0 ? (x.retouren||0) / x.bruto_omzet * 100 : 0,
+      cac       : stuks > 0 ? ads / stuks : null,
+      roas      : ads > 0 ? (x.netto_omzet||0) / ads : null,
+      margeStuk : stuks > 0 ? bruto / stuks : null
+    };
+  });
+}
+
+function pnlTotaal(rows){
+  if(!rows?.length) return null;
+  const s = (f) => rows.reduce((a,r)=>a+(f(r)||0),0);
+  const t = {
+    orders: s(r=>r.orders), stuks: s(r=>r.stuks),
+    bruto_omzet: s(r=>r.bruto_omzet), kortingen: s(r=>r.kortingen),
+    retouren: s(r=>r.retouren), retour_orders: s(r=>r.retour_orders),
+    netto_omzet: s(r=>r.netto_omzet), ads: s(r=>r.ads),
+    meta: s(r=>r.meta_spend), google: s(r=>r.google_spend),
+    varkost: s(r=>r.varkost), retkost: s(r=>r.retkost),
+    bruto: s(r=>r.bruto), contributie: s(r=>r.contributie),
+    maanden: rows.length
+  };
+  t.overhead   = (HIST?.overhead_per_maand_schatting || 0) * rows.length;
+  t.resultaat  = t.contributie - t.overhead;
+  t.retourPct  = t.bruto_omzet > 0 ? t.retouren / t.bruto_omzet * 100 : 0;
+  t.cac        = t.stuks > 0 ? t.ads / t.stuks : null;
+  t.margeStuk  = t.stuks > 0 ? t.bruto / t.stuks : null;
+  t.roas       = t.ads > 0 ? t.netto_omzet / t.ads : null;
+  // Break-even ROAS = netto omzet gedeeld door de brutomarge die erin zit.
+  t.beRoas     = t.bruto > 0 ? t.netto_omzet / t.bruto : null;
+  return t;
+}
+
+function renderMaandPnl(){
+  const el = document.getElementById('maand-pnl');
+  if(!el) return;
+  const rows = pnlMaanden();
+  if(!rows){ el.innerHTML = '<div style="color:var(--muted);font-size:13px">history.json niet geladen, maandhistorie niet beschikbaar.</div>'; return; }
+  const T = pnlTotaal(rows);
+  const sgn = (v,d=0) => (v<0?'−':'') + eur(Math.abs(v), d);
+  const cls = (v) => v < 0 ? 'warn' : 'good';
+
+  const trs = rows.map(r => `
+    <tr${r.lopend?' style="opacity:.75"':''}>
+      <td style="font-weight:600">${r.label}${r.lopend?' <span style="font-size:9px;color:var(--muted);text-transform:uppercase">lopend</span>':''}</td>
+      <td>${eur(r.netto_omzet,0)}</td>
+      <td>${r.orders} / ${r.stuks}</td>
+      <td class="${r.retourPct>=20?'warn':''}">${r.retourPct.toFixed(0)}%</td>
+      <td>${eur(r.ads,0)}</td>
+      <td>${r.roas?xfmt(r.roas):'—'}</td>
+      <td>${eur(r.bruto,0)}</td>
+      <td class="${cls(r.contributie)}"><b>${sgn(r.contributie)}</b></td>
+    </tr>`).join('');
+
+  el.innerHTML = `
+    <table class="ctable" style="margin-bottom:16px">
+      <thead><tr>
+        <th>Maand</th><th>Netto omzet</th><th>Orders / stuks</th><th>Retour</th>
+        <th>Ad-spend</th><th>Blended<br><span style="font-weight:400;text-transform:none;letter-spacing:0">ex btw</span></th><th>Brutomarge</th><th>Contributie</th>
+      </tr></thead>
+      <tbody>${trs}</tbody>
+      <tfoot><tr style="border-top:2px solid var(--line);font-weight:700">
+        <td>Totaal</td>
+        <td>${eur(T.netto_omzet,0)}</td>
+        <td>${T.orders} / ${T.stuks}</td>
+        <td class="${T.retourPct>=20?'warn':''}">${T.retourPct.toFixed(0)}%</td>
+        <td>${eur(T.ads,0)}</td>
+        <td>${T.roas?xfmt(T.roas):'—'}</td>
+        <td>${eur(T.bruto,0)}</td>
+        <td class="${cls(T.contributie)}">${sgn(T.contributie)}</td>
+      </tr></tfoot>
+    </table>
+
+    <div class="pf-tabel">
+      <div class="pf-row"><span class="pf-naam">Bruto omzet</span><span class="pf-baan"><span class="pf-balk" style="width:100%"></span></span><span class="pf-pct"></span><span class="pf-bedrag">${eur(T.bruto_omzet,0)}</span></div>
+      <div class="pf-row"><span class="pf-naam">− Kortingen</span><span class="pf-baan"><span class="pf-balk kost" style="width:${T.kortingen/T.bruto_omzet*100}%"></span></span><span class="pf-pct">${(T.kortingen/T.bruto_omzet*100).toFixed(1).replace('.',',')}%</span><span class="pf-bedrag">−${eur(T.kortingen,0)}</span></div>
+      <div class="pf-row"><span class="pf-naam">− Retouren (${T.retour_orders} orders)</span><span class="pf-baan"><span class="pf-balk kost" style="width:${T.retouren/T.bruto_omzet*100}%"></span></span><span class="pf-pct">${T.retourPct.toFixed(1).replace('.',',')}%</span><span class="pf-bedrag warn">−${eur(T.retouren,0)}</span></div>
+      <div class="pf-row pf-total"><span class="pf-naam">= Netto omzet</span><span class="pf-baan"><span class="pf-balk" style="width:${T.netto_omzet/T.bruto_omzet*100}%"></span></span><span class="pf-pct"></span><span class="pf-bedrag">${eur(T.netto_omzet,0)}</span></div>
+      <div class="pf-row"><span class="pf-naam">− Inkoop, logistiek en fees (${T.stuks} stuks)</span><span class="pf-baan"><span class="pf-balk kost" style="width:${T.varkost/T.netto_omzet*100}%"></span></span><span class="pf-pct">${(T.varkost/T.netto_omzet*100).toFixed(1).replace('.',',')}%</span><span class="pf-bedrag">−${eur(T.varkost,0)}</span></div>
+      <div class="pf-row"><span class="pf-naam">− Retourafhandeling</span><span class="pf-baan"><span class="pf-balk kost" style="width:${T.retkost/T.netto_omzet*100}%"></span></span><span class="pf-pct">${(T.retkost/T.netto_omzet*100).toFixed(1).replace('.',',')}%</span><span class="pf-bedrag">−${eur(T.retkost,0)}</span></div>
+      <div class="pf-row pf-total"><span class="pf-naam">= Brutomarge</span><span class="pf-baan"><span class="pf-balk" style="width:${T.bruto/T.netto_omzet*100}%"></span></span><span class="pf-pct">${(T.bruto/T.netto_omzet*100).toFixed(1).replace('.',',')}%</span><span class="pf-bedrag">${eur(T.bruto,0)}</span></div>
+      <div class="pf-row"><span class="pf-naam">− Ad-spend (Meta ${eur(T.meta,0)} + Google ${eur(T.google,0)})</span><span class="pf-baan"><span class="pf-balk ads" style="width:${Math.min(100,T.ads/T.netto_omzet*100)}%"></span></span><span class="pf-pct">${(T.ads/T.netto_omzet*100).toFixed(1).replace('.',',')}%</span><span class="pf-bedrag warn">−${eur(T.ads,0)}</span></div>
+      <div class="pf-row pf-total"><span class="pf-naam">= Contributie na ads</span><span class="pf-baan"><span class="pf-balk ${T.contributie<0?'neg':'net'}" style="width:${Math.min(100,Math.abs(T.contributie)/T.netto_omzet*100)}%"></span></span><span class="pf-pct"></span><span class="pf-bedrag ${cls(T.contributie)}"><b>${sgn(T.contributie)}</b></span></div>
+      <div class="pf-row"><span class="pf-naam">− Overhead, schatting ${eur(HIST.overhead_per_maand_schatting,0)}/mnd</span><span class="pf-baan"><span class="pf-balk kost" style="width:${T.overhead/T.netto_omzet*100}%"></span></span><span class="pf-pct"></span><span class="pf-bedrag">−${eur(T.overhead,0)}</span></div>
+      <div class="pf-row pf-total"><span class="pf-naam">= Resultaat</span><span class="pf-baan"><span class="pf-balk ${T.resultaat<0?'neg':'net'}" style="width:${Math.min(100,Math.abs(T.resultaat)/T.netto_omzet*100)}%"></span></span><span class="pf-pct"></span><span class="pf-bedrag ${cls(T.resultaat)}"><b>${sgn(T.resultaat)}</b></span></div>
+    </div>
+
+    <div class="pf-kaartjes" style="margin-top:16px">
+      <div class="pf-kaart">
+        <div class="pf-kaart-lbl">Brutomarge per stuk</div>
+        <div class="pf-kaart-val">${eur(T.margeStuk)}</div>
+        <div class="pf-kaart-sub">na retouren, ${T.stuks} behouden stuks</div>
+      </div>
+      <div class="pf-kaart">
+        <div class="pf-kaart-lbl">CAC per stuk</div>
+        <div class="pf-kaart-val ${T.cac>T.margeStuk?'warn':'good'}">${eur(T.cac)}</div>
+        <div class="pf-kaart-sub">${T.cac>T.margeStuk?`${eur(T.cac-T.margeStuk)} boven de marge`:'binnen de marge'}</div>
+      </div>
+      <div class="pf-kaart">
+        <div class="pf-kaart-lbl">Blended ROAS</div>
+        <div class="pf-kaart-val ${T.roas>=T.beRoas?'good':'warn'}">${xfmt(T.roas)}</div>
+        <div class="pf-kaart-sub">break-even ligt op ${xfmt(T.beRoas)}</div>
+      </div>
+    </div>
+
+    <div class="pf-note" style="margin-top:12px">
+      Omzet en retouren live uit Shopify, ad-spend uit Meta en Google, alles ex btw.
+      Inkoop, logistiek en fees komen uit het vaste marge-model (${eur(HIST.model.variabel_per_stuk)}/stuk),
+      retourafhandeling uit ${eur(HIST.model.retour_afhandeling_per_stuk)}/stuk (heen- en retourzending plus de PSP-fee die niet terugkomt).
+      Overhead is een schatting uit de bankanalyse, geen live boeking; het Higgsfield-jaarplan zit er niet in.
+      Bijwerken: zie REFRESH.md.
+    </div>`;
+}
 
 // Meta advertentie-snapshot, bijwerken via MCP ads_get_ad_entities level=ad (this_month)
 let META_ADS_DATE = '1-20 jun 2026'; // wordt 'live' zodra /api/data ad-niveau levert
@@ -2951,17 +3126,21 @@ function renderGroei(){
   const aovMtd   = ordMtd > 0 ? revMtd / ordMtd : 0;
   const today    = new Date();
   const dayOfMon = today.getDate();
-  const daysInMon = 30; // juni
-  const lastHist  = GROEI_HIST[GROEI_HIST.length-1]; // mei
-  const dailyMei  = lastHist.rev / lastHist.days;
+  // Geen vaste maandnamen meer: lengte van de lopende maand en de laatste afgeronde
+  // maand komen uit de kalender en uit history.json.
+  const daysInMon = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+  const histRows  = histAfgerond();
+  const lastHist  = histRows[histRows.length-1] || {rev:0, days:30};
+  const dailyVorig= lastHist.days > 0 ? lastHist.rev / lastHist.days : 0;
   const dailyCurr = dayOfMon > 0 ? revMtd / dayOfMon : 0;
   const projRev   = dailyCurr * daysInMon;
-  const growthPct = dailyMei > 0 ? (dailyCurr - dailyMei) / dailyMei * 100 : 0;
+  const growthPct = dailyVorig > 0 ? (dailyCurr - dailyVorig) / dailyVorig * 100 : 0;
   const NEW_CUST_MTD = 30;
+  const maandNamen = ['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
 
   // Totaal alle tijden
-  const allTimeRev = GROEI_HIST.reduce((s,m)=>s+m.rev,0) + revMtd;
-  const allTimeOrd = GROEI_HIST.reduce((s,m)=>s+m.orders,0) + ordMtd;
+  const allTimeRev = histRows.reduce((s,m)=>s+m.rev,0) + revMtd;
+  const allTimeOrd = histRows.reduce((s,m)=>s+m.orders,0) + ordMtd;
 
   // KPI cards
   const kpisEl = document.getElementById('groei-kpis');
@@ -2969,14 +3148,14 @@ function renderGroei(){
     const gSign = growthPct >= 0 ? '+' : '';
     kpisEl.innerHTML = `
       <div class="card kpi">
-        <div class="label">Prognose juni</div>
+        <div class="label">Prognose ${maandNamen[today.getMonth()]}</div>
         <div class="val" id="groei-proj-val">${eur(projRev,0)}</div>
         <div class="sub">obv ${dayOfMon} dagen · ${eur(dailyCurr,0)}/dag</div>
       </div>
       <div class="card kpi">
         <div class="label">Groeitempo</div>
         <div class="val ${growthPct>=0?'good':'warn'}">${gSign}${growthPct.toFixed(1)}%</div>
-        <div class="sub">daggemiddelde vs mei (${eur(dailyMei,0)}/dag)</div>
+        <div class="sub">daggemiddelde vs ${lastHist.label||'vorige maand'} (${eur(dailyVorig,0)}/dag)</div>
       </div>
       <div class="card kpi">
         <div class="label">Omzet · alle tijden</div>
@@ -2991,26 +3170,28 @@ function renderGroei(){
     `;
     // count-up op prognose
     const pv = document.getElementById('groei-proj-val');
-    if(pv && projRev>0){
+    if(pv && projRev>0 && pv.offsetParent){
       const st=performance.now(),dur=800;
       (function tick(now){const p2=Math.min((now-st)/dur,1),e=1-Math.pow(1-p2,3);
         pv.textContent=eur(projRev*e,0);if(p2<1)requestAnimationFrame(tick);else pv.textContent=eur(projRev,0);})(performance.now());
     }
     const av = document.getElementById('groei-alltime-val');
-    if(av && allTimeRev>0){
+    if(av && allTimeRev>0 && av.offsetParent){
       const st=performance.now(),dur=900;
       (function tick(now){const p2=Math.min((now-st)/dur,1),e=1-Math.pow(1-p2,3);
         av.textContent=eur(allTimeRev*e,0);if(p2<1)requestAnimationFrame(tick);else av.textContent=eur(allTimeRev,0);})(performance.now());
     }
   }
 
-  // 7-maands omzettrend
+  // Omzettrend per maand, lengte volgt history.json
   const trendEl = document.getElementById('groei-trend');
   if(trendEl){
     const months = [
-      ...GROEI_HIST.map((m,i)=>({...m, daily:m.rev/m.days, proj:false, delay:`${i*.08+.05}s`})),
-      {label:'Jun', rev:projRev, orders:Math.round(ordMtd/dayOfMon*daysInMon), daily:dailyCurr, proj:true, delay:'.55s'},
+      ...histRows.map((m,i)=>({...m, daily:m.rev/m.days, proj:false, delay:`${i*.08+.05}s`})),
+      {label:'Nu', rev:projRev, orders:Math.round(ordMtd/dayOfMon*daysInMon), daily:dailyCurr, proj:true, delay:'.55s'},
     ];
+    const sub = document.getElementById('groei-trend-sub');
+    if(sub) sub.textContent = `· ${months.length} maanden`;
     const maxRev = Math.max(...months.map(m=>m.rev));
     trendEl.innerHTML = months.map(m=>{
       const pct = maxRev>0 ? (m.rev/maxRev*100).toFixed(1) : 0;
@@ -3063,11 +3244,11 @@ function renderGroei(){
   if(sigEl){
     let s='';
     if(growthPct>3){
-      s+=`<div class="signal good"><span class="dot live" style="margin-top:5px"></span><span><b>Groeitempo boven mei</b>Daggemiddelde ${eur(dailyCurr,0)} vs ${eur(dailyMei,0)} in mei (+${growthPct.toFixed(1)}%). Op koers voor ${eur(projRev,0)} in juni.</span></div>`;
+      s+=`<div class="signal good"><span class="dot live" style="margin-top:5px"></span><span><b>Groeitempo boven ${lastHist.label||'vorige maand'}</b>Daggemiddelde ${eur(dailyCurr,0)} vs ${eur(dailyVorig,0)} in ${lastHist.label||'de vorige maand'} (+${growthPct.toFixed(1)}%). Op koers voor ${eur(projRev,0)} deze maand.</span></div>`;
     } else if(growthPct<-5){
-      s+=`<div class="signal"><span class="dot flag" style="margin-top:5px"></span><span><b>Groeitempo achter op mei</b>Daggemiddelde ${eur(dailyCurr,0)}/dag vs ${eur(dailyMei,0)}/dag. Actie nodig.</span></div>`;
+      s+=`<div class="signal"><span class="dot flag" style="margin-top:5px"></span><span><b>Groeitempo achter op ${lastHist.label||'vorige maand'}</b>Daggemiddelde ${eur(dailyCurr,0)}/dag vs ${eur(dailyVorig,0)}/dag. Actie nodig.</span></div>`;
     } else {
-      s+=`<div class="signal neutral"><span class="dot idle" style="margin-top:5px"></span><span><b>Groeitempo stabiel</b>Daggemiddelde ${eur(dailyCurr,0)}/dag, in lijn met mei (${eur(dailyMei,0)}/dag).</span></div>`;
+      s+=`<div class="signal neutral"><span class="dot idle" style="margin-top:5px"></span><span><b>Groeitempo stabiel</b>Daggemiddelde ${eur(dailyCurr,0)}/dag, in lijn met ${lastHist.label||'de vorige maand'} (${eur(dailyVorig,0)}/dag).</span></div>`;
     }
     const aovMei=lastHist.rev/lastHist.orders;
     if(aovMtd>0&&aovMtd<aovMei-1.5){
@@ -3075,9 +3256,9 @@ function renderGroei(){
     } else if(aovMtd>0){
       s+=`<div class="signal good"><span class="dot live" style="margin-top:5px"></span><span><b>AOV stabiel</b>Gem. orderwaarde ${eur(aovMtd)}, historisch gemiddelde €65–67.</span></div>`;
     }
-    const opMei=lastHist.orders/lastHist.days,opCurr=ordMtd/dayOfMon;
-    const opG=opMei>0?(opCurr-opMei)/opMei*100:0;
-    s+=`<div class="signal neutral"><span class="dot idle" style="margin-top:5px"></span><span><b>Ordersnelheid: ${opCurr.toFixed(1)}/dag</b>${opG>=0?'+':''}${opG.toFixed(0)}% vs mei (${opMei.toFixed(1)}/dag). Prognose: ${Math.round(opCurr*daysInMon)} orders voor juni.</span></div>`;
+    const opVorig=lastHist.days>0?lastHist.orders/lastHist.days:0,opCurr=ordMtd/dayOfMon;
+    const opG=opVorig>0?(opCurr-opVorig)/opVorig*100:0;
+    s+=`<div class="signal neutral"><span class="dot idle" style="margin-top:5px"></span><span><b>Ordersnelheid: ${opCurr.toFixed(1)}/dag</b>${opG>=0?'+':''}${opG.toFixed(0)}% vs ${lastHist.label||'de vorige maand'} (${opVorig.toFixed(1)}/dag). Prognose: ${Math.round(opCurr*daysInMon)} orders deze maand.</span></div>`;
     // Retentie signaal
     s+=`<div class="signal"><span class="dot flag" style="margin-top:5px"></span><span><b>Terugkerende klanten 1,1%</b>Shopify benchmark: 5–15%. Klaviyo flows en post-purchase sequenties kunnen dit verhogen.</span></div>`;
     sigEl.innerHTML=s;
@@ -3154,6 +3335,7 @@ function render(k){
   document.getElementById('wf').innerHTML=wfHtml;
   renderRichon(k);
   renderWinst(k);
+  renderMaandPnl();
   // sync wf2 (marges tab)
   const wf2 = document.getElementById('wf2');
   if(wf2) wf2.innerHTML = document.getElementById('wf').innerHTML;
@@ -3374,16 +3556,60 @@ function drpUpdate(k) {
   renderDrpCalendar(k);
 }
 
+// Maximaal komt uit history.json, NIET uit /api/data. De Shopify-app mist de scope
+// read_all_orders en levert daardoor alleen de laatste 60 dagen: op 26 jul 2026 gaf
+// dat €3.881 over 70 orders terwijl de werkelijke historie €15.322 netto over 316
+// orders is. Afgelopen maanden komen dus uit history.json, de lopende maand live uit MTD.
 async function drpSelectMax() {
   drpClose();
   window._drpMaxActive = true;
-  const now = new Date();
-  const end = now.toISOString().slice(0,10);
-  const start = '2025-04-01'; // ELÛNA max history
   document.querySelectorAll('.drp-preset[data-k]').forEach(b=>b.classList.remove('active'));
   document.getElementById('drp-max-btn')?.classList.add('active');
-  document.getElementById('drp-label').textContent = 'Maximaal';
-  await fetchCustomRange(start, end);
+
+  const rows = pnlMaanden();
+  if(!rows){
+    document.getElementById('drp-label').textContent = 'Maximaal';
+    console.error('drpSelectMax: history.json ontbreekt');
+    return;
+  }
+  const nuYm = new Date().toLocaleDateString('en-CA', {timeZone:'Europe/Amsterdam'}).slice(0,7);
+  const afgerond = rows.filter(r => r.ym < nuYm);
+  const mtd = P.mtd || {};
+  // Lopende maand live erbij, zodat Maximaal niet stilvalt zodra history.json een
+  // maand achterloopt. Ex btw, want history is ex btw.
+  const lopend = {
+    label : ['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'][parseInt(nuYm.slice(5,7),10)-1],
+    netto : (mtd.rev || 0) / BTW,
+    orders: mtd.orders || 0,
+    stuks : mtd.units  || 0,
+    meta  : mtd.spend  || 0,
+    google: mtd.gspend || 0
+  };
+  const buckets = [
+    ...afgerond.map(r => ({label:r.label, netto:r.netto_omzet, orders:r.orders, stuks:r.stuks, meta:r.meta_spend, google:r.google_spend})),
+    lopend
+  ];
+  const som = f => buckets.reduce((a,b)=>a+(f(b)||0),0);
+  const nettoEx = som(b=>b.netto);
+
+  P.custom = {
+    label: 'Maximaal',
+    range: `${buckets[0].label.toLowerCase()} ${rows[0].ym.slice(0,4)} – vandaag`,
+    rev   : nettoEx * BTW,   // dashboard rekent intern incl btw en deelt weer door BTW
+    orders: som(b=>b.orders),
+    units : som(b=>b.stuks),
+    spend : som(b=>b.meta),
+    gspend: som(b=>b.google),
+    mroas : null, groas: null, ctr: null, cpc: null,
+    prev_rev: null, prev_orders: null
+  };
+  DAILY_CUSTOM      = buckets.map(b => ({d:b.label, iso:'', rev: b.netto * BTW, orders: b.orders}));
+  DAILY_PREV_CUSTOM = [];
+
+  const customActiveBtn = document.getElementById('drp-custom-active');
+  if (customActiveBtn) customActiveBtn.style.display = '';
+  render('custom');
+  drpUpdate('custom');
   document.getElementById('drp-label').textContent = 'Maximaal';
 }
 

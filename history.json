@@ -1,0 +1,35 @@
+{
+  "_comment": "Maandhistorie + P&L voor ELÛNA. Bewust een apart bestand: /api/data kan GEEN orders ouder dan 60 dagen zien (de Shopify-app mist de scope read_all_orders), dus alles vóór dat venster moet hier staan. Bedragen ex btw, in euro. Bron: Shopify ShopifyQL (sales-rapport), Meta Graph API, Google Ads API v21. Ophalen: zie REFRESH.md.",
+  "updated": "2026-07-26",
+  "bronnen": {
+    "omzet": "Shopify ShopifyQL FROM sales, TIMESERIES month (gross_sales, discounts, returns, net_sales, taxes, net_items_sold)",
+    "meta": "Meta Graph API, act_924352226288770, level=ad_account, time_increment=monthly",
+    "google": "Google Ads API v21, customer 470-420-6454, FROM customer per maand"
+  },
+  "model": {
+    "cogs": 11.5,
+    "logistiek": 15.42,
+    "fees": 3.23,
+    "sourcing": 1.15,
+    "weee": 0.16,
+    "variabel_per_stuk": 31.46,
+    "retour_afhandeling_per_stuk": 17.63,
+    "_retour_toelichting": "heenzending 7,20 + retourlabel 7,20 + niet-terugbetaalde PSP-fee 3,23. Inkoop telt niet mee: de ketel komt retour en is herverkoopbaar."
+  },
+  "maanden": [
+    { "ym": "2025-12", "label": "Dec", "dagen": 31, "orders": 18, "stuks": 14, "bruto_omzet": 1031.10, "kortingen": 39.13, "retouren": 242.21, "retour_orders": 9, "netto_omzet": 749.76, "btw": 0.00, "meta_spend": 713.37, "google_spend": 521.71 },
+    { "ym": "2026-01", "label": "Jan", "dagen": 31, "orders": 58, "stuks": 43, "bruto_omzet": 3245.10, "kortingen": 218.01, "retouren": 788.94, "retour_orders": 10, "netto_omzet": 2238.15, "btw": 0.00, "meta_spend": 727.40, "google_spend": 598.82 },
+    { "ym": "2026-02", "label": "Feb", "dagen": 28, "orders": 32, "stuks": 29, "bruto_omzet": 2040.35, "kortingen": 117.41, "retouren": 222.33, "retour_orders": 6, "netto_omzet": 1700.61, "btw": 0.00, "meta_spend": 497.70, "google_spend": 536.50 },
+    { "ym": "2026-03", "label": "Mrt", "dagen": 31, "orders": 37, "stuks": 32, "bruto_omzet": 2608.10, "kortingen": 156.77, "retouren": 355.26, "retour_orders": 7, "netto_omzet": 2096.07, "btw": 0.00, "meta_spend": 429.85, "google_spend": 827.99 },
+    { "ym": "2026-04", "label": "Apr", "dagen": 30, "orders": 53, "stuks": 40, "bruto_omzet": 3707.35, "kortingen": 272.61, "retouren": 860.42, "retour_orders": 14, "netto_omzet": 2574.32, "btw": 0.00, "meta_spend": 1161.48, "google_spend": 929.95 },
+    { "ym": "2026-05", "label": "Mei", "dagen": 31, "orders": 48, "stuks": 43, "bruto_omzet": 3330.42, "kortingen": 215.47, "retouren": 384.75, "retour_orders": 2, "netto_omzet": 2730.20, "btw": 95.91, "meta_spend": 975.18, "google_spend": 844.74 },
+    { "ym": "2026-06", "label": "Jun", "dagen": 30, "orders": 45, "stuks": 39, "bruto_omzet": 2658.99, "kortingen": 167.34, "retouren": 398.85, "retour_orders": 7, "netto_omzet": 2092.80, "btw": 467.49, "meta_spend": 963.02, "google_spend": 804.35 },
+    { "ym": "2026-07", "label": "Jul", "dagen": 26, "lopend": true, "orders": 25, "stuks": 20, "bruto_omzet": 1502.98, "kortingen": 85.13, "retouren": 277.49, "retour_orders": 2, "netto_omzet": 1140.36, "btw": 239.51, "meta_spend": 212.47, "google_spend": 506.08 }
+  ],
+  "overhead_per_maand_schatting": 185,
+  "_overhead_toelichting": "Tools/SaaS/bank/admin, schatting uit de bankanalyse van 1 jun 2026 (asset-financien/2026-06-01-eluna-pnl.md). NIET live opgehaald. Het Higgsfield-jaarplan ($2.988, opgezegd 10 jul 2026) zit hier NIET in.",
+  "open_vragen": [
+    "Btw: t/m april is er 0 btw geboekt (order-check maart: totaal 58,46, taxesIncluded=false, geen tax line). Vanaf mei/juni staat NL btw 21% wel aan. Als dit KOR was, is dat correct; zo niet, dan is er btw-schuld over die periode. Uitvragen bij de boekhouder.",
+    "Retouren staan hier op de refunddatum (Shopify sales-rapport); retour_orders op de orderdatum. Kleine timingverschillen tussen die twee kolommen zijn normaal."
+  ]
+}

@@ -22,6 +22,20 @@ Nooit direct data in `index.html` aanpassen.
 
 ---
 
+## Shopify ziet maar 60 dagen (bekende beperking, 26 jul 2026)
+
+De custom app mist de scope `read_all_orders`. Shopify levert dan **alleen orders van de
+laatste 60 dagen**, stil, zonder fout. Gemeten: `/api/data?start=2025-12-01&end=2026-01-31`
+gaf 0 orders (werkelijk 76 orders, €4.283), en "Maximaal" toonde €3.881 / 70 orders in
+plaats van €15.322 netto / 316 orders.
+
+Daarom komen maandhistorie, all-time en de P&L uit **`history.json`**, niet uit de API.
+`histAfgerond()` en `pnlMaanden()` in `index.html` zijn de enige ingangen; er staan geen
+maandbedragen of maandnamen meer hardgecodeerd in views. Bijwerken: zie REFRESH.md.
+
+Definitief oplossen: in de Shopify-admin bij de custom app `read_all_orders` aanzetten,
+daarna maandaggregatie in `api/data.js` bouwen en `history.json` overbodig maken.
+
 ## Google Ads via API (primair, automatisch)
 
 Basic Access goedgekeurd 16 jun 2026. De per-campagne breakdown (Shopping/PMAX,

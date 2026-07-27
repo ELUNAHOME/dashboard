@@ -1,0 +1,40 @@
+{
+  "_comment": "Actionable retour-feed, geproduceerd door de eluna-retour skill (lokaal, Apple Mail support@elunahome.nl). Het dashboard rendert dit als urgent retour-paneel. SLA: retouren binnen 24-48u oppakken.",
+  "updated": "2026-06-29",
+  "open_count": 3,
+  "oldest_age_days": 3,
+  "returns": [
+    {
+      "order": "ELÛNA126010",
+      "customer": "Yasir Kızılgöl",
+      "case": "C",
+      "status": "needs-human",
+      "action": "Pakket al ingeleverd, vraagt om refund. Ontvangst + terugbetaling in Shopify checken.",
+      "age_days": 3,
+      "sla_risk": "over",
+      "draft_ready": false
+    },
+    {
+      "order": "ELÛNA126310",
+      "customer": "Elsa Van Ginneken",
+      "case": "B",
+      "status": "label-attached",
+      "action": "Nieuw werkend label bijgehangen. Concept klaar, alleen checken en versturen.",
+      "age_days": 1,
+      "sla_risk": "ok",
+      "draft_ready": true
+    },
+    {
+      "order": "ELÛNA128910",
+      "customer": "Dick Bouwkamp",
+      "case": "A",
+      "status": "awaiting-label",
+      "action": "Nieuwe retouraanvraag. Concept staat klaar. Stuur Max het labelverzoek.",
+      "age_days": 0,
+      "sla_risk": "ok",
+      "draft_ready": true,
+      "max_message": "Hé Max, mag ik van jou een retourlabel voor:\nOrder: ELÛNA128910\nNaam: Dick Bouwkamp\nThanks!",
+      "verified": "Shopify-gecheckt: order 128910 (24 jun, waterkoker) is de juiste van zijn 2 orders; nog niet geretourneerd. Let op: mogelijk dubbele bestelling (ook 127710 op 16 jun)."
+    }
+  ]
+}

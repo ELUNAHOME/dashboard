@@ -2,3 +2,4 @@
 scripts/google-ads-oauth.py
 google-vercel-env.txt
 .env*
+data.json.bak-*
