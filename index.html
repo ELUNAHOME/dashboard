@@ -918,7 +918,7 @@
             <div class="pov-role">Google Ads &middot; Shopping &middot; Performance Max &middot; klant-ID 470-420-6454</div>
             <ul class="pov-bullets">
               <li><b>PMax asset groups segmenteren.</b> Maak 3 aparte groups: Branded "ELÛNA waterkoker", Categorie "RVS waterkoker kopen", Competitor "design waterkoker". Zo zie je per intentie waar budget heen gaat.</li>
-              <li><b>Target ROAS instellen op 3&times;.</b> Break-even is 2,65&times;. Zonder expliciete target ROAS geeft Google zichzelf ruimte om verlieslatend te bieden.</li>
+              <li><b>Target ROAS instellen op 3&times;.</b> Break-even is 2,95&times;. Zonder expliciete target ROAS geeft Google zichzelf ruimte om verlieslatend te bieden.</li>
               <li><b>Primaire conversie controleren.</b> Alleen "Purchase" mag primaire conversie zijn. Add to Cart of Begin Checkout erin geeft een te hoge ROAS en klopt de bid-strategie niet.</li>
               <li><b>Search Terms rapport bekijken.</b> Filter op zoektermen met klikken maar geen conversies. Voeg toe als exact-negatief om budgetverspilling te stoppen.</li>
             </ul>
@@ -1002,8 +1002,8 @@
       <div class="card">
         <h2>Omzet-forecast · wanneer schalen</h2>
         <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Breakpoints op blended ROAS. Huidig: <b id="fc-current"></b> spend/dag.</div>
-        <div class="fc-row"><span style="color:var(--warn);font-weight:600">Verlieslatend</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:100%;background:#C98A6B"></div></div><span style="text-align:right;font-weight:600;font-size:12px;color:var(--warn)">ROAS &lt; 2,65&#xD7;</span></div>
-        <div class="fc-row"><span>Break-even</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:67%;background:var(--sage)"></div></div><span style="text-align:right;font-weight:600;font-size:12px">ROAS 2,65&#xD7;</span></div>
+        <div class="fc-row"><span style="color:var(--warn);font-weight:600">Verlieslatend</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:100%;background:#C98A6B"></div></div><span style="text-align:right;font-weight:600;font-size:12px;color:var(--warn)">ROAS &lt; 2,95&#xD7;</span></div>
+        <div class="fc-row"><span>Break-even</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:67%;background:var(--sage)"></div></div><span style="text-align:right;font-weight:600;font-size:12px">ROAS 2,95&#xD7;</span></div>
         <div class="fc-row"><span style="font-weight:600">Schalen (doel)</span><div class="fc-bar-wrap"><div class="fc-bar" style="width:100%;background:var(--good)"></div></div><span style="text-align:right;font-weight:600;font-size:12px;color:var(--good)">ROAS 2,5&#xD7;+</span></div>
         <div style="font-size:12px;color:var(--muted);margin-top:13px;border-top:1px solid var(--line);padding-top:12px">
           CAC nu <b>&#x20AC;<span id="fc-cac"></span>/stuk</b>. Break-even CAC = brutomarge/stuk. Gap: <span id="fc-gap"></span>.
@@ -1149,6 +1149,12 @@ const COGS_EX   = 11.50;
 const LOG_EX    = 15.42;
 const FEES_EX   =  4.23;
 const FIXED_EX  = COGS_EX + LOG_EX + FEES_EX; // 31.15
+// Marge- en break-even-drempels, herijkt 27 jul 2026 op de werkelijke P&L
+// (dec 2025 t/m 26 jul 2026) in plaats van op het marge-model:
+//   netto omzet 15.322, brutomarge 6.155 = 40,2% -> break-even 2,49x ex btw
+//   brutomarge per behouden stuk 23,67 (was 26,35, dat rekende met 5% retour)
+//   drempel in het dashboard is 2,95x omdat hier met omzet incl btw gerekend wordt
+// De oude waarden 26,35 / 2,19 / 2,65 gingen uit van 5% retouren; werkelijk is 17,5%.
 let GROSS = LIST_EX - FIXED_EX;  // wordt per render overschreven met werkelijke marge
 let showBTW = false;
 let P = {}, C = {}, GC = {}, KLAVIYO = {}, DATA_META = {}, INVENTORY = {};
@@ -1337,7 +1343,7 @@ function generateActions(k){
     meta.unshift(I('data ok',T('data-tag','Data'),'Winstgevend, voorzichtig opschalen',
       `Netto +${eur(net)}/stuk. ${_scaleAd?'Focus op '+_scaleAd.n+' ('+_scaleAd.roas.toFixed(2)+'×), verhoog budget met €10/dag per week.':'Verhoog Meta budget stapsgewijs €10/dag per week.'} Monitor blended ROAS.`,'','NU'));
   }
-  if(trackGap>=1.7&&roas<2.65)
+  if(trackGap>=1.7&&roas<2.95)
     meta.push(I('data',T('data-tag','Data'),'Meta attribueert laag: blended '+xfmt(roas)+' vs Meta '+xfmt(p.mroas),
       `Meta schrijft zichzelf weinig conversies toe. Sinds half juni sluit Meta tegen Shopify last-click, dus dit is vooral echte underperformance, geen meetlek. Stuur op blended, niet op mROAS. CAPI staat bewust op Aanbevolen, niet wijzigen.`,'','NU'));
   if(retC&&retC.spend>20&&retC.roas===null)
@@ -1368,7 +1374,7 @@ function generateActions(k){
       'Verklein audience (90d i.p.v. 180d) + nieuw creatief voor retargeting.','','BINNENKORT'));
 
   // ── GOOGLE ────────────────────────────────────────────────────
-  if(p.gspend>50&&p.rev/(p.gspend||1)<2.65)
+  if(p.gspend>50&&p.rev/(p.gspend||1)<2.95)
     google.push(I('data',T('data-tag','Data'),'Google blended ROAS '+xfmt(p.gspend>0?p.rev/p.gspend:null)+', niet kostendekkend',
       'PMax asset groups segmenteren: merk / categorie / concurrent. Exact-negatief [waterkoker] toevoegen in Shopping.','','NU'));
   google.push(I('playbook',T('google','Google'),'Conversietracking audit, dubbele attributie',
@@ -1527,8 +1533,8 @@ function renderWinst(k){
              </div>
              <div class="pf-kaart">
                <div class="pf-kaart-lbl">Blended ROAS</div>
-               <div class="pf-kaart-val ${beRoas && beRoas >= 2.19 ? 'good' : 'warn'}">${beRoas ? xfmt(beRoas) : '—'}</div>
-               <div class="pf-kaart-sub">break-even ligt op 2,19× ex btw</div>
+               <div class="pf-kaart-val ${beRoas && beRoas >= 2.49 ? 'good' : 'warn'}">${beRoas ? xfmt(beRoas) : '—'}</div>
+               <div class="pf-kaart-sub">break-even ligt op 2,49× ex btw</div>
              </div>
              <div class="pf-kaart">
                <div class="pf-kaart-lbl">Netto per stuk</div>
@@ -1587,7 +1593,7 @@ function renderPerfStats(k, grossEx, cac, net){
     ${pacingHtml}
     ${attrBadge}
     <div class="ps-divider"></div>
-    <div class="ps-row"><span class="ps-lbl">Blended ROAS</span><span class="ps-val ${geenSpendData?'':(roas>=2.65?'good':'warn')}">${geenSpendData?'—':(roas>0?xfmt(roas):',')}</span></div>
+    <div class="ps-row"><span class="ps-lbl">Blended ROAS</span><span class="ps-val ${geenSpendData?'':(roas>=2.95?'good':'warn')}">${geenSpendData?'—':(roas>0?xfmt(roas):',')}</span></div>
     <div class="ps-row"><span class="ps-lbl">CAC / stuk</span><span class="ps-val ${geenSpendData?'':(cac&&cac>grossEx?'warn':'good')}">${geenSpendData?'—':(cac?eur(cac):',')}</span></div>
     <div class="ps-row"><span class="ps-lbl">Netto / stuk</span><span class="ps-val ${geenSpendData?'':(net&&net<0?'warn':'good')}">${geenSpendData?'—':(net?(net<0?'−':'+')+eur(Math.abs(net)):',')}</span></div>
     <div class="ps-row"><span class="ps-lbl">Ad-spend totaal</span><span class="ps-val">${geenSpendData?'—':eur(tot)}</span></div>
@@ -1606,9 +1612,9 @@ function renderAdMix(k){
   const blended=tot>0&&p.rev>0?p.rev/tot:null;
   const cac=p.units>0?tot/p.units:null;
   const net=cac!=null?GROSS-cac:null;
-  const mroasColor=p.mroas!=null?(p.mroas>=2.65?'var(--good)':'var(--warn)'):'var(--muted)';
-  const groasColor=p.groas!=null?(p.groas>=2.65?'var(--good)':'var(--warn)'):'var(--muted)';
-  const bColor=blended!=null?(blended>=2.65?'var(--good)':'var(--warn)'):'var(--muted)';
+  const mroasColor=p.mroas!=null?(p.mroas>=2.95?'var(--good)':'var(--warn)'):'var(--muted)';
+  const groasColor=p.groas!=null?(p.groas>=2.95?'var(--good)':'var(--warn)'):'var(--muted)';
+  const bColor=blended!=null?(blended>=2.95?'var(--good)':'var(--warn)'):'var(--muted)';
   const cacColor=cac!=null?(cac>GROSS?'var(--warn)':'var(--good)'):'var(--muted)';
   const netColor=net!=null?(net<0?'var(--warn)':'var(--good)'):'var(--muted)';
   document.getElementById('admix-content').innerHTML=`
@@ -1655,12 +1661,12 @@ function renderGoogleCamp(k){
   const totSpend   = mspend + gspend;
   const bRoas      = totSpend > 0 ? rev / totSpend : null;
   const cac        = (p?.units||0) > 0 ? totSpend / p.units : null;
-  const grossEx    = 26.35; // brutomarge ex BTW
+  const grossEx    = 23.67; // brutomarge ex BTW
   const net        = cac != null ? grossEx - cac : null;
-  const beRoas     = 2.65;
+  const beRoas     = 2.95;
   const bRoasGood  = bRoas != null && bRoas >= beRoas;
   const bRoasColor = bRoas == null ? 'var(--muted)' : bRoasGood ? 'var(--good)' : 'var(--warn)';
-  const gRoasColor = groas == null ? 'var(--muted)' : groas >= 2.65 ? 'var(--good)' : 'var(--warn)';
+  const gRoasColor = groas == null ? 'var(--muted)' : groas >= 2.95 ? 'var(--good)' : 'var(--warn)';
 
   // Efficiency vs break-even
   const bRoasDelta = bRoas != null ? ((bRoas - beRoas) / beRoas * 100) : null;
@@ -1686,7 +1692,7 @@ function renderGoogleCamp(k){
               <td><div style="font-weight:600">${c.name}</div><div style="font-size:11px;color:var(--muted);margin-top:1px">${c.type}</div></td>
               <td style="text-align:right">${eur(c.spend)}</td>
               ${dailyAvg!=null?`<td style="text-align:right;color:var(--muted)">${days?eur(c.spend/days):'-'}/dag</td>`:''}
-              <td style="text-align:right;font-weight:600;color:${c.roas!=null&&c.roas>=2.65?'var(--good)':'var(--warn)'}">${c.roas!=null?xfmt(c.roas):','}</td>
+              <td style="text-align:right;font-weight:600;color:${c.roas!=null&&c.roas>=2.95?'var(--good)':'var(--warn)'}">${c.roas!=null?xfmt(c.roas):','}</td>
               <td style="text-align:right"><span style="font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 7px">${c.type}</span></td>
             </tr>`).join('');
           return `<tr>
@@ -1737,9 +1743,9 @@ function renderBlendedCamp(k){
 
   const bRoas     = totSpend > 0 ? rev / totSpend : null;
   const cac       = (p.units||0) > 0 ? totSpend / p.units : null;
-  const grossEx   = 26.35;
+  const grossEx   = 23.67;
   const net       = cac != null ? grossEx - cac : null;
-  const beRoas    = 2.65;
+  const beRoas    = 2.95;
   const bRoasGood = bRoas != null && bRoas >= beRoas;
   const bRoasClr  = bRoas  == null ? 'var(--muted)' : bRoasGood ? 'var(--good)' : 'var(--warn)';
   const cacClr    = cac    == null ? 'var(--muted)' : cac  <= 14.45 ? 'var(--good)' : 'var(--warn)';
@@ -1824,8 +1830,8 @@ function renderChannelViews(k){
         </div>
         <div>
           <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Blended ROAS</div>
-          <div style="font-size:26px;font-weight:700;line-height:1;color:${bRoas!=null&&bRoas>=2.65?'var(--good)':'var(--warn)'}">${bRoas!=null?xfmt(bRoas):','}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:3px">break-even 2,65×</div>
+          <div style="font-size:26px;font-weight:700;line-height:1;color:${bRoas!=null&&bRoas>=2.95?'var(--good)':'var(--warn)'}">${bRoas!=null?xfmt(bRoas):','}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">break-even 2,95×</div>
         </div>
       </div>`;
   }
@@ -1835,7 +1841,7 @@ function renderChannelViews(k){
     const tS=camps.reduce((s,c)=>s+c.spend,0),tI=camps.reduce((s,c)=>s+c.imp,0),tCl=camps.reduce((s,c)=>s+c.clicks,0);
     chMetaTable.innerHTML=`
       <thead><tr><th style="text-align:left">Campagne</th><th>Spend</th><th>Impressies</th><th>Clicks</th><th>CTR</th><th>CPM</th><th>CPC</th><th>ROAS</th></tr></thead>
-      <tbody>${camps.map(c=>`<tr><td>${c.name}</td><td>${eur(c.spend)}</td><td>${num(c.imp)}</td><td>${num(c.clicks)}</td><td>${pct(c.ctr)}</td><td>${eur(c.cpm)}</td><td>${eur(c.cpc)}</td><td class="${c.roas!=null&&c.roas>=2.65?'good':c.roas!=null?'warn':''}">${xfmt(c.roas)}<span class="badge-ip">in-platform</span></td></tr>`).join('')}
+      <tbody>${camps.map(c=>`<tr><td>${c.name}</td><td>${eur(c.spend)}</td><td>${num(c.imp)}</td><td>${num(c.clicks)}</td><td>${pct(c.ctr)}</td><td>${eur(c.cpm)}</td><td>${eur(c.cpc)}</td><td class="${c.roas!=null&&c.roas>=2.95?'good':c.roas!=null?'warn':''}">${xfmt(c.roas)}<span class="badge-ip">in-platform</span></td></tr>`).join('')}
       <tr><td>Totaal Meta</td><td>${eur(tS)}</td><td>${num(tI)}</td><td>${num(tCl)}</td><td>${pct(tI>0?tCl/tI*100:null)}</td><td>${eur(tI>0?tS/tI*1000:0)}</td><td>${eur(tCl>0?tS/tCl:0)}</td><td class="muted">zie blended</td></tr>
       </tbody>`;
   }
@@ -1864,12 +1870,12 @@ function renderChannelViews(k){
           </div>
           <div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Google ROAS</div>
-            <div style="font-size:26px;font-weight:700;line-height:1;color:${gRoas!=null&&gRoas>=2.65?'var(--good)':'var(--warn)'}">${gRoas!=null?xfmt(gRoas):','}</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:3px">break-even 2,65×</div>
+            <div style="font-size:26px;font-weight:700;line-height:1;color:${gRoas!=null&&gRoas>=2.95?'var(--good)':'var(--warn)'}">${gRoas!=null?xfmt(gRoas):','}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">break-even 2,95×</div>
           </div>
           <div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Blended ROAS</div>
-            <div style="font-size:26px;font-weight:700;line-height:1;color:${bRoas!=null&&bRoas>=2.65?'var(--good)':'var(--warn)'}">${bRoas!=null?xfmt(bRoas):','}</div>
+            <div style="font-size:26px;font-weight:700;line-height:1;color:${bRoas!=null&&bRoas>=2.95?'var(--good)':'var(--warn)'}">${bRoas!=null?xfmt(bRoas):','}</div>
             <div style="font-size:11px;color:var(--muted);margin-top:3px">Meta + Google</div>
           </div>
           <div>
@@ -2077,7 +2083,7 @@ function renderMargesTable(){
     const net = cac!=null ? grossEx-cac : null;
     const profitable = net!=null && net>0;
     const netCls = net==null ? '' : net>=0 ? 'good' : 'warn';
-    const roasCls = roas==null ? '' : roas>=2.65 ? 'good' : 'warn';
+    const roasCls = roas==null ? '' : roas>=2.95 ? 'good' : 'warn';
     rows += `<tr>
       <td style="font-weight:600">${lbl}</td>
       <td>${eur(tot)||','}</td>
@@ -2298,7 +2304,7 @@ function renderMeta(k){
   filterEl.innerHTML = filterBar;
   tableEl.innerHTML=`
     <thead><tr><th style="text-align:left">Campagne</th><th>Spend</th><th>Impressies</th><th>Clicks</th><th>CTR</th><th>CPM</th><th>CPC</th><th>ROAS</th></tr></thead>
-    <tbody>${camps.map(c=>`<tr><td>${c.name}</td><td>${eur(c.spend)}</td><td>${num(c.imp)}</td><td>${num(c.clicks)}</td><td>${pct(c.ctr)}</td><td>${eur(c.cpm)}</td><td>${eur(c.cpc)}</td><td class="${c.roas!=null&&c.roas>=2.65?'good':c.roas!=null?'warn':''}">${xfmt(c.roas)}<span class="badge-ip">in-platform</span></td></tr>`).join('')}
+    <tbody>${camps.map(c=>`<tr><td>${c.name}</td><td>${eur(c.spend)}</td><td>${num(c.imp)}</td><td>${num(c.clicks)}</td><td>${pct(c.ctr)}</td><td>${eur(c.cpm)}</td><td>${eur(c.cpc)}</td><td class="${c.roas!=null&&c.roas>=2.95?'good':c.roas!=null?'warn':''}">${xfmt(c.roas)}<span class="badge-ip">in-platform</span></td></tr>`).join('')}
     <tr><td>Totaal Meta</td><td>${eur(tS)}</td><td>${num(tI)}</td><td>${num(tCl)}</td><td>${pct(tI>0?tCl/tI*100:null)}</td><td>${eur(tI>0?tS/tI*1000:0)}</td><td>${eur(tCl>0?tS/tCl:0)}</td><td class="muted">zie blended</td></tr>
     </tbody>`;
 }
@@ -2354,9 +2360,9 @@ function renderRichon(k){
   }
 
   // 2. Blended ROAS vs break-even
-  if(roas > 0 && roas < 2.65){
-    bullets.push(`Blended ROAS ${xfmt(roas)}, onder break-even van 2,65×. Per €100 spend verlies je ${eur((2.65 - roas) * 100)} aan marge. Geen schaal zolang dit rood staat.`);
-  } else if(roas >= 2.65){
+  if(roas > 0 && roas < 2.95){
+    bullets.push(`Blended ROAS ${xfmt(roas)}, onder break-even van 2,95×. Per €100 spend verlies je ${eur((2.95 - roas) * 100)} aan marge. Geen schaal zolang dit rood staat.`);
+  } else if(roas >= 2.95){
     bullets.push(`Blended ROAS ${xfmt(roas)}, boven break-even. Unit economics werken. Schaal voorzichtig: +20% budget, 48u monitoren, niet dubbelslaan.`);
   } else {
     bullets.push(`Geen spend geregistreerd, geen ROAS of margin berekening mogelijk voor deze periode.`);
@@ -2370,7 +2376,7 @@ function renderRichon(k){
 
   // 4. Burn rate & cash discipline (Jon Cona / Michael Epstein: cash is king in DTC)
   if(dailyBurn > 0){
-    const breakEvenRev = 2.65 * tot;
+    const breakEvenRev = 2.95 * tot;
     const delta = breakEvenRev - p.rev;
     if(delta > 0){
       bullets.push(`€${Math.round(dailyBurn)}/dag burn. Break-even vereist ${eur(breakEvenRev)} omzet deze periode, delta ${eur(delta)}. Geen budgetverhoging voor dit gat gedicht is.`);
@@ -2380,8 +2386,8 @@ function renderRichon(k){
   }
 
   // 5. Scale signal (The Operators: data-driven scale gates)
-  if(roas < 2.65){
-    bullets.push(`Schaalgate: wacht op 3 opeenvolgende dagen ROAS >2,65× voordat budget omhoog gaat. Eén goede dag is geen signaal.`);
+  if(roas < 2.95){
+    bullets.push(`Schaalgate: wacht op 3 opeenvolgende dagen ROAS >2,95× voordat budget omhoog gaat. Eén goede dag is geen signaal.`);
   } else if(p.units >= 3){
     bullets.push(`Schaalgate groen. Maar: check contribution margin per dag, niet per periode. Daggemiddelden verbloemen pieken.`);
   }
@@ -2394,20 +2400,20 @@ function renderRichon(k){
 
   const action = net != null && net < 0
     ? `Fix eerst: contribution margin positief krijgen. Dat betekent CAC omlaag (offer, CAPI, creatief), niet budget omlaag.`
-    : roas < 2.65
+    : roas < 2.95
     ? `ROAS onder break-even: focus op CVR-verbeteringen en CAPI. Geen budgetverhoging.`
     : `Unit economics werken. Schaal in stappen van +20%. Monitor dagelijks, niet wekelijks.`;
   aEl.textContent = action;
 
-  const revTarget = (2.65 * tot).toFixed(0);
-  fEl.textContent = `Break-even target: ${eur(Number(revTarget))} omzet op deze spend. Huidige delta: ${eur(Math.abs(2.65 * tot - p.rev))} ${2.65 * tot > p.rev ? 'te kort' : 'surplus'}.`;
+  const revTarget = (2.95 * tot).toFixed(0);
+  fEl.textContent = `Break-even target: ${eur(Number(revTarget))} omzet op deze spend. Huidige delta: ${eur(Math.abs(2.95 * tot - p.rev))} ${2.95 * tot > p.rev ? 'te kort' : 'surplus'}.`;
 }
 
 // Route naar €10k/maand: live pace, gap in stuks/dag, en de eerlijke voorwaarde (eerst boven break-even).
 function renderRoute10k(){
   const el = document.getElementById('route10k');
   if(!el) return;
-  const GOAL = 10000, BE = 2.65;
+  const GOAL = 10000, BE = 2.95;
   const m = P.mtd || {};
   const now = new Date();
   const dom = Math.max(1, now.getDate());
@@ -2622,7 +2628,7 @@ function renderMarketing(k){
   const bRoas     = totSpend > 0 ? rev / totSpend : null;
   const aov       = orders > 0 ? rev / orders : null;
   const bF        = showBTW ? 1 : 1/BTW;
-  const beRoas    = 2.65;
+  const beRoas    = 2.95;
 
   // Klaviyo email omzet (flows 30d, altijd beschikbaar)
   const emailRev  = (KLAVIYO.flows || []).reduce((s, f) => s + (f.d30_revenue || 0), 0);
@@ -2656,7 +2662,7 @@ function renderMarketing(k){
       ${mkM('Omzet', rev > 0 ? eur(rev * bF) : ',', p.label)}
       ${mkM('Bestellingen', orders || ',', (p.units||0) + ' stuks')}
       ${mkM('Gem. orderwaarde', aov ? eur(aov * bF) : ',', 'per bestelling')}
-      ${mkM('Blended ROAS', bRoas ? xfmt(bRoas) : ',', 'break-even 2,65×', bRoasClr)}
+      ${mkM('Blended ROAS', bRoas ? xfmt(bRoas) : ',', 'break-even 2,95×', bRoasClr)}
       ${mkM('Ad-spend', totSpend > 0 ? eur(totSpend) : ',', 'Meta + Google')}
     </div>`;
   }
@@ -2829,7 +2835,7 @@ function renderMarketing(k){
     const spendPd  = totSpend / days_n;
     const scenarios = [
       { lbl:'Huidig',           roas: bRoas || 0,  clr:'var(--warn)',  note:'nu' },
-      { lbl:'Break-even',       roas: beRoas,       clr:'var(--sage)',  note:'2,65×' },
+      { lbl:'Break-even',       roas: beRoas,       clr:'var(--sage)',  note:'2,95×' },
       { lbl:'Doel',             roas: 3.5,          clr:'var(--good)',  note:'3,5×' },
       { lbl:'Schalen (3× BE)',  roas: 4.0,          clr:'#3A6E47',      note:'4,0×' },
     ];
@@ -2837,7 +2843,7 @@ function renderMarketing(k){
     const rows = scenarios.map(s => {
       const projRev   = s.roas * totSpend;
       const projUnits = Math.round(projRev / (69.95));
-      const projNetto = s.roas > 0 ? (26.35 - totSpend / Math.max(projUnits, 1)) : null;
+      const projNetto = s.roas > 0 ? (23.67 - totSpend / Math.max(projUnits, 1)) : null;
       const pct       = projRev / maxRev * 100;
       const isNow     = s.note === 'nu';
       return `<div class="mktg-pot-row">
@@ -3055,7 +3061,7 @@ function renderMetaKillScale(k){
   const el = document.getElementById('ch-meta-adsets');
   if(!el) return;
   const META_ADS = (k && LIVE_ADS[k] && LIVE_ADS[k].length) ? LIVE_ADS[k] : META_ADS_SNAPSHOT;
-  const BE = 2.65;
+  const BE = 2.95;
 
   function verdict(a){
     if(a.roas>=BE)                              return {lbl:'SCHAAL OP', cls:'badge-scale',  clr:'var(--good)'};
@@ -3307,10 +3313,10 @@ function render(k){
 
   // ROAS-puls animatie op perf-card
   const perfCard = document.getElementById('perf-card');
-  if(perfCard) perfCard.classList.toggle('roas-warn', tot > 0 && roas < 2.65);
+  if(perfCard) perfCard.classList.toggle('roas-warn', tot > 0 && roas < 2.95);
   if (perfCard) {
     if (tot > 0) {
-      perfCard.style.borderLeft = `3px solid ${roas >= 2.65 ? 'var(--good)' : 'var(--warn)'}`;
+      perfCard.style.borderLeft = `3px solid ${roas >= 2.95 ? 'var(--good)' : 'var(--warn)'}`;
       perfCard.style.paddingLeft = '13px';
     } else {
       perfCard.style.borderLeft = '';
@@ -3346,7 +3352,7 @@ function render(k){
   if(net!=null&&net<0) s+=`<div class="signal"><span class="dot flag" style="margin-top:6px"></span><span><b>Verlieslatend (${p.label})</b>CAC ${eur(cac)} &gt; brutomarge ${eur(grossEx)} &rarr; netto ${eur(net)}/stuk.</span></div>`;
   else if(net!=null) s+=`<div class="signal good"><span class="dot live" style="margin-top:6px"></span><span><b>Winstgevend (${p.label})</b>Netto +${eur(net)}/stuk. Voorzichtig opschalen.</span></div>`;
   s+=`<div class="signal neutral"><span class="dot idle" style="margin-top:6px"></span><span><b>Meta in-platform: ${xfmt(p.mroas)} vs blended: ${xfmt(roas)}</b>Alleen blended (omzet ÷ ${eur(tot)} totale spend) is de waarheid.</span></div>`;
-  if(roas<2.65) s+=`<div class="signal"><span class="dot flag" style="margin-top:6px"></span><span><b>Blended ROAS onder break-even</b>Break-even ~2,65×. Nu ${xfmt(roas)}. CVR en LP verbeteren vóór opschalen.</span></div>`;
+  if(roas<2.95) s+=`<div class="signal"><span class="dot flag" style="margin-top:6px"></span><span><b>Blended ROAS onder break-even</b>Break-even ~2,95×. Nu ${xfmt(roas)}. CVR en LP verbeteren vóór opschalen.</span></div>`;
   document.getElementById('signals').innerHTML=s;
 
   const {meta,google,klaviyo,strat,creative}=generateActions(k);

@@ -131,26 +131,46 @@ Push: `git add data.json && git commit -m "data refresh $(date +%Y-%m-%d)" && gi
 ```
 blended_roas = rev / (meta_spend + google_spend)
 cac_per_unit = (meta_spend + google_spend) / units
-netto = brutomarge (€26,35) - cac_per_unit
-break_even_roas = ~2.19× (ex BTW: 57,81/26,35) of ~2.66× (incl BTW: 69,95/26,35)
-# Shopify stuurt standaard incl BTW naar Google → gebruik 2.65× als drempel
+netto = brutomarge (€23,67) - cac_per_unit
+break_even_roas = 2,49× ex BTW  of  2,95× incl BTW
+# Shopify stuurt standaard incl BTW naar Google → gebruik 2,95× als drempel
 ```
+
+Herijkt 27 jul 2026 op de werkelijke P&L, niet op het marge-model: netto omzet
+€15.322 met brutomarge €6.155 is 40,2%, dus break-even = 15.322/6.155 = 2,49×.
+De oude 2,19× en 2,65× kwamen uit een brutomarge van €26,35 die met 5% retouren
+rekende; werkelijk is 17,5%.
+
+Let op de aanname eronder: de P&L gaat ervan uit dat een geretourneerde ketel
+terug de voorraad in gaat en opnieuw verkocht wordt. Blijkt dat niet zo, dan is
+break-even circa 3,6× ex BTW. Uitvragen bij Four Fulfilment.
 
 Meta in-platform ROAS (`mroas`) is NIET betrouwbaar, altijd blended gebruiken.
 
 ---
 
-## Vaste marge-model (nooit aanpassen tenzij prijzen veranderen)
+## Marge-model, en wat er werkelijk uitkomt
 
-| Post | Bedrag |
-|------|--------|
-| Verkoopprijs ex btw | €57,81 |
-| COGS | €11,50 |
-| Logistiek | €15,42 |
-| Fees + retouren | €4,23 |
-| **Brutomarge** | **€26,35** |
-| Doel-CAC | €14,45 |
-| Netto (doel) | €10,89 (19%) |
+| Post | Model | Werkelijk (dec 2025 t/m 26 jul 2026) |
+|------|-------|--------------------------------------|
+| Verkoopprijs ex btw | €57,81 | €58,93 gerealiseerd per stuk |
+| COGS | €11,50 | niet geverifieerd tegen leveranciersfactuur |
+| Logistiek | €15,42 | uitgaand deel €7,20 klopt exact (Four Fulfilment) |
+| Fees + retouren | €4,23 | retouren zijn 17,5%, niet 5% |
+| **Brutomarge** | **€26,35** | **€23,67 per behouden stuk** |
+| Doel-CAC | €14,45 | werkelijk €43,27 |
+| Netto | €10,89 (19%) | −€19,60 per stuk |
+
+Twee dingen die nog open staan en het model verder verslechteren:
+
+1. Logistiek wordt per VERKOCHT stuk gerekend, Four Fulfilment factureert per
+   VERZONDEN pakket. Dec t/m juni: 398 pakketten tegen 291 orders. Uitgaande
+   porto werkelijk circa €2.866 tegen €1.872 in het model.
+2. COGS €11,50 en de €8,22 zeevracht, inklaring en verpakking zijn nergens tegen
+   een factuur geverifieerd. Doe dat voor je hier conclusies op bouwt.
+
+Four Fulfilment-tarieven, geverifieerd op facturen 2026-0005 t/m 2026-0135:
+NL pakket €7,20 (dec 2025 nog €6,75), BE pakket €7,40, retourafhandeling €1,00.
 
 ---
 
