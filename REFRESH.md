@@ -44,7 +44,7 @@ optellen tot dezelfde netto omzet als de som van de maanden. Niets anders aanpas
 3. **Google Ads** — GEEN MCP beschikbaar. Handmatig via Chrome (claude-in-chrome). Account ELÛNA, klant-ID `470-420-6454`
    (`__c=4704206454`, login support@elunahome.nl). Open `ads.google.com/aw/campaigns`, zet periode op "Deze maand",
    lees rij **Totaal: account** → Kosten (= gspend), Conv.waarde, Conversies. Account-totaal, niet alleen "Geschikt"-filter.
-4. **Drive marge-model** (vast, ref): bestand "ELÛNA - Market Research - Margins" — COGS €11,50 · logistiek €15,42 · fees+retouren €4,23 · brutomarge €26,35 · doel-CAC €14,45 · netto €10,89 (19%). Verkoop €69,95 (€57,81 ex btw).
+4. **Drive marge-model** (ref, ACHTERHAALD op de kernaannames): bestand "ELÛNA - Market Research - Margins" rekent met COGS €11,50 · logistiek €15,42 · fees+retouren €4,23 · brutomarge €26,35 · doel-CAC €14,45. Herijkt 30 jul 2026 op de werkelijke P&L: retouren zijn 17,5% (niet 5%), brutomarge per behouden stuk €23,67, break-even ROAS 2,49x ex btw en 2,95x incl btw. Gebruik de tabel in CLAUDE.md ("Marge-model, en wat er werkelijk uitkomt"), niet dit Drive-bestand, voor drempels.
 
 ## Berekende KPI's
 - Totale spend = Meta-spend + Google-spend.

@@ -1831,7 +1831,7 @@ function renderChannelViews(k){
         <div>
           <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Blended ROAS</div>
           <div style="font-size:26px;font-weight:700;line-height:1;color:${bRoas!=null&&bRoas>=2.95?'var(--good)':'var(--warn)'}">${bRoas!=null?xfmt(bRoas):','}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:3px">break-even 2,95×</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">break-even 2,95× incl btw</div>
         </div>
       </div>`;
   }
@@ -1871,7 +1871,7 @@ function renderChannelViews(k){
           <div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Google ROAS</div>
             <div style="font-size:26px;font-weight:700;line-height:1;color:${gRoas!=null&&gRoas>=2.95?'var(--good)':'var(--warn)'}">${gRoas!=null?xfmt(gRoas):','}</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:3px">break-even 2,95×</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">break-even 2,95× incl btw</div>
           </div>
           <div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Blended ROAS</div>
@@ -2662,7 +2662,7 @@ function renderMarketing(k){
       ${mkM('Omzet', rev > 0 ? eur(rev * bF) : ',', p.label)}
       ${mkM('Bestellingen', orders || ',', (p.units||0) + ' stuks')}
       ${mkM('Gem. orderwaarde', aov ? eur(aov * bF) : ',', 'per bestelling')}
-      ${mkM('Blended ROAS', bRoas ? xfmt(bRoas) : ',', 'break-even 2,95×', bRoasClr)}
+      ${mkM('Blended ROAS', bRoas ? xfmt(bRoas) : ',', 'break-even 2,95× incl btw', bRoasClr)}
       ${mkM('Ad-spend', totSpend > 0 ? eur(totSpend) : ',', 'Meta + Google')}
     </div>`;
   }
