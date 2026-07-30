@@ -1147,8 +1147,8 @@ const LIST_EX   = 57.81;   // lijstprijs ex BTW
 const LIST_INCL = 69.95;   // lijstprijs incl BTW
 const COGS_EX   = 11.50;
 const LOG_EX    = 15.42;
-const FEES_EX   =  4.23;
-const FIXED_EX  = COGS_EX + LOG_EX + FEES_EX; // 31.15
+const FEES_EX   =  4.54;  // fees 3,23 + sourcing 1,15 + WEEE 0,16; retourkosten zitten NIET per periode maar in de Maand-P&L (history.json)
+const FIXED_EX  = COGS_EX + LOG_EX + FEES_EX; // 31.46, gelijk aan het P&L-model
 // Marge- en break-even-drempels, herijkt 27 jul 2026 op de werkelijke P&L
 // (dec 2025 t/m 26 jul 2026) in plaats van op het marge-model:
 //   netto omzet 15.322, brutomarge 6.155 = 40,2% -> break-even 2,49x ex btw
@@ -1516,7 +1516,7 @@ function renderWinst(k){
       ${rij('Omzet ex btw', revEx, {pct:100, kleur:'omzet'})}
       ${rij(`− Inkoop · ${units} × ${eur(COGS_EX)}`, -cogs, {pct:marge(-cogs), kleur:'kost'})}
       ${rij(`− Logistiek · ${units} × ${eur(LOG_EX)}`, -log, {pct:marge(-log), kleur:'kost'})}
-      ${rij(`− Fees en retouren · ${units} × ${eur(FEES_EX)}`, -fees, {pct:marge(-fees), kleur:'kost'})}
+      ${rij(`− Fees, sourcing en WEEE · ${units} × ${eur(FEES_EX)}`, -fees, {pct:marge(-fees), kleur:'kost'})}
       ${rij('= Brutomarge', bruto, {pct:marge(bruto), kleur:'bruto', totaal:true, warn:bruto<0})}
       ${rij('− Ad-spend Meta en Google', ads == null ? null : -ads, {pct: ads==null?null:marge(-ads), kleur:'ads'})}
       ${rij('= Nettowinst', netto, {pct: netto==null?null:marge(netto), kleur: netto!=null&&netto<0?'neg':'net', totaal:true, warn: netto!=null&&netto<0})}
@@ -3334,7 +3334,7 @@ function render(k){
   wfHtml+=`
     <div class="row"><span class="name">− COGS</span><div class="bar cost" style="width:${Math.round(COGS_EX/BASE*100)}%"></div><span class="amt">${eur(COGS_EX*wF)}</span></div>
     <div class="row"><span class="name">− Logistiek</span><div class="bar cost" style="width:${Math.round(LOG_EX/BASE*100)}%"></div><span class="amt">${eur(LOG_EX*wF)}</span></div>
-    <div class="row"><span class="name">− Fees + retouren</span><div class="bar cost" style="width:${Math.round(FEES_EX/BASE*100)}%"></div><span class="amt">${eur(FEES_EX*wF)}</span></div>
+    <div class="row"><span class="name">− Fees, sourcing, WEEE</span><div class="bar cost" style="width:${Math.round(FEES_EX/BASE*100)}%"></div><span class="amt">${eur(FEES_EX*wF)}</span></div>
     <div class="row"><span class="name">= Brutomarge</span><div class="bar ${grossEx<0?'neg':''}" style="width:${Math.round(Math.max(2,grossEx/BASE*100))}%"></div><span class="amt ${grossEx<0?'warn':''}"><b>${eur(grossEx*wF)}</b></span></div>
     <div class="row"><span class="name">− CAC (${p.label.toLowerCase()})</span><div class="bar ${netNeg?'neg':'net'}" style="width:${cacW}%"></div><span class="amt ${netNeg?'warn':''}">${cac?eur(cac):','}</span></div>
     <div class="row"><span class="name">= Netto / stuk</span><div class="bar ${netNeg?'neg':'net'}" style="width:${net?Math.max(2,Math.abs(net)/BASE*100):2}%"></div><span class="amt ${netNeg?'warn':'good'}"><b>${net?(net<0?'−':'')+eur(Math.abs(net)):','}</b></span></div>`;

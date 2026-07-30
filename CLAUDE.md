@@ -136,7 +136,7 @@ break_even_roas = 2,49× ex BTW  of  2,95× incl BTW
 # Shopify stuurt standaard incl BTW naar Google → gebruik 2,95× als drempel
 ```
 
-Herijkt 27 jul 2026 op de werkelijke P&L, niet op het marge-model: netto omzet
+Herijkt 27 jul 2026 (aanvullingen 30 jul) op de werkelijke P&L, niet op het marge-model: netto omzet
 €15.322 met brutomarge €6.155 is 40,2%, dus break-even = 15.322/6.155 = 2,49×.
 De oude 2,19× en 2,65× kwamen uit een brutomarge van €26,35 die met 5% retouren
 rekende; werkelijk is 17,5%.
@@ -165,7 +165,8 @@ Twee dingen die nog open staan en het model verder verslechteren:
 
 1. Logistiek wordt per VERKOCHT stuk gerekend, Four Fulfilment factureert per
    VERZONDEN pakket. Dec t/m juni: 398 pakketten tegen 291 orders. Uitgaande
-   porto werkelijk circa €2.866 tegen €1.872 in het model.
+   porto in dat venster werkelijk circa €2.866 (398 x 7,20) tegen €1.728 in het
+   model (240 behouden stuks x 7,20): gat circa €1.138.
 2. COGS €11,50 en de €8,22 zeevracht, inklaring en verpakking zijn nergens tegen
    een factuur geverifieerd. Doe dat voor je hier conclusies op bouwt.
 
@@ -180,12 +181,15 @@ NL pakket €7,20 (dec 2025 nog €6,75), BE pakket €7,40, retourafhandeling �
 ELÛNA DASHBOARD/
 ├── index.html               # Dashboard shell, CSS, HTML, JS logic
 ├── data.json                # Statische fallback, bijwerken bij grote data-wijzigingen
+├── history.json             # Maandhistorie + P&L-model, bron voor Maximaal en tab Winst
+├── REFRESH.md               # Verversrecept
 ├── api/
 │   ├── data.js              # Vercel serverless, Shopify + Meta + Klaviyo live
-│   └── health.js            # Token check endpoint
+│   ├── health.js            # Token check endpoint
+│   └── claude.js            # AI-analist-endpoint (systeemprompt bevat de marge-parameters!)
 ├── scripts/
 │   └── update-google.sh     # Google Ads handmatige update (30 sec)
-├── vercel.json              # Routes: /api/data + /api/health
+├── vercel.json              # Routes: /api/data + /api/health + /api/claude
 └── CNAME                    # dashboard.elunahome.nl
 ```
 
@@ -195,4 +199,4 @@ ELÛNA DASHBOARD/
 
 - Lees standaard, schrijf niet naar Shopify/Klaviyo/Google, alleen data ophalen
 - Meta Ads: lezen standaard. Ad-beheer (ads pauzeren, budget verlagen) mag na expliciet akkoord van Kevin, per actie. Nooit budget verhogen, ads/campagnes aanmaken of geld uitgeven zonder bevestiging. Tool toegestaan sinds 2026-06-29.
-- Google Ads: alleen lezen via UI of API, nooit campagnes aanpassen
+- Google Ads: alleen lezen via UI of API; wijzigingen alleen door Kevin zelf of op zijn expliciete per-actie opdracht (precedent 23 jul 2026: 9 negatives via Chrome op Kevins opdracht)

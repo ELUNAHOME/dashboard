@@ -44,15 +44,15 @@ optellen tot dezelfde netto omzet als de som van de maanden. Niets anders aanpas
 3. **Google Ads** — GEEN MCP beschikbaar. Handmatig via Chrome (claude-in-chrome). Account ELÛNA, klant-ID `470-420-6454`
    (`__c=4704206454`, login support@elunahome.nl). Open `ads.google.com/aw/campaigns`, zet periode op "Deze maand",
    lees rij **Totaal: account** → Kosten (= gspend), Conv.waarde, Conversies. Account-totaal, niet alleen "Geschikt"-filter.
-4. **Drive marge-model** (ref, ACHTERHAALD op de kernaannames): bestand "ELÛNA - Market Research - Margins" rekent met COGS €11,50 · logistiek €15,42 · fees+retouren €4,23 · brutomarge €26,35 · doel-CAC €14,45. Herijkt 30 jul 2026 op de werkelijke P&L: retouren zijn 17,5% (niet 5%), brutomarge per behouden stuk €23,67, break-even ROAS 2,49x ex btw en 2,95x incl btw. Gebruik de tabel in CLAUDE.md ("Marge-model, en wat er werkelijk uitkomt"), niet dit Drive-bestand, voor drempels.
+4. **Drive marge-model** (ref, ACHTERHAALD op de kernaannames): bestand "ELÛNA - Market Research - Margins" rekent met COGS €11,50 · logistiek €15,42 · fees+retouren €4,23 · brutomarge €26,35 · doel-CAC €14,45. Herijkt 27 jul 2026 op de werkelijke P&L (aanvullingen 30 jul): retouren zijn 17,5% (niet 5%), brutomarge per behouden stuk €23,67, break-even ROAS 2,49x ex btw en 2,95x incl btw. Gebruik de tabel in CLAUDE.md ("Marge-model, en wat er werkelijk uitkomt"), niet dit Drive-bestand, voor drempels.
 
 ## Berekende KPI's
 - Totale spend = Meta-spend + Google-spend.
 - Blended ROAS = omzet (incl btw) ÷ TOTALE spend (Meta + Google). NIET op alleen Meta.
 - CAC = totale spend ÷ orders. Per stuk = totale spend ÷ stuks.
-- Netto bij huidige CAC = brutomarge €26,35 − CAC per stuk.
+- Netto bij huidige CAC = brutomarge €23,67 per behouden stuk − CAC per stuk (herijkt, zie CLAUDE.md).
 - Platform-ROAS (Meta purchase_roas, Google conv.waarde/kosten) niet optellen — ze overlappen. Alleen blended is waar.
-- Signaal ⚠️ als CAC/stuk > brutomarge €26,35; ✅ als blended ROAS > break-even (~1,8×).
+- Signaal ⚠️ als CAC/stuk > brutomarge €23,67; ✅ als blended ROAS (incl btw) > break-even 2,95×.
 
 ## Snapshot 13-06-2026 (MTD 1–13 juni) — incl. Google
 Omzet €1.287 · 19 orders · ~20 stuks · AOV €67,75.
@@ -62,7 +62,7 @@ Platform in-platform (onbetrouwbaar): Meta 0,55× · Google 1,42×.
 Let op: vorige snapshot toonde 2,24× — dat was Meta-only en dus te gunstig.
 
 ## Watchlist (volgende keer expliciet checken)
-- **Zoekterm "waterkoker" (kaal, exact) in NL - Shopping Campaign.** 30d (14 mei–12 jun): €116,56 voor 1 conversie = €116 CPA, ver boven marge €26,35. Bewust NIET genegativeerd: te dunne data (1 sale) en het is de kern-categorieterm + ~11k vertoningen/mnd top-of-funnel. Smart Bidding (doel-ROAS 315%) tempert 'm. Beslis op cijfers: houdt de €116-CPA over 60–90 dagen stand → reversibele exact-negatief `[waterkoker]` overwegen (blokkeert alleen de kale term, niet "waterkoker zonder plastic" e.d.). Zo niet → laten staan.
+- **Zoekterm "waterkoker" (kaal, exact) in NL - Shopping Campaign.** 30d (14 mei–12 jun): €116,56 voor 1 conversie = €116 CPA, ver boven marge €23,67. Bewust NIET genegativeerd: te dunne data (1 sale) en het is de kern-categorieterm + ~11k vertoningen/mnd top-of-funnel. Smart Bidding (doel-ROAS 315%) tempert 'm. Beslis op cijfers: houdt de €116-CPA over 60–90 dagen stand → reversibele exact-negatief `[waterkoker]` overwegen (blokkeert alleen de kale term, niet "waterkoker zonder plastic" e.d.). Zo niet → laten staan.
 - Check ook of **PMax** gepauzeerd blijft (was 13 jun gepauzeerd) en of **brand-incrementaliteitstest** nog loopt/gewenst is.
 
 ## Werkwijze om te verversen

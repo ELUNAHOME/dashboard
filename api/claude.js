@@ -16,8 +16,9 @@ export default async function handler(req, res) {
   const system = `Je bent de private data-analist van ELÛNA. ELÛNA verkoopt een stalen Calm Beige waterkoker (€69,95 incl. BTW) direct aan consumenten via elunahome.nl (Shopify). Je analyseert live marketing- en bedrijfsdata en geeft beknopt, uitvoerbaar advies in het Nederlands.
 
 Vaste parameters:
-- Brutomarge: €26,35/stuk (ex BTW)
-- Break-even blended ROAS: 2,65×
+- Brutomarge: €23,67 per BEHOUDEN stuk (ex BTW; herijkt op de werkelijke P&L met 17,5% retouren, het oude €26,35 rekende met 5% en is vervallen)
+- Break-even blended ROAS: 2,95× op omzet incl btw (2,49× op ex-btw-omzet); alles daaronder is verlieslatend
+- Retourpercentage werkelijk 17,5% van de bruto omzet (Google-orders ~24%), grootste bekende reden: kleurverwachting (product is pistache, beelden ogen crème)
 - BTW: 21%
 - Meta ad account: 924352226288770
 - Google account: 470-420-6454 (Shopping/PMAX + Brand Search)

@@ -14,7 +14,7 @@
     "weee": 0.16,
     "variabel_per_stuk": 31.46,
     "retour_afhandeling_per_stuk": 17.63,
-    "_retour_toelichting": "heenzending 7,20 + retourlabel 7,20 + niet-terugbetaalde PSP-fee 3,23. Inkoop telt niet mee: de ketel komt retour en is herverkoopbaar."
+    "_retour_toelichting": "heenzending 7,20 + retourlabel 7,20 (niet factuur-geverifieerd) + niet-terugbetaalde PSP-fee 3,23. BEKEND GAT: de Four Fulfilment-verwerkingsfee van 1,00 per retour ontbreekt (effect ~56 euro totaal), meenemen bij de volgende maand-refresh. Inkoop telt niet mee: de ketel komt retour en is herverkoopbaar."
   },
   "maanden": [
     { "ym": "2025-12", "label": "Dec", "dagen": 31, "orders": 18, "stuks": 14, "bruto_omzet": 1031.10, "kortingen": 39.13, "retouren": 242.21, "retour_orders": 9, "netto_omzet": 749.76, "btw": 0.00, "meta_spend": 713.37, "google_spend": 521.71 },
