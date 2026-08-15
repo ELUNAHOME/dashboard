@@ -881,7 +881,7 @@
         </svg>
       </button>
       <div class="guru-orb-label">Strategisch perspectief</div>
-      <div class="guru-orb-sub">Sam Piliero &middot; Ben Heath &middot; Hormozi &times; Davie &middot; The Operators</div>
+      <div class="guru-orb-sub">Doorgerekend op de cijfers van de gekozen periode</div>
     </div>
 
     <!-- GURU MODAL -->
@@ -895,57 +895,13 @@
           </div>
           <button class="guru-close-btn" onclick="closeGuruModal()">&#x2715;</button>
         </div>
-        <div class="pov-grid" id="pov-grid">
-
-          <div class="pov">
-            <div class="pov-name">Sam Piliero</div>
-            <div class="pov-role">Meta Ads &middot; The Momentum Agency &middot; creative &amp; CAPI</div>
-            <ul class="pov-bullets" id="sam-bullets">
-              <li><b>IMAGE V50 is je enige converterende ad (ROAS 1.24&times;).</b> €203 spend, 4 aankopen. Nog 1.41&times; onder break-even. Verhoog budget voorzichtig met €10/dag per week en meet blended ROAS.</li>
-              <li><b>VIDEO V7 en IMAGE V57: kill-drempel naderen.</b> Samen €46 spend, 0 aankopen. Geef elk nog max €10 extra spend, daarna pauzeren als geen conversie.</li>
-              <li><b>Retargeting heeft nieuw creatief nodig.</b> Warme bezoekers (Add to Cart) kennen het product al. Toon garantie + reviews, geen productintro.</li>
-              <li><b>Broad + sterke hook &gt; niche targeting.</b> ELÛNA's probleem zit in LP-conversie, niet de doelgroep. Fix LP eerst, schaal daarna.</li>
-            </ul>
-            <div class="pov-action" id="sam-action">Schaal V50 voorzichtig op · Watch V7 en V57 · Nieuw retargeting creatief</div>
-            <div class="pov-actions">
-              <a class="pov-btn warn" href="https://adsmanager.facebook.com/adsmanager/manage/ads?act=924352226288770" target="_blank">Open Ad Manager</a>
-              <a class="pov-btn" href="https://adsmanager.facebook.com/adsmanager/manage/ads?act=924352226288770&filter_field=effective_status&filter_value=ACTIVE" target="_blank">Actieve ads</a>
-            </div>
-          </div>
-
-          <div class="pov">
-            <div class="pov-name">Ben Heath</div>
-            <div class="pov-role">Google Ads &middot; Shopping &middot; Performance Max &middot; klant-ID 470-420-6454</div>
-            <ul class="pov-bullets">
-              <li><b>PMax asset groups segmenteren.</b> Maak 3 aparte groups: Branded "ELÛNA waterkoker", Categorie "RVS waterkoker kopen", Competitor "design waterkoker". Zo zie je per intentie waar budget heen gaat.</li>
-              <li><b>Target ROAS instellen op 3&times;.</b> Break-even is 2,95&times;. Zonder expliciete target ROAS geeft Google zichzelf ruimte om verlieslatend te bieden.</li>
-              <li><b>Primaire conversie controleren.</b> Alleen "Purchase" mag primaire conversie zijn. Add to Cart of Begin Checkout erin geeft een te hoge ROAS en klopt de bid-strategie niet.</li>
-              <li><b>Search Terms rapport bekijken.</b> Filter op zoektermen met klikken maar geen conversies. Voeg toe als exact-negatief om budgetverspilling te stoppen.</li>
-            </ul>
-            <div class="pov-action">Segmenteer asset groups · Zet target ROAS op 3&times; · Controleer primaire conversie</div>
-            <div class="pov-actions">
-              <a class="pov-btn warn" href="https://ads.google.com/aw/campaigns" target="_blank">Open Campagnes</a>
-              <a class="pov-btn" href="https://ads.google.com/aw/conversions" target="_blank">Conversie-instellingen</a>
-              <a class="pov-btn" href="https://ads.google.com/aw/reports/search-terms" target="_blank">Search Terms</a>
-            </div>
-          </div>
-
-          <div class="pov">
-            <div class="pov-name">Hormozi &times; Davie Fogarty</div>
-            <div class="pov-role">Offer-design &middot; DTC scaling &middot; product-led growth</div>
-            <ul class="pov-bullets">
-              <li><b>ELÛNA offer nu: €69,95 solo, geen upsell, geen bundel.</b> Slechte offer plus goed creatief is duurder falen op schaal. Fix offer economics vóór je budget verhoogt.</li>
-              <li><b>Bundle-test: ELÛNA plus beschermhoes €89,95.</b> Als 20% bundel kiest stijgt AOV met €15 en daalt CAC/stuk met ~€10. Aanmaken in Shopify kost 20 minuten.</li>
-              <li><b>10 micro-influencers (5k-30k NL, food/interieur/lifestyle).</b> Stuur product gratis, €350 COGS, €0 spend. Verwacht 6 posts is ~90k bereik plus UGC hergebruiken als Meta ad.</li>
-              <li><b>"30 dagen retour" staat nu onderaan de LP.</b> Dit is je sterkste conversiehefboom. Zet het boven de fold, grote tekst, boven de koopknop.</li>
-            </ul>
-            <div class="pov-action">Maak bundel in Shopify · Retour-garantie boven de fold · Stuur 10 creators een product</div>
-            <div class="pov-actions">
-              <a class="pov-btn warn" href="https://admin.shopify.com/store/elunahome/products/new" target="_blank">Nieuwe bundel aanmaken</a>
-              <a class="pov-btn" href="https://admin.shopify.com/store/elunahome/themes/current/editor" target="_blank">LP aanpassen</a>
-            </div>
-          </div>
-
+        <!-- Drie statische POV-kaarten (Sam Piliero, Ben Heath, Hormozi x Davie) verwijderd op
+             15 aug 2026. Ze stonden volledig hardgecodeerd in de HTML: 13 vaste bedragen,
+             advies over advertentie "IMAGE V50" met EUR 203 spend en ROAS 1,24x uit een
+             campagne die allang anders draait. pov-grid werd nergens door JS gevuld (alleen
+             CSS gebruikte de klasse), sam-bullets en sam-action nul keer aangeraakt. Advies
+             dat niet meebeweegt met de data leest als actueel en is dat niet; wat blijft is
+             de kaart hieronder, die per periode DOORREKENT op de live cijfers. -->
           <div class="richon-card" id="richon-pov">
             <div class="richon-name">The Operators</div>
             <div class="richon-role">Sean Frank (Ridge) &middot; Jon Cona &middot; Michael Epstein &middot; unit economics, geen BS</div>
@@ -954,7 +910,6 @@
             <div class="richon-forward" id="richon-forward"></div>
           </div>
 
-        </div>
       </div>
     </div>
 
@@ -1155,6 +1110,15 @@ const FIXED_EX  = COGS_EX + LOG_EX + FEES_EX; // 31.46, gelijk aan het P&L-model
 //   brutomarge per behouden stuk 23,67 (was 26,35, dat rekende met 5% retour)
 //   drempel in het dashboard is 2,95x omdat hier met omzet incl btw gerekend wordt
 // De oude waarden 26,35 / 2,19 / 2,65 gingen uit van 5% retouren; werkelijk is 17,5%.
+//
+// EEN drempel, twee bases. Tot 15 aug 2026 stond 2,95 op tien plekken hard en 2,49 op twee,
+// zonder dat de code keek welke basis er op dat moment op het scherm stond. Wie de toggle op
+// ex btw zette, vergeleek een ex-btw-ROAS met een incl-btw-drempel en las daardoor "verlies"
+// waar winst stond. Gebruik daarom ALTIJD beRoas() en nooit een los getal.
+const BE_ROAS_EX   = 2.49;   // omzet ex btw  ÷ spend
+const BE_ROAS_INCL = 2.95;   // omzet incl btw ÷ spend (dezelfde marge, andere teller)
+function beRoas(){ return showBTW ? BE_ROAS_INCL : BE_ROAS_EX; }
+function beLabel(){ return showBTW ? '2,95× incl btw' : '2,49× ex btw'; }
 let GROSS = LIST_EX - FIXED_EX;  // wordt per render overschreven met werkelijke marge
 let showBTW = false;
 let P = {}, C = {}, GC = {}, KLAVIYO = {}, DATA_META = {}, INVENTORY = {};
@@ -1163,6 +1127,12 @@ let DAILY_MTD = [], DAILY_D7 = [], DAILY_D30 = [];
 let DAILY_PREV_MTD = [], DAILY_PREV_D7 = [], DAILY_PREV_D30 = [];
 let DAILY_CUSTOM = [], DAILY_PREV_CUSTOM = [];
 let DATA_SOURCE = 'fallback'; // 'live' | 'fallback'
+// Herkomst van de GOOGLE-cijfers apart bijgehouden. Shopify en Meta kunnen live zijn terwijl
+// Google uit een handmatig bestand komt; zonder deze vlag leest zo'n mengsel als volledig live.
+// Boven de drempel wordt Google helemaal weggelaten, want elk afgeleid cijfer (blended ROAS, CAC,
+// netto per stuk, ad-mix) rust erop en is dan fout in plaats van onvolledig.
+const GOOGLE_FB_MAX_AGE_DAYS = 3;
+let GOOGLE_FB = { active:false, measuredAt:null, ageDays:0, tooOld:false };
 let currentK = 'mtd';
 // Maandhistorie + P&L. Komt uit history.json, niet uit /api/data: de Shopify-app mist
 // de scope read_all_orders en ziet daardoor NIETS ouder dan 60 dagen. Alles vóór dat
@@ -1219,7 +1189,20 @@ async function loadData(bustCache) {
       if (fb.ok) {
         const fbData = await fb.json();
         if (needsGoogleFb) {
+          // De Google-cijfers komen hier NIET van de live API maar uit data.json. Tot 15 aug 2026
+          // gebeurde dat stil: het dashboard toonde de juli-spend (444,88) als augustus-MTD terwijl
+          // Google werkelijk 190,81 had uitgegeven, en dat draaide de conclusie om (netto/stuk
+          // -8,29 in plaats van +4,42, met "budget bevriezen" als advies terwijl schalen mocht).
+          // Daarom dragen deze cijfers vanaf nu hun meetdatum, en boven de drempel gaan ze eruit
+          // in plaats van te misleiden: een ONTBREKEND cijfer is eerlijk, een OUD cijfer liegt.
+          const gMeasured = fbData.google_measured_at || fbData.updated || null;
+          const gAgeDays  = gMeasured
+            ? Math.floor((Date.now() - new Date(gMeasured).getTime()) / 86400000)
+            : 999;
+          GOOGLE_FB = { active: true, measuredAt: gMeasured, ageDays: gAgeDays,
+                        tooOld: gAgeDays > GOOGLE_FB_MAX_AGE_DAYS };
           for (const k of Object.keys(d.P)) {
+            if (GOOGLE_FB.tooOld) continue;   // te oud: laat gspend op null, dan valt het zichtbaar weg
             if (fbData.P?.[k]?.gspend != null) d.P[k].gspend = fbData.P[k].gspend;
             if (fbData.P?.[k]?.groas  != null) d.P[k].groas  = fbData.P[k].groas;
           }
@@ -1327,6 +1310,7 @@ function generateActions(k){
   // Live ad-niveau voor deze periode; valt terug op de handmatige snapshot als de API niets leverde
   const META_ADS = (LIVE_ADS[k] && LIVE_ADS[k].length) ? LIVE_ADS[k] : META_ADS_SNAPSHOT;
   const p=P[k], camps=C[k]||[];
+  // BASIS: incl btw. Interne drempellogica, wordt NIET getoond; vergelijk alleen met 2.95.
   const tot=(p.spend||0)+(p.gspend||0), roas=tot>0?p.rev/tot:0;
   const cac=p.units>0?tot/p.units:null, net=cac!=null?GROSS-cac:null;
   const aov=p.orders>0?p.rev/p.orders:null;
@@ -1493,7 +1477,7 @@ function renderWinst(k){
       <span class="pf-naam">${naam}</span>
       <span class="pf-baan"><span class="pf-balk ${opts.kleur||''}" style="width:${w}%"></span></span>
       <span class="pf-pct">${opts.pct == null ? '' : pctTxt(opts.pct)}</span>
-      <span class="pf-bedrag ${opts.warn ? 'warn' : ''}">${bedrag == null ? '—' : (bedrag < 0 ? '−' : '') + eur(Math.abs(bedrag), 0)}</span>
+      <span class="pf-bedrag ${opts.warn ? 'warn' : ''}">${bedrag == null ? '-' : (bedrag < 0 ? '−' : '') + eur(Math.abs(bedrag), 0)}</span>
     </div>`;
   };
 
@@ -1506,7 +1490,7 @@ function renderWinst(k){
       <div style="text-align:right">
         <div class="pf-kop-lbl">Nettowinst</div>
         <div class="pf-kop-val ${netto != null && netto < 0 ? 'warn' : 'good'}" style="font-size:30px">
-          ${netto == null ? '—' : (netto < 0 ? '−' : '') + eur(Math.abs(netto), 0)}
+          ${netto == null ? '-' : (netto < 0 ? '−' : '') + eur(Math.abs(netto), 0)}
         </div>
         <div style="font-size:11px;color:var(--muted)">${netto == null ? 'ad-spend onbekend' : pctTxt(marge(netto)) + ' van de omzet'}</div>
       </div>
@@ -1533,12 +1517,12 @@ function renderWinst(k){
              </div>
              <div class="pf-kaart">
                <div class="pf-kaart-lbl">Blended ROAS</div>
-               <div class="pf-kaart-val ${beRoas && beRoas >= 2.49 ? 'good' : 'warn'}">${beRoas ? xfmt(beRoas) : '—'}</div>
+               <div class="pf-kaart-val ${beRoas && beRoas >= 2.49 ? 'good' : 'warn'}">${beRoas ? xfmt(beRoas) : '-'}</div>
                <div class="pf-kaart-sub">break-even ligt op 2,49× ex btw</div>
              </div>
              <div class="pf-kaart">
                <div class="pf-kaart-lbl">Netto per stuk</div>
-               <div class="pf-kaart-val ${netto<0?'warn':'good'}">${units>0 ? (netto<0?'−':'')+eur(Math.abs(netto/units)) : '—'}</div>
+               <div class="pf-kaart-val ${netto<0?'warn':'good'}">${units>0 ? (netto<0?'−':'')+eur(Math.abs(netto/units)) : '-'}</div>
                <div class="pf-kaart-sub">${units} stuks verkocht</div>
              </div>
            </div>`}
@@ -1551,7 +1535,9 @@ function renderWinst(k){
 
 function renderPerfStats(k, grossEx, cac, net){
   const p=P[k];
-  const tot=(p.spend||0)+(p.gspend||0), roas=tot>0?p.rev/tot:0;
+  const tot=(p.spend||0)+(p.gspend||0);
+  // Weergave volgt de btw-toggle, net als de omzet erboven en de Route-tegel eronder.
+  const roas=tot>0?(p.rev*(showBTW?1:1/BTW))/tot:0;
   // Voor een aangepast bereik (o.a. Maximaal) levert de API geen ad-spend. Dat is iets
   // anders dan nul spend: met nul zou het dashboard een netto van +€24 per stuk tonen,
   // oftewel winst die er niet is. Daarom hier expliciet als "onbekend" behandelen.
@@ -1593,10 +1579,10 @@ function renderPerfStats(k, grossEx, cac, net){
     ${pacingHtml}
     ${attrBadge}
     <div class="ps-divider"></div>
-    <div class="ps-row"><span class="ps-lbl">Blended ROAS</span><span class="ps-val ${geenSpendData?'':(roas>=2.95?'good':'warn')}">${geenSpendData?'—':(roas>0?xfmt(roas):',')}</span></div>
-    <div class="ps-row"><span class="ps-lbl">CAC / stuk</span><span class="ps-val ${geenSpendData?'':(cac&&cac>grossEx?'warn':'good')}">${geenSpendData?'—':(cac?eur(cac):',')}</span></div>
-    <div class="ps-row"><span class="ps-lbl">Netto / stuk</span><span class="ps-val ${geenSpendData?'':(net&&net<0?'warn':'good')}">${geenSpendData?'—':(net?(net<0?'−':'+')+eur(Math.abs(net)):',')}</span></div>
-    <div class="ps-row"><span class="ps-lbl">Ad-spend totaal</span><span class="ps-val">${geenSpendData?'—':eur(tot)}</span></div>
+    <div class="ps-row"><span class="ps-lbl">Blended ROAS</span><span class="ps-val ${geenSpendData?'':(roas>=beRoas()?'good':'warn')}">${geenSpendData?'-':(roas>0?xfmt(roas):',')}</span></div>
+    <div class="ps-row"><span class="ps-lbl">CAC / stuk</span><span class="ps-val ${geenSpendData?'':(cac&&cac>grossEx?'warn':'good')}">${geenSpendData?'-':(cac?eur(cac):',')}</span></div>
+    <div class="ps-row"><span class="ps-lbl">Netto / stuk</span><span class="ps-val ${geenSpendData?'':(net&&net<0?'warn':'good')}">${geenSpendData?'-':(net?(net<0?'−':'+')+eur(Math.abs(net)):',')}</span></div>
+    <div class="ps-row"><span class="ps-lbl">Ad-spend totaal</span><span class="ps-val">${geenSpendData?'-':eur(tot)}</span></div>
     ${geenSpendData?`<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45">
       Geen ad-spend beschikbaar voor dit bereik, dus ROAS, CAC en netto zijn hier niet te berekenen.
       Ze zijn bewust leeggelaten in plaats van op nul gezet, anders lees je winst die er niet is.</div>`:''}`;
@@ -1609,12 +1595,16 @@ function renderAdMix(k){
   if(tot===0){card.style.display='none';return;}
   card.style.display='';
   const mp=Math.round(meta/tot*100), gp=100-mp;
-  const blended=tot>0&&p.rev>0?p.rev/tot:null;
+  // Blended ROAS op DEZELFDE basis als de omzet die op het scherm staat. Stond dit vast op
+  // incl btw, dan las je hier 3,45x terwijl de Route-tegel 2,85x gaf: hetzelfde kengetal,
+  // twee getallen, één scherm. De in-platform cijfers hieronder blijven bewust incl btw,
+  // want zo meet de pixel; dat staat als label bij die regels.
+  const blended=tot>0&&p.rev>0?(p.rev*(showBTW?1:1/BTW))/tot:null;
   const cac=p.units>0?tot/p.units:null;
   const net=cac!=null?GROSS-cac:null;
   const mroasColor=p.mroas!=null?(p.mroas>=2.95?'var(--good)':'var(--warn)'):'var(--muted)';
   const groasColor=p.groas!=null?(p.groas>=2.95?'var(--good)':'var(--warn)'):'var(--muted)';
-  const bColor=blended!=null?(blended>=2.95?'var(--good)':'var(--warn)'):'var(--muted)';
+  const bColor=blended!=null?(blended>=beRoas()?'var(--good)':'var(--warn)'):'var(--muted)';
   const cacColor=cac!=null?(cac>GROSS?'var(--warn)':'var(--good)'):'var(--muted)';
   const netColor=net!=null?(net<0?'var(--warn)':'var(--good)'):'var(--muted)';
   document.getElementById('admix-content').innerHTML=`
@@ -1830,8 +1820,8 @@ function renderChannelViews(k){
         </div>
         <div>
           <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Blended ROAS</div>
-          <div style="font-size:26px;font-weight:700;line-height:1;color:${bRoas!=null&&bRoas>=2.95?'var(--good)':'var(--warn)'}">${bRoas!=null?xfmt(bRoas):','}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:3px">break-even 2,95× incl btw</div>
+          <div style="font-size:26px;font-weight:700;line-height:1;color:${bRoas!=null&&bRoas>=beRoas()?'var(--good)':'var(--warn)'}">${bRoas!=null?xfmt(bRoas):','}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">break-even 2,95× · in-platform meet incl btw</div>
         </div>
       </div>`;
   }
@@ -1871,11 +1861,11 @@ function renderChannelViews(k){
           <div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Google ROAS</div>
             <div style="font-size:26px;font-weight:700;line-height:1;color:${gRoas!=null&&gRoas>=2.95?'var(--good)':'var(--warn)'}">${gRoas!=null?xfmt(gRoas):','}</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:3px">break-even 2,95× incl btw</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">break-even 2,95× · in-platform meet incl btw</div>
           </div>
           <div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Blended ROAS</div>
-            <div style="font-size:26px;font-weight:700;line-height:1;color:${bRoas!=null&&bRoas>=2.95?'var(--good)':'var(--warn)'}">${bRoas!=null?xfmt(bRoas):','}</div>
+            <div style="font-size:26px;font-weight:700;line-height:1;color:${bRoas!=null&&bRoas>=beRoas()?'var(--good)':'var(--warn)'}">${bRoas!=null?xfmt(bRoas):','}</div>
             <div style="font-size:11px;color:var(--muted);margin-top:3px">Meta + Google</div>
           </div>
           <div>
@@ -2078,6 +2068,7 @@ function renderMargesTable(){
     const actualSellEx = p.units>0 ? (p.rev/p.units)/BTW : LIST_EX;
     const grossEx = actualSellEx - FIXED_EX;
     const tot = (p.spend||0)+(p.gspend||0);
+    // BASIS: incl btw. Interne drempellogica, wordt NIET getoond; vergelijk alleen met 2.95.
     const roas = tot>0 ? p.rev/tot : null;
     const cac = p.units>0 ? tot/p.units : null;
     const net = cac!=null ? grossEx-cac : null;
@@ -2333,6 +2324,7 @@ function switchTab(tabId){
 function renderRichon(k){
   const p = P[k];
   const tot = (p.spend||0) + (p.gspend||0);
+  // BASIS: incl btw. Interne drempellogica, wordt NIET getoond; vergelijk alleen met 2.95.
   const roas = tot > 0 ? p.rev / tot : 0;
   const actualSellEx = p.units > 0 ? (p.rev / p.units) / BTW : LIST_EX;
   const grossEx = actualSellEx - FIXED_EX;
@@ -2341,7 +2333,12 @@ function renderRichon(k){
   const FOUR_STOCK = INVENTORY.stock != null ? INVENTORY.stock : 34;
   const PBL_STOCK = INVENTORY.pbl_stock != null ? INVENTORY.pbl_stock : 0;
   const totalStock = FOUR_STOCK + PBL_STOCK;
-  const days = k==='mtd'?14:k==='d7'?7:k==='d30'?30:1;
+  // MTD stond hier hard op 14 dagen, een getal dat klopte op de dag dat het werd getypt en
+  // daarna elke dag verder afweek. Het deelt units en spend, dus het vervuilde runway,
+  // stuks-per-dag en dagelijkse burn tegelijk. Nu de werkelijke dag van de maand.
+  const days = k==='mtd' ? Math.max(1, new Date().getDate())
+             : k==='d7'  ? 7
+             : k==='d30' ? 30 : 1;
   const dailyUnits = p.units / days;
   const fourRunway = dailyUnits > 0 ? Math.round(FOUR_STOCK / dailyUnits) : null;
   const totalRunway = dailyUnits > 0 ? Math.round(totalStock / dailyUnits) : null;
@@ -2413,27 +2410,38 @@ function renderRichon(k){
 function renderRoute10k(){
   const el = document.getElementById('route10k');
   if(!el) return;
-  const GOAL = 10000, BE = 2.95;
+  // Deze tegel rekende tot 15 aug 2026 ALTIJD met omzet incl btw, ook als de toggle op ex btw
+  // stond. Op één scherm stond zo twee keer dezelfde grootheid met een ander getal: 989 bovenaan
+  // tegen 1.196 hier, AOV 49,43 tegen 59,81, projectie 2.043 tegen 2.472. Alles volgt nu de
+  // toggle, en de break-even schuift mee want die is basis-afhankelijk.
+  const GOAL = 10000;                       // doel is ex btw, zie label onder de tegel
+  const bF   = showBTW ? 1 : 1/BTW;         // zelfde factor als de rest van het dashboard
+  const BE   = showBTW ? BE_ROAS_INCL : BE_ROAS_EX;
   const m = P.mtd || {};
   const now = new Date();
   const dom = Math.max(1, now.getDate());
   const dim = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
-  const rev = m.rev || 0;
+  const rev = (m.rev || 0) * bF;
   const proj = rev / dom * dim;
-  const projPct = Math.min(100, Math.round(proj / GOAL * 100));
+  const goalShown = showBTW ? GOAL * BTW : GOAL;   // doel meebewegen, anders vergelijk je bases
+  const projPct = Math.min(100, Math.round(proj / goalShown * 100));
   const aov = m.orders > 0 ? rev / m.orders : 66;
   const updDay = (m.units || 0) / dom;                 // stuks/dag nu
-  const updNeed = GOAL / dim / aov;                    // stuks/dag nodig voor 10k
+  const updNeed = goalShown / dim / aov;               // stuks/dag nodig voor het doel
   const tot = (m.spend||0)+(m.gspend||0);
+  // ROAS op DEZELFDE basis als de getoonde omzet, anders vergelijk je hem met de verkeerde drempel
   const roas = tot > 0 ? rev / tot : 0;
   const roasOk = roas >= BE;
+  const spendCompleet = !(GOOGLE_FB.tooOld || m.gspend == null);
   const totalStock = (INVENTORY.stock ?? 0) + (INVENTORY.pbl_stock ?? 0);
   const unitsMonth10k = Math.round(GOAL / aov);        // ~stuks/maand op 10k
   const stockMonths = unitsMonth10k > 0 ? (totalStock / unitsMonth10k) : null;
 
-  const stap = !roasOk
-    ? `Eerste horde: blended ROAS is ${xfmt(roas)}, onder break-even ${BE}×. Op dit rendement is elke extra euro spend verlies, dus eerst ROAS boven ${BE}× (email oogsten, Google-efficiëntie, sterkere creatives), daarna pas schalen.`
-    : `Blended ROAS ${xfmt(roas)} is boven break-even: schalen mag. Voor €10k/maand is ~${eur0(GOAL/BE)} ad-spend/maand nodig bij ${BE}× (netto ~0) of ${eur0(GOAL/3.5)} bij 3,5×.`;
+  const stap = !spendCompleet
+    ? `De ad-spend is onvolledig (Google ontbreekt), dus blended ROAS en CAC staan hier bewust op streepjes in plaats van een getal dat te gunstig uitvalt. Zet de Google-koppeling aan, dan rekent deze tegel weer volledig.`
+    : !roasOk
+    ? `Eerste horde: blended ROAS is ${xfmt(roas)}, onder break-even ${xfmt(BE)}. Op dit rendement is elke extra euro spend verlies, dus eerst ROAS boven ${xfmt(BE)} (email oogsten, Google-efficiëntie, sterkere creatives), daarna pas schalen.`
+    : `Blended ROAS ${xfmt(roas)} is boven break-even ${xfmt(BE)}: schalen mag. Voor ${eur0(goalShown)}/maand is ~${eur0(goalShown/BE)} ad-spend/maand nodig op break-even, of ${eur0(goalShown/3.5)} bij 3,5×.`;
   const voorraadNote = stockMonths != null && stockMonths < 2
     ? ` Let op voorraad: 10k/maand = ~${unitsMonth10k} stuks/maand; huidige ${totalStock} stuks dekt ~${stockMonths.toFixed(1)} maand op dat tempo, herbevoorrading (45-65d lead) hoort bij dit plan.`
     : '';
@@ -2448,7 +2456,7 @@ function renderRoute10k(){
       <div>
         <div style="font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Maand-projectie</div>
         <div style="font-size:24px;font-weight:700;color:var(--ink)">${eur0(proj)}</div>
-        <div style="font-size:11px;color:var(--muted)">nu ${eur0(rev)} MTD</div>
+        <div style="font-size:11px;color:var(--muted)">nu ${eur0(rev)} MTD · doel ${eur0(goalShown)} ${showBTW?'incl':'ex'} btw</div>
       </div>
       <div>
         <div style="font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Stuks / dag</div>
@@ -2457,8 +2465,8 @@ function renderRoute10k(){
       </div>
       <div>
         <div style="font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Blended ROAS</div>
-        <div style="font-size:24px;font-weight:700;color:${roasOk?'var(--good)':'var(--warn)'}">${xfmt(roas)}</div>
-        <div style="font-size:11px;color:var(--muted)">break-even ${BE}×</div>
+        <div style="font-size:24px;font-weight:700;color:${!spendCompleet?'var(--muted)':(roasOk?'var(--good)':'var(--warn)')}">${spendCompleet?xfmt(roas):'-'}</div>
+        <div style="font-size:11px;color:var(--muted)">break-even ${beLabel()}</div>
       </div>
     </div>
     <div style="height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-bottom:10px">
@@ -2966,7 +2974,7 @@ function renderMaandPnl(){
       <td>${r.orders} / ${r.stuks}</td>
       <td class="${r.retourPct>=20?'warn':''}">${r.retourPct.toFixed(0)}%</td>
       <td>${eur(r.ads,0)}</td>
-      <td>${r.roas?xfmt(r.roas):'—'}</td>
+      <td>${r.roas?xfmt(r.roas):'-'}</td>
       <td>${eur(r.bruto,0)}</td>
       <td class="${cls(r.contributie)}"><b>${sgn(r.contributie)}</b></td>
     </tr>`).join('');
@@ -2984,7 +2992,7 @@ function renderMaandPnl(){
         <td>${T.orders} / ${T.stuks}</td>
         <td class="${T.retourPct>=20?'warn':''}">${T.retourPct.toFixed(0)}%</td>
         <td>${eur(T.ads,0)}</td>
-        <td>${T.roas?xfmt(T.roas):'—'}</td>
+        <td>${T.roas?xfmt(T.roas):'-'}</td>
         <td>${eur(T.bruto,0)}</td>
         <td class="${cls(T.contributie)}">${sgn(T.contributie)}</td>
       </tr></tfoot>
@@ -3284,6 +3292,7 @@ function render(k){
   currentK = k;
   const p=P[k];
   if (!p) return; // periode nog niet beschikbaar (bijv. custom voor fetch)
+  // BASIS: incl btw. Interne drempellogica, wordt NIET getoond; vergelijk alleen met 2.95.
   const tot=(p.spend||0)+(p.gspend||0), roas=tot>0?p.rev/tot:0;
   const aov=p.orders>0?p.rev/p.orders:null;
 
