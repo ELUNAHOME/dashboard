@@ -5,3 +5,4 @@ google-vercel-env.txt
 data.json.bak-*
 retouren.json
 RETOUREN-HANDOFF.md
+scripts/zet-google-env-vercel.log
