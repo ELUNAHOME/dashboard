@@ -55,6 +55,25 @@ directe toegang, dus GEEN `login-customer-id` header sturen, anders faalt elke c
 met USER_PERMISSION_DENIED. `GOOGLE_ADS_LOGIN_CUSTOMER_ID` leeg laten in Vercel.
 Check live: `/api/data` → `google_note` moet "live · Google Ads API v21" zijn.
 
+## De fallback heeft nu een houdbaarheidsdatum (15 aug 2026, lees dit voor je Google aanraakt)
+
+Tot 15 augustus 2026 viel de UI stil terug op `data.json` als de API `gspend: null` gaf, zonder
+enige leeftijdscheck. Gemeten die dag: het dashboard toonde 444,88 Google-spend als augustus-MTD
+terwijl dat cijfer uit data.json van 23 JULI kwam en Google werkelijk 190,81 had uitgegeven.
+Blended ROAS stond daardoor op 2,28x in plaats van 4,41x, netto per stuk op MIN 8,29 in plaats
+van PLUS 4,42, en de actiekaart adviseerde "budget bevriezen" terwijl schalen mocht. De
+CONCLUSIE stond dus omgekeerd, en de badge zei ondertussen gewoon "live".
+
+Vanaf nu geldt:
+- `data.json` draagt `google_measured_at`. Zet die datum als je de Google-cijfers bijwerkt.
+- Is die datum ouder dan `GOOGLE_FB_MAX_AGE_DAYS` (3), dan wordt Google NIET meer ingevuld:
+  gspend blijft null, en blended ROAS plus CAC gaan zichtbaar op streepjes. Dat is bewust,
+  een ontbrekend cijfer is eerlijk en een oud cijfer liegt.
+- De echte oplossing blijft de 5 env vars hierboven in Vercel; dan is deze fallback dood hout.
+
+Draai `python3 verify-dashboard.py` na elke wijziging (15 checks, plus `--zelftest` met 6
+injecties). Die borgt ook dat de btw-basis niet opnieuw per tegel gaat verschillen.
+
 ## Google Ads handmatig bijwerken (fallback, 30 seconden)
 
 Alleen nodig als de API-creds ontbreken of falen.
