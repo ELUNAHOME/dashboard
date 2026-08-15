@@ -91,7 +91,14 @@ async function googleAdsQuery(accessToken, duringPeriod) {
   // (anders USER_PERMISSION_DENIED). GOOGLE_ADS_LOGIN_CUSTOMER_ID hoort leeg te zijn.
   const loginCid = (process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID || '').replace(/-/g, '');
   if (loginCid) headers['login-customer-id'] = loginCid;
-  const url = `https://googleads.googleapis.com/v21/customers/${customerId}/googleAds:search`;
+  // Google faseert API-versies na circa een jaar uit. v21 gaf vanaf enig moment HTTP 400
+  // INVALID_ARGUMENT op elke call, waarna fetchGoogleAds() stil terugviel op de handmatige
+  // route en het dashboard "Google API niet geconfigureerd" meldde. Die tekst wees de
+  // verkeerde kant op: de vier credentials stonden sinds juni gewoon in Vercel, alleen de
+  // VERSIE in deze URL was dood. Gemeten 15 aug 2026 met dezelfde credentials: v21 faalt,
+  // v22, v23 en v24 geven alle drie 192,13 euro over dezelfde periode.
+  const GOOGLE_ADS_API_VERSIE = 'v24';
+  const url = `https://googleads.googleapis.com/${GOOGLE_ADS_API_VERSIE}/customers/${customerId}/googleAds:search`;
 
   const [totalsRes, campsRes] = await Promise.all([
     fetch(url, {
@@ -163,8 +170,13 @@ async function fetchGoogleAds() {
     const GC = Object.fromEntries(entries.map(([k, v]) => [k, v.gcamps || []]));
     return { data, GC, source: 'api' };
   } catch(err) {
+    // De REDEN meegeven, niet alleen terugvallen. Tot 15 aug 2026 verdween deze fout in een
+    // console.error die niemand las, en toonde het dashboard "Google API niet geconfigureerd":
+    // precies de verkeerde diagnose, want de credentials stonden er wel en alleen de
+    // API-versie was uitgefaseerd. Een foutmelding die de verkeerde kant op wijst kost meer
+    // tijd dan geen foutmelding.
     console.error('Google Ads API fout, fallback naar handmatig:', err.message);
-    return { data: getGoogleManual(), GC: {}, source: 'manual' };
+    return { data: getGoogleManual(), GC: {}, source: 'manual', error: err.message };
   }
 }
 
@@ -802,9 +814,20 @@ export default async function handler(req, res) {
       P[k].mroas  = meta.mroas ?? null;
     }
 
+    // Drie situaties, drie verschillende teksten. "niet geconfigureerd" mag ALLEEN nog als de
+    // credentials echt ontbreken; faalt de call ondanks aanwezige credentials, dan zeggen we dat
+    // met de foutreden erbij.
+    const googleCredsAanwezig = !!(process.env.GOOGLE_ADS_CLIENT_ID && process.env.GOOGLE_ADS_CLIENT_SECRET
+                                   && process.env.GOOGLE_ADS_REFRESH_TOKEN && process.env.GOOGLE_ADS_DEVELOPER_TOKEN);
     const googleNote = googleResult.source === 'api'
-      ? 'live · Google Ads API v21'
-      : (Object.values(googleData).some(v => v.gspend !== null) ? 'handmatig · update via update-google.sh' : 'Google API niet geconfigureerd');
+      ? 'live · Google Ads API'
+      : googleResult.error
+        ? `Google Ads API FAALT: ${String(googleResult.error).slice(0, 160)}`
+        : (Object.values(googleData).some(v => v.gspend !== null)
+            ? 'handmatig · update via update-google.sh'
+            : (googleCredsAanwezig
+                ? 'Google-credentials staan er, maar er kwam geen data terug'
+                : 'Google API niet geconfigureerd'));
 
     const now = new Date();
     res.status(200).json({
