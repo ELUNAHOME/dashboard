@@ -20,6 +20,16 @@ uit `history.json` komt, is te laag.**
 
 ## history.json bijwerken (maandelijks, na afsluiten van de maand)
 
+**Tel gifting-orders NIET mee.** Creator-seeding levert echte Shopify-orders op met
+financial_status "paid" en totaal 0,00. Ze horen in de voorraad en de logistiek, maar niet
+in `orders` of `stuks`, want ze staan wel in de noemer van AOV en CAC en leveren niets op.
+Gemeten 17 aug 2026: 3 van de 38 orders in 30 dagen waren gifting, wat de AOV op 60,93
+zette in plaats van 66,16, en over 7 dagen op 51,47 in plaats van 65,50. De live API filtert
+ze sinds 17 aug zelf (`api/data.js`, functie `shopifyOrders`); voor deze handmatige
+maandregel moet je het zelf doen. Tel ze met:
+`orders(query:"created_at:>=<maand> created_at:<=<maandeind>")` en sluit alles uit met
+`totalPriceSet.shopMoney.amount == 0`. Noteer het aantal in de `_comment` van die maand.
+
 Voeg één regel per afgesloten maand toe. Alle bedragen ex btw:
 
 1. **Shopify** (via de Shopify-connector, die ziet wél de hele historie):

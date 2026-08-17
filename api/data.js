@@ -239,7 +239,21 @@ async function shopifyOrders(dateMin, dateMax) {
     alle.push(...(json.orders || []));
     url = next;
   }
-  return alle;
+  // GIFTING-ORDERS TELLEN NIET MEE ALS VERKOOP.
+  // Creator-seeding levert echte Shopify-orders op, met financial_status "paid" en een
+  // totaal van 0,00. Ze horen thuis in de logistiek en in de voorraad, maar niet in de
+  // verkoopcijfers: ze staan wel in de NOEMER van elke deling en leveren niets op. Dat
+  // drukt de gemiddelde orderwaarde en vleit tegelijk de CAC, want die wordt gedeeld
+  // door meer orders dan er echt betaald zijn.
+  // Gemeten 17 augustus 2026 over 18 jul t/m 17 aug: 3 van de 38 orders waren gifting.
+  // De AOV toonde daardoor 60,93 in plaats van 66,16, en over de laatste 7 dagen zelfs
+  // 51,47 in plaats van 65,50 (3 gratis op 14 orders).
+  // Hier op EEN plek eruit gefilterd, zodat elke afgeleide (omzet, orders, units, de
+  // dagreeks, AOV en CAC) gegarandeerd dezelfde set gebruikt. Het aantal reist als
+  // teller mee, zodat het zichtbaar blijft in plaats van stil te verdwijnen.
+  const betaald = alle.filter(o => parseFloat(o.total_price) > 0);
+  betaald.gifting = alle.length - betaald.length;
+  return betaald;
 }
 
 function aggregateOrders(orders) {
@@ -248,7 +262,7 @@ function aggregateOrders(orders) {
     rev += parseFloat(o.total_price);
     units += o.line_items.reduce((s, i) => s + i.quantity, 0);
   }
-  return { rev: r2(rev), orders: orders.length, units };
+  return { rev: r2(rev), orders: orders.length, units, gifting: orders.gifting || 0 };
 }
 
 // De sleutel was "dag/maand" zonder jaartal. Bij een bereik over meerdere jaren viel
