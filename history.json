@@ -1,6 +1,6 @@
 {
   "_comment": "Maandhistorie + P&L voor ELÛNA. Bewust een apart bestand: /api/data kan GEEN orders ouder dan 60 dagen zien (de Shopify-app mist de scope read_all_orders), dus alles vóór dat venster moet hier staan. Bedragen ex btw, in euro. Bron: Shopify ShopifyQL (sales-rapport), Meta Graph API, Google Ads API v21. Ophalen: zie REFRESH.md.",
-  "updated": "2026-08-14",
+  "updated": "2026-09-01",
   "bronnen": {
     "omzet": "Shopify ShopifyQL FROM sales, TIMESERIES month (gross_sales, discounts, returns, net_sales, taxes, net_items_sold)",
     "meta": "Meta Graph API, act_924352226288770, level=ad_account, time_increment=monthly",
@@ -24,7 +24,8 @@
     { "ym": "2026-04", "label": "Apr", "dagen": 30, "orders": 53, "stuks": 40, "bruto_omzet": 3707.35, "kortingen": 272.61, "retouren": 860.42, "retour_orders": 14, "netto_omzet": 2574.32, "btw": 0.00, "meta_spend": 1161.48, "google_spend": 929.95 },
     { "ym": "2026-05", "label": "Mei", "dagen": 31, "orders": 48, "stuks": 43, "bruto_omzet": 3330.42, "kortingen": 215.47, "retouren": 384.75, "retour_orders": 2, "netto_omzet": 2730.20, "btw": 95.91, "meta_spend": 975.18, "google_spend": 844.74 },
     { "ym": "2026-06", "label": "Jun", "dagen": 30, "orders": 45, "stuks": 39, "bruto_omzet": 2658.99, "kortingen": 167.34, "retouren": 398.85, "retour_orders": 7, "netto_omzet": 2092.80, "btw": 467.49, "meta_spend": 963.02, "google_spend": 804.35 },
-    { "ym": "2026-07", "label": "Jul", "dagen": 31, "orders": 31, "stuks": 25, "bruto_omzet": 1849.80, "kortingen": 108.21, "retouren": 342.54, "retour_orders": 3, "netto_omzet": 1399.05, "btw": 293.85, "meta_spend": 254.38, "google_spend": 634.29 }
+    { "ym": "2026-07", "label": "Jul", "dagen": 31, "orders": 31, "stuks": 25, "bruto_omzet": 1849.80, "kortingen": 108.21, "retouren": 342.54, "retour_orders": 3, "netto_omzet": 1399.05, "btw": 293.85, "meta_spend": 254.38, "google_spend": 634.29 },
+    { "ym": "2026-08", "label": "Aug", "dagen": 31, "orders": 36, "stuks": 40, "bruto_omzet": 2500.68, "kortingen": 523.56, "retouren": 115.62, "retour_orders": 2, "netto_omzet": 1861.50, "btw": 390.98, "meta_spend": 270.55, "google_spend": 440.40, "gifting_orders": 6 }
   ],
   "overhead_per_maand_schatting": 185,
   "_overhead_toelichting": "Tools/SaaS/bank/admin, schatting uit de bankanalyse van 1 jun 2026 (asset-financien/2026-06-01-eluna-pnl.md). NIET live opgehaald. Het Higgsfield-jaarplan ($2.988, opgezegd 10 jul 2026) zit hier NIET in.",
