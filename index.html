@@ -849,27 +849,6 @@
       </div>
     </div>
 
-    <!-- ACTIE-ENGINE -->
-    <div style="margin-top:28px">
-      <div style="margin-bottom:6px">
-        <h2 style="margin:0">Kanaalplanning</h2>
-      </div>
-      <div class="ae-tabs">
-        <button class="ae-tab active" onclick="aeTab('meta')" data-aetab="meta"><span class="ae-ch-dot meta"></span>Meta Ads</button>
-        <button class="ae-tab" onclick="aeTab('google')" data-aetab="google"><span class="ae-ch-dot google"></span>Google Ads</button>
-        <button class="ae-tab" onclick="aeTab('klaviyo')" data-aetab="klaviyo"><span class="ae-ch-dot klaviyo"></span>Klaviyo</button>
-        <button class="ae-tab" onclick="aeTab('creative')" data-aetab="creative"><span class="ae-ch-dot creative"></span>Creatives</button>
-        <button class="ae-tab" onclick="aeTab('strat')" data-aetab="strat"><span class="ae-ch-dot strat"></span>Strategisch</button>
-      </div>
-      <div class="ae-cols">
-        <div class="ae-col active" id="col-meta"><div class="ae-col-head"><span class="ae-ch-dot meta"></span>Meta Ads</div><div id="ae-meta"></div><div class="ae-footer" onclick="aeRestore()"></div></div>
-        <div class="ae-col" id="col-google"><div class="ae-col-head"><span class="ae-ch-dot google"></span>Google Ads</div><div id="ae-google"></div><div class="ae-footer" onclick="aeRestore()"></div></div>
-        <div class="ae-col" id="col-klaviyo"><div class="ae-col-head"><span class="ae-ch-dot klaviyo"></span>Klaviyo</div><div id="ae-klaviyo"></div><div class="ae-footer" onclick="aeRestore()"></div></div>
-        <div class="ae-col" id="col-creative"><div class="ae-col-head"><span class="ae-ch-dot creative"></span>Creatives</div><div id="ae-creative"></div><div class="ae-footer" onclick="aeRestore()"></div></div>
-        <div class="ae-col" id="col-strat"><div class="ae-col-head"><span class="ae-ch-dot strat"></span>Strategisch</div><div id="ae-strat"></div><div class="ae-footer" onclick="aeRestore()"></div></div>
-      </div>
-    </div>
-
     <!-- GURU ORB -->
     <div class="guru-orb-wrap">
       <button class="guru-orb" onclick="openGuruModal()" aria-label="Strategisch perspectief">
@@ -1306,143 +1285,6 @@ const I=(type,tags,title,body,impact='',prio='')=>{
   </div>`;
 };
 
-function generateActions(k){
-  // Live ad-niveau voor deze periode; valt terug op de handmatige snapshot als de API niets leverde
-  const META_ADS = (LIVE_ADS[k] && LIVE_ADS[k].length) ? LIVE_ADS[k] : META_ADS_SNAPSHOT;
-  const p=P[k], camps=C[k]||[];
-  // BASIS: incl btw. Interne drempellogica, wordt NIET getoond; vergelijk alleen met 2.95.
-  const tot=(p.spend||0)+(p.gspend||0), roas=tot>0?p.rev/tot:0;
-  const cac=p.units>0?tot/p.units:null, net=cac!=null?GROSS-cac:null;
-  const aov=p.orders>0?p.rev/p.orders:null;
-  const retC=camps.find(c=>c.name.includes('RETAR'));
-  const trackGap=roas>0&&p.mroas>0?roas/p.mroas:0;
-  const meta=[], google=[], klaviyo=[], strat=[], creative=[];
-
-  // ── META ──────────────────────────────────────────────────────
-  if(cac!=null&&cac>GROSS)
-    meta.unshift(I('data',T('data-tag','Data'),'Budget bevriezen, CAC verlieslatend',
-      `CAC ${eur(cac)}/stuk vs brutomarge ${eur(GROSS)}. Geen opschaling. Verbeter eerst je conversie en productpagina.`,'','NU'));
-  else if(cac!=null){
-    const _scaleAd = META_ADS.filter(a=>a.status==='ACTIVE'&&a.roas>0).sort((a,b)=>b.roas-a.roas)[0];
-    meta.unshift(I('data ok',T('data-tag','Data'),'Winstgevend, voorzichtig opschalen',
-      `Netto +${eur(net)}/stuk. ${_scaleAd?'Focus op '+_scaleAd.n+' ('+_scaleAd.roas.toFixed(2)+'×), verhoog budget met €10/dag per week.':'Verhoog Meta budget stapsgewijs €10/dag per week.'} Monitor blended ROAS.`,'','NU'));
-  }
-  if(trackGap>=1.7&&roas<2.95)
-    meta.push(I('data',T('data-tag','Data'),'Meta attribueert laag: blended '+xfmt(roas)+' vs Meta '+xfmt(p.mroas),
-      `Meta schrijft zichzelf weinig conversies toe. Sinds half juni sluit Meta tegen Shopify last-click, dus dit is vooral echte underperformance, geen meetlek. Stuur op blended, niet op mROAS. CAPI staat bewust op Aanbevolen, niet wijzigen.`,'','NU'));
-  if(retC&&retC.spend>20&&retC.roas===null)
-    meta.push(I('data',T('data-tag','Data'),`Retargeting ${eur(retC.spend)} spend, 0 gemeten conversies`,
-      'Controleer de pixel op de thank-you pagina. Klopt die, dan is dit echte underperformance, geen meetfout. Stuur op blended.','','NU'));
-  if(p.ctr>2.8&&p.mroas!=null&&p.mroas<0.8)
-    meta.push(I('data',T('data-tag','Data'),'CTR '+pct(p.ctr)+' sterk, LP converteert niet',
-      'Mensen klikken maar kopen niet. Check LP: laadtijd, reviews, headline, risk reversal.','','NU'));
-  // Dynamische kill-tip op basis van META_ADS snapshot
-  const _killAds = META_ADS.filter(a=>a.status==='ACTIVE'&&a.spend>25&&(a.roas===0||a.roas<1.0));
-  const _bestActive = META_ADS.filter(a=>a.status==='ACTIVE'&&a.roas>0).sort((a,b)=>b.roas-a.roas)[0];
-  const _heractief  = META_ADS.filter(a=>a.status==='PAUSED'&&a.roas>=1.5).sort((a,b)=>b.roas-a.roas)[0];
-  if(_killAds.length>0){
-    const _kNames = _killAds.map(a=>a.n).join(' + ');
-    const _kTotal = _killAds.reduce((s,a)=>s+a.spend,0);
-    const _kSales = _killAds.reduce((s,a)=>s+a.sales,0);
-    meta.push(I('data',T('data-tag','Data'),`Stop nu: ${_kNames}`,
-      `${eur(_kTotal,0)} spend deze maand, ${_kSales} ${_kSales===1?'aankoop':'aankopen'}. Budget heralloceren naar ${_bestActive?_bestActive.n+' ('+_bestActive.roas.toFixed(2)+'×)':_heractief?_heractief.n:'betere creatives'}.`,'','NU'));
-  }
-  if(_heractief){
-    meta.push(I('playbook',T('meta','Meta'),`Heractief: ${_heractief.n} (${_heractief.roas.toFixed(2)}× voor pauzeren)`,
-      `Beste performer van ${META_ADS_DATE} vóór pauzeren. Zet terug actief in eigen CBO, €15/dag, 3 dagen meten. Als ROAS herbevestigd, budget opbouwen.`,'','NU'));
-  }
-  if(retC&&retC.cpm>22)
-    meta.push(I('data',T('data-tag','Data'),'Retargeting CPM '+eur(retC.cpm)+', ad fatigue',
-      'Verklein audience (90d i.p.v. 180d) + nieuw creatief voor retargeting.','','BINNENKORT'));
-
-  // ── GOOGLE ────────────────────────────────────────────────────
-  if(p.gspend>50&&p.rev/(p.gspend||1)<2.95)
-    google.push(I('data',T('data-tag','Data'),'Google blended ROAS '+xfmt(p.gspend>0?p.rev/p.gspend:null)+', niet kostendekkend',
-      'PMax asset groups segmenteren: merk / categorie / concurrent. Exact-negatief [waterkoker] toevoegen in Shopping.','','NU'));
-  google.push(I('playbook',T('google','Google'),'Conversietracking audit, dubbele attributie',
-    'Shopify → Google Tag: controleer "conversion lag" in Search Terms report. Foute tracking = foute bidstrategie.','','BINNENKORT'));
-  google.push(I('playbook',T('google','Google'),'Merk vs generiek splitsen in Shopping',
-    'Merkzoekopdrachten converteren 5–10× beter. Apart budgetteren en controleren.','','BINNENKORT'));
-  if(!(GC[k] && GC[k].length))
-    google.push(I('playbook',T('google','Google'),'Google API live &rarr; per-campagne breakdown',
-      'Zet 4 env vars in Vercel (CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN, DEVELOPER_TOKEN) en de Shopping/PMAX- en Brand Search-rijen vullen automatisch. LOGIN_CUSTOMER_ID leeg laten: de MCC beheert het operating-account niet, met die header faalt elke call.','','NU'));
-
-  // ── KLAVIYO ───────────────────────────────────────────────────
-  const flows = KLAVIYO.flows || [];
-  const browse = flows.find(f=>f.name.includes('Browse'));
-  const cart   = flows.find(f=>f.name.includes('Check'));
-  const review = flows.find(f=>f.name.includes('Review'));
-  const welcome= flows.find(f=>f.name.includes('Welcome'));
-  if(cart&&cart.d30_recipients<15)
-    klaviyo.push(I('data',T('email','Email'),'Abandoned Checkout, slechts '+cart.d30_recipients+' triggers (30d)',
-      'Mogelijk Shopify/Klaviyo tracking-probleem. Controleer flow-trigger en Checkout Events.','','NU'));
-  if(browse&&browse.d30_ctr<1)
-    klaviyo.push(I('data',T('email','Email'),'Browse Abandonment: open rate sterk, CTR '+browse.d30_ctr.toFixed(1)+'%',
-      'Mensen openen maar klikken niet. CTA of aanbod werkt niet. Test kortingsaanbieding in email.','','NU'));
-  if(review&&review.d30_ctr===0)
-    klaviyo.push(I('data',T('email','Email'),'Product Review flow: 0% CTR op review-CTA',
-      'Knop of onderwerprregel werkt niet. A/B testen met ander CTA-format ("Deel jouw ervaring").','','BINNENKORT'));
-  if(welcome)
-    klaviyo.push(I('playbook',T('email','Email'),'Welcome Series email 2 converteert niet',
-      `Email 1 werkt (flow genereert €${welcome.d30_revenue.toFixed(0)} in 30d). Email 2 (cadeau-push) verwijderen of vervangen door social proof.`,'','BINNENKORT'));
-  const failedCamp=(KLAVIYO.campaigns||[]).find(c=>c.conversions===0&&c.ctr>3);
-  if(failedCamp)
-    klaviyo.push(I('data',T('email','Email'),'Campagne "'+failedCamp.name.slice(0,28)+'...", 0 conversies',
-      `${failedCamp.recipients} ontvangers, CTR ${failedCamp.ctr.toFixed(1)}%, kliks maar geen aankopen. LP of coupon werkte niet.`,'','BINNENKORT'));
-
-  // ── STRATEGISCH ───────────────────────────────────────────────
-  const FOUR_STOCK = INVENTORY.stock != null ? INVENTORY.stock : 34;
-  const fourDays = p.units>0 ? Math.round(FOUR_STOCK / (p.units / (k==='today'||k==='gisteren'?1:k==='d7'?7:k==='d30'?30:14))) : null;
-  if(fourDays!=null&&fourDays<30)
-    strat.unshift(I('data',T('product','Product'),'Inventaris: FOUR heeft nog '+FOUR_STOCK+' stuks ('+fourDays+' dgn)',
-      `Lead time Windspro: 45-65 dagen. Bestel op tijd om stockout te voorkomen. PBL heeft nog ${INVENTORY.pbl_stock ?? 0} stuks buffer.`,'','NU'));
-  if(aov!=null&&aov<72)
-    strat.push(I('data',T('product','Product'),'AOV '+eur(aov)+', geen bundle',
-      'Bijna alle orders single-unit. 2-pack €119,90 of post-checkout upsell. +20% AOV = CAC/stuk daalt €10.','','BINNENKORT'));
-  strat.push(I('playbook',T('cro','CRO'),'LP headline: van specs naar ritueel',
-    '"1,7L · volledig RVS" → "Zo begint elke ochtend." A/B testen. 7 dagen meten.','','BINNENKORT'));
-  strat.push(I('playbook',T('cro','CRO'),'Levenslange garantie op RVS toevoegen aan LP',
-    'Kost bijna niets. RVS gaat 20+ jaar mee. Expliciet boven de fold. Verwacht +15–25% CVR.','','BINNENKORT'));
-  strat.push(I('playbook',T('product','Product'),'2-pack bundel op Shopify',
-    '€119,90 i.p.v. 2× €69,95. Als 20% kiest voor bundel: AOV +€15, CAC/stuk −€10.','','BINNENKORT'));
-  strat.push(I('playbook',T('pr','PR/Creator'),'15 micro-influencers NL giften (food/lifestyle, 5k–30k)',
-    '€1.050 COGS, €0 spend. 8 van 15 posten = 120k bereik. Content hergebruiken als UGC in Meta ads.','','LATER'));
-  strat.push(I('playbook',T('organic','Organic'),'Organisch: 1× per week Reels/TikTok (Higgsfield)',
-    'Algoritme-boost na 8 weken. Verlaagt paid CPM doordat organisch social proof toevoegt.','','LATER'));
-  strat.push(I('playbook',T('pr','PR'),'Seizoensplan: Sinterklaas + Kerst, start prep september',
-    'Waterkokers zijn top-cadeau. Q4 is 3–5× hogere ROAS window. Creatieve brief nu starten.','','LATER'));
-  strat.push(I('playbook',T('pr','PR'),'PR: Libelle, Margriet, HLN Lifestyle',
-    'Gratis product + persbericht "premium RVS waterkoker die 20+ jaar meegaat". 1 placement = €5k-€10k omzet + SEO backlinks.','','LATER'));
-
-  // ── CREATIVES / HIGGSFIELD ────────────────────────────────────
-  // Analyse op basis van META_ADS snapshot
-  const _ctrTop = [...META_ADS].sort((a,b)=>b.ctr-a.ctr)[0]; // hoogste CTR
-  const _roasTop = META_ADS.filter(a=>a.status==='ACTIVE'&&a.roas>0).sort((a,b)=>b.roas-a.roas)[0];
-  const _killConc = META_ADS.filter(a=>a.spend>50&&a.sales===0&&a.status==='ACTIVE'); // actief, veel spend, 0 sales
-
-  if(_roasTop){
-    creative.push(I('creative',T('higgsfield','Higgsfield'),`Maak video-variant van ${_roasTop.n}`,
-      `Beste actieve ROAS (${_roasTop.roas.toFixed(2)}×). Zelfde concept omzetten naar 15s video in Higgsfield: ochtendmoment, waterkoker centraal, geen gezicht nodig. Soul: rustig + minimalistisch.`,'','NU'));
-  }
-  if(_ctrTop&&_ctrTop.sales===0&&_ctrTop.spend>30){
-    creative.push(I('data',T('higgsfield','Higgsfield'),`${_ctrTop.n}, CTR ${_ctrTop.ctr.toFixed(1)}% maar 0 sales`,
-      `Concept trekt clicks (${_ctrTop.ctr.toFixed(1)}% CTR) maar converteert niet op de LP. Pas de CTA aan in beeld: voeg prijs + review toe vóór het einde. Geen nieuw concept nodig, bestaande angle aanscherpen.`,'','NU'));
-  }
-  if(_killConc.length>0){
-    creative.push(I('data',T('creative','Concept'),`Stop: ${_killConc.map(a=>a.n).join(', ')}, geen conversies`,
-      `${_killConc.length > 1 ? 'Deze concepten leveren' : 'Dit concept levert'} na €${_killConc.reduce((s,a)=>s+a.spend,0).toFixed(0)} spend 0 aankopen. Geen varianten meer maken op deze creatieve hoek.`,'','NU'));
-  }
-  creative.push(I('creative',T('higgsfield','Higgsfield'),'Hook test: ochtendritueel + design',
-    'Leun op het rustige ochtendmoment en de RVS-bouw: water dat opwarmt, stoom, gieten. GEEN plastic- of gezondheidsclaim (die gaf een 2-sterren review). 15 sec, tekst op beeld, geen voiceover nodig.','','BINNENKORT'));
-  creative.push(I('creative',T('higgsfield','Higgsfield'),'Higgsfield: gieten-macro shot, water als held',
-    'Geen tekst, geen voiceover. Camera volgt het water: inkoken → gieten → stoom. Muziek: rustig, minimalistische piano. 8 seconden. Ideaal als thumb-stopper voor retargeting.','','BINNENKORT'));
-  creative.push(I('creative',T('higgsfield','Higgsfield'),'Seizoen Q4: Kerst-angle in Higgsfield, start augustus',
-    'Waterkoker als cadeau. Warme belichting, cadeaulint, "voor iemand die het verdient." Q4 is historisch 3–5× hogere ROAS. Brief nu klaarzetten zodat in aug productie kan starten.','','LATER'));
-  creative.push(I('playbook',T('creative','UGC'),'3 klantvideo\'s verzamelen voor UGC ads',
-    'Email top-kopers (>€69,95 eenmalig, geen retour). Vraag 30-sec video: "hoe gebruik je ELÛNA elke ochtend?" Stuur Higgsfield-brief mee. UGC halveert doorgaans CPP vs branded content.','','LATER'));
-
-  return {meta, google, klaviyo, strat, creative};
-}
 
 // Winst-overzicht: de hele weg van omzet naar netto voor de gekozen periode.
 // Alle posten komen uit het vaste marge-model maal het werkelijke aantal stuks uit
@@ -1778,7 +1620,6 @@ function renderBlendedCamp(k){
 function renderChannelViews(k){
   const p = P[k];
   if(!p) return;
-  const {meta, google, klaviyo} = generateActions(k);
 
   // ── META ────────────────────────────────────────────────────────
   const chMetaPerf = document.getElementById('ch-meta-perf');
@@ -3299,7 +3140,7 @@ function render(k){
   const discountEx   = LIST_EX - actualSellEx;
   const hasDiscount  = discountEx > 0.50;
   const grossEx      = actualSellEx - FIXED_EX;
-  GROSS = grossEx; // wordt gebruikt door generateActions()
+  GROSS = grossEx;
 
   // bF: pas toe op incl-BTW Shopify-bedragen voor display
   // wF: pas toe op ex-BTW kostenbedragen voor display
@@ -3362,12 +3203,6 @@ function render(k){
   if(roas<2.95) s+=`<div class="signal"><span class="dot flag" style="margin-top:6px"></span><span><b>Blended ROAS onder break-even</b>Break-even ~2,95×. Nu ${xfmt(roas)}. CVR en LP verbeteren vóór opschalen.</span></div>`;
   document.getElementById('signals').innerHTML=s;
 
-  const {meta,google,klaviyo,strat,creative}=generateActions(k);
-  document.getElementById('ae-meta').innerHTML=meta.join('');
-  document.getElementById('ae-google').innerHTML=google.join('');
-  document.getElementById('ae-klaviyo').innerHTML=klaviyo.join('');
-  document.getElementById('ae-creative').innerHTML=creative.join('');
-  document.getElementById('ae-strat').innerHTML=strat.join('');
 
   // Forecast
   const mtdCac=(P.mtd.spend+P.mtd.gspend)/P.mtd.units;
